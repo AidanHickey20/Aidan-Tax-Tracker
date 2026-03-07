@@ -58,6 +58,16 @@ model RecurringItem {
   createdAt   DateTime @default(now())
 }
 
+model TrackedInvestment {
+  id          String   @id @default(uuid())
+  symbol      String   // Ticker for stocks (AAPL), CoinGecko ID for crypto (bitcoin)
+  name        String   // Display name
+  type        String   // STOCK or CRYPTO
+  shares      Float    @default(0) // Number of shares/coins owned
+  avgCost     Float    @default(0) // Average cost basis per share/coin
+  createdAt   DateTime @default(now())
+}
+
 model Reminder {
   id        String  @id @default(uuid())
   message   String

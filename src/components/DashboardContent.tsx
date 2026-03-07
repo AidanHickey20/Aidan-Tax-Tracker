@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { formatCurrency, formatWeekLabel, CATEGORIES } from "@/lib/utils";
 import IncomeExpenseChart from "./IncomeExpenseChart";
+import PortfolioDashboard from "./PortfolioDashboard";
 
 interface LineItem {
   id: string;
@@ -166,6 +167,11 @@ export default function DashboardContent() {
           <IncomeExpenseChart data={chartData} />
         </div>
       )}
+
+      {/* Investment Portfolio */}
+      <div className="mb-8">
+        <PortfolioDashboard />
+      </div>
 
       {/* Account Balances Snapshot */}
       {latestBalances.length > 0 && (
