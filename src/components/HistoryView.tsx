@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatWeekLabel, formatCurrency } from "@/lib/utils";
+import SpreadsheetImport from "./SpreadsheetImport";
 
 interface LineItem {
   id: string;
@@ -39,13 +40,17 @@ export default function HistoryView() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  useEffect(() => {
+  function loadEntries() {
     fetch("/api/entries")
       .then((r) => r.json())
       .then((data) => {
         setEntries(data);
         setLoading(false);
       });
+  }
+
+  useEffect(() => {
+    loadEntries();
   }, []);
 
   async function deleteEntry(id: string) {
@@ -58,20 +63,20 @@ export default function HistoryView() {
     return <div className="text-slate-400 py-12 text-center">Loading history...</div>;
   }
 
-  if (entries.length === 0) {
-    return (
-      <div className="text-center py-12 text-slate-400">
-        <p className="text-lg mb-2">No entries yet</p>
-        <p className="text-sm">
-          Head to <Link href="/entry" className="text-emerald-600 underline">Weekly Entry</Link> to log your first week.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-4xl">
       <h2 className="text-2xl font-bold text-slate-800 mb-6">Past Weeks</h2>
+
+      <SpreadsheetImport onImported={loadEntries} />
+
+      {entries.length === 0 && (
+        <div className="text-center py-12 text-slate-400">
+          <p className="text-lg mb-2">No entries yet</p>
+          <p className="text-sm">
+            Head to <Link href="/entry" className="text-emerald-600 underline">Weekly Entry</Link> to log your first week, or import a spreadsheet above.
+          </p>
+        </div>
+      )}
 
       <div className="space-y-3">
         {entries.map((entry) => {
