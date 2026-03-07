@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model WeeklyEntry {
+  id        String   @id @default(uuid())
+  weekStart DateTime
+  weekEnd   DateTime
+  mileage   Float    @default(0)
+  notes     String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lineItems       LineItem[]
+  accountBalances AccountBalance[]
+  investments     InvestmentEntry[]
+}
+
+model LineItem {
+  id            String @id @default(uuid())
+  description   String
+  amount        Float
+  category      String // INCOME, BUSINESS_EXPENSE, PERSONAL_EXPENSE, OWNER_DRAW
+
+  weeklyEntry   WeeklyEntry @relation(fields: [weeklyEntryId], references: [id], onDelete: Cascade)
+  weeklyEntryId String
+}
+
+model AccountBalance {
+  id          String @id @default(uuid())
+  accountName String
+  balance     Float
+
+  weeklyEntry   WeeklyEntry @relation(fields: [weeklyEntryId], references: [id], onDelete: Cascade)
+  weeklyEntryId String
+}
+
+model InvestmentEntry {
+  id     String @id @default(uuid())
+  name   String
+  amount Float
+
+  weeklyEntry   WeeklyEntry @relation(fields: [weeklyEntryId], references: [id], onDelete: Cascade)
+  weeklyEntryId String
+}
+
+model RecurringItem {
+  id          String  @id @default(uuid())
+  description String
+  amount      Float
+  category    String // INCOME, BUSINESS_EXPENSE, PERSONAL_EXPENSE, OWNER_DRAW, INVESTMENT
+  isActive    Boolean @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model Reminder {
+  id        String  @id @default(uuid())
+  message   String
+  isActive  Boolean @default(true)
+  createdAt DateTime @default(now())
+}
