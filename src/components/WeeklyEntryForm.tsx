@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getCurrentWeekRange, formatCurrency, CATEGORIES, type Category } from "@/lib/utils";
+import { getCurrentWeekRange, formatCurrency, type Category } from "@/lib/utils";
 import { format } from "date-fns";
 
 interface LineItemInput {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { formatCurrency, formatWeekLabel, CATEGORIES } from "@/lib/utils";
+import { formatCurrency, formatWeekLabel } from "@/lib/utils";
 import IncomeExpenseChart from "./IncomeExpenseChart";
 import PortfolioDashboard from "./PortfolioDashboard";
 import { MaskedValue } from "./PrivacyProvider";
@@ -80,10 +80,6 @@ export default function DashboardContent() {
 
   const ytdPersonalExpenses = allLineItems
     .filter((i) => i.category === "PERSONAL_EXPENSE")
-    .reduce((sum, i) => sum + i.amount, 0);
-
-  const ytdOwnerDraws = allLineItems
-    .filter((i) => i.category === "OWNER_DRAW")
     .reduce((sum, i) => sum + i.amount, 0);
 
   const estimatedTaxableProfit = ytdIncome - ytdBusinessExpenses;

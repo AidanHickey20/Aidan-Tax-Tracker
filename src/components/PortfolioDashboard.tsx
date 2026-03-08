@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import Sparkline from "./Sparkline";
-import { usePrivacy, MaskedValue } from "./PrivacyProvider";
+import { MaskedValue } from "./PrivacyProvider";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -88,7 +88,6 @@ export default function PortfolioDashboard({ onTotalChange }: { onTotalChange?: 
 
     // Separate MANUAL investments from ones that need price fetching
     const priceableInvs = invs.filter((i) => i.type !== "MANUAL");
-    const manualInvs = invs.filter((i) => i.type === "MANUAL");
 
     let prices: PriceData[] = [];
 
@@ -445,7 +444,6 @@ export default function PortfolioDashboard({ onTotalChange }: { onTotalChange?: 
               {rows.map((row) => {
                 const isUp = row.change >= 0;
                 const gainIsUp = row.totalGain >= 0;
-                const isEditing = editId === row.id;
 
                 return (
                   <tr key={row.id} className="border-b border-slate-50 hover:bg-slate-50">

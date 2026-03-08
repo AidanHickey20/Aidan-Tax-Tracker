@@ -16,6 +16,7 @@ export function PrivacyProvider({ children }: { children: ReactNode }) {
   const [hidden, setHidden] = useState(true);
   const [loaded, setLoaded] = useState(false);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const stored = localStorage.getItem("privacy-hidden");
     if (stored === "false") {
@@ -23,6 +24,7 @@ export function PrivacyProvider({ children }: { children: ReactNode }) {
     }
     setLoaded(true);
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   function toggle() {
     setHidden((h) => {

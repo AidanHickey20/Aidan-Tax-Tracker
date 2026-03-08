@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import InvestmentDetailChart from "./InvestmentDetailChart";
@@ -89,6 +89,15 @@ export default function InvestmentDetail({ investmentId }: { investmentId: strin
   const [loading, setLoading] = useState(true);
   const [chartLoading, setChartLoading] = useState(false);
 
+  const fetchDetail = useCallback(async (symbol: string, type: string, r: string) => {
+    setChartLoading(true);
+    const s = type === "CRYPTO" ? symbol.toLowerCase() : symbol;
+    const res = await fetch(`/api/portfolio/detail?symbol=${s}&type=${type}&range=${r}`);
+    const data = await res.json();
+    setDetail(data);
+    setChartLoading(false);
+  }, []);
+
   useEffect(() => {
     fetch("/api/portfolio")
       .then((r) => r.json())
@@ -100,16 +109,7 @@ export default function InvestmentDetail({ investmentId }: { investmentId: strin
         }
         setLoading(false);
       });
-  }, [investmentId]);
-
-  async function fetchDetail(symbol: string, type: string, r: string) {
-    setChartLoading(true);
-    const s = type === "CRYPTO" ? symbol.toLowerCase() : symbol;
-    const res = await fetch(`/api/portfolio/detail?symbol=${s}&type=${type}&range=${r}`);
-    const data = await res.json();
-    setDetail(data);
-    setChartLoading(false);
-  }
+  }, [investmentId, fetchDetail]);
 
   function handleRangeChange(r: string) {
     setRange(r);

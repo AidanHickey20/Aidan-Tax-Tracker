@@ -49,7 +49,7 @@ const STUDENT_LOAN_PAYMENT = 1205;
 const CAR_LOAN_AT_REF = 13000;
 const CAR_LOAN_RATE = 0.04; // ~4% (back-calculated from $333/mo over 3.5yr)
 const CAR_LOAN_PAYMENT = 333;
-const CAR_PAYOFF_YEAR = 2030;
+
 
 function monthsElapsed(from: Date, to: Date): number {
   return (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
@@ -128,11 +128,13 @@ export default function NetWorthPage() {
     setLoading(false);
   }, []);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
   }, [fetchData]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // ── Dynamic calculations based on current date ──
   const calcs = useMemo(() => {
