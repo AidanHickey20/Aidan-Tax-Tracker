@@ -88,14 +88,18 @@ export default function InvestmentDetailChart({ data, color, range }: Props) {
             color: "#f8fafc",
             fontSize: "12px",
           }}
-          formatter={(value: number) => [
-            new Intl.NumberFormat("en-US", {
-              style: "currency",
-              currency: "USD",
-              minimumFractionDigits: value < 1 ? 6 : 2,
-            }).format(value),
-            "Price",
-          ]}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          formatter={(value: any) => {
+            const num = Number(value) || 0;
+            return [
+              new Intl.NumberFormat("en-US", {
+                style: "currency",
+                currency: "USD",
+                minimumFractionDigits: num < 1 ? 6 : 2,
+              }).format(num),
+              "Price",
+            ];
+          }}
           labelFormatter={(label) => format(new Date(label), "MMM d, yyyy h:mm a")}
         />
         <Area
