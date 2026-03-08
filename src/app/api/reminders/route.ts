@@ -13,6 +13,8 @@ export async function POST(request: NextRequest) {
   const reminder = await prisma.reminder.create({
     data: {
       message: body.message,
+      frequency: body.frequency ?? "WEEKLY",
+      scheduledDay: body.scheduledDay ?? -1,
       isActive: body.isActive ?? true,
     },
   });
@@ -25,6 +27,8 @@ export async function PUT(request: NextRequest) {
     where: { id: body.id },
     data: {
       message: body.message,
+      frequency: body.frequency,
+      scheduledDay: body.scheduledDay,
       isActive: body.isActive,
     },
   });

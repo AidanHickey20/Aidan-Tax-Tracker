@@ -29,12 +29,16 @@ interface RecurringItem {
   description: string;
   amount: number;
   category: string;
+  frequency: string;
+  scheduledDay: number;
   isActive: boolean;
 }
 
 interface Reminder {
   id: string;
   message: string;
+  frequency: string;
+  scheduledDay: number;
   isActive: boolean;
 }
 
@@ -70,8 +74,35 @@ export default function WeeklyEntryForm() {
       setReminders(remindersData.filter((r: Reminder) => r.isActive));
 
       if (!editId) {
-        // Pre-fill from recurring items
-        const activeItems = recurringItems.filter((r: RecurringItem) => r.isActive);
+        // Pre-fill from recurring items, filtering by frequency
+        const weekStartDate = new Date(start);
+        const weekEndDate = new Date(end);
+
+        const activeItems = recurringItems.filter((r: RecurringItem) => {
+          if (!r.isActive) return false;
+          if (r.frequency === "WEEKLY") return true;
+          // Monthly: include if scheduled day falls within this week
+          if (r.frequency === "MONTHLY") {
+            const day = r.scheduledDay;
+            if (day < 1) {
+              // No specific day set — include in the first week of the month
+              return weekStartDate.getDate() <= 7;
+            }
+            // Check if scheduled day falls within the week range
+            const month = weekStartDate.getMonth();
+            const year = weekStartDate.getFullYear();
+            const scheduled = new Date(year, month, day);
+            // Handle months shorter than scheduledDay (e.g. Feb 31 → last day)
+            if (scheduled.getMonth() !== month) {
+              // Day doesn't exist this month, use last day
+              const lastDay = new Date(year, month + 1, 0);
+              return lastDay >= weekStartDate && lastDay <= weekEndDate;
+            }
+            return scheduled >= weekStartDate && scheduled <= weekEndDate;
+          }
+          return true;
+        });
+
         const recurringLineItems = activeItems
           .filter((r: RecurringItem) => r.category !== "INVESTMENT")
           .map((r: RecurringItem) => ({
@@ -238,6 +269,11 @@ export default function WeeklyEntryForm() {
             {reminders.map((r) => (
               <li key={r.id} className="text-sm text-amber-700 flex items-center gap-2">
                 <span>&#8226;</span> {r.message}
+                <span className={`text-xs px-1.5 py-0.5 rounded ${
+                  r.frequency === "MONTHLY" ? "bg-blue-100 text-blue-600" : "bg-amber-200 text-amber-700"
+                }`}>
+                  {r.frequency === "MONTHLY" ? "Monthly" : "Weekly"}
+                </span>
               </li>
             ))}
           </ul>

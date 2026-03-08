@@ -51,12 +51,14 @@ model InvestmentEntry {
 }
 
 model RecurringItem {
-  id          String  @id @default(uuid())
-  description String
-  amount      Float
-  category    String // INCOME, BUSINESS_EXPENSE, PERSONAL_EXPENSE, OWNER_DRAW, INVESTMENT
-  isActive    Boolean @default(true)
-  createdAt   DateTime @default(now())
+  id           String   @id @default(uuid())
+  description  String
+  amount       Float
+  category     String   // INCOME, BUSINESS_EXPENSE, PERSONAL_EXPENSE, OWNER_DRAW, INVESTMENT
+  frequency    String   @default("WEEKLY") // WEEKLY or MONTHLY
+  scheduledDay Int      @default(-1) // WEEKLY: 0=Sun..6=Sat, MONTHLY: 1-31, -1=unset
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
 }
 
 model TrackedInvestment {
@@ -72,8 +74,10 @@ model TrackedInvestment {
 }
 
 model Reminder {
-  id        String  @id @default(uuid())
-  message   String
-  isActive  Boolean @default(true)
-  createdAt DateTime @default(now())
+  id           String   @id @default(uuid())
+  message      String
+  frequency    String   @default("WEEKLY") // WEEKLY or MONTHLY
+  scheduledDay Int      @default(-1) // WEEKLY: 0=Sun..6=Sat, MONTHLY: 1-31, -1=unset
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
 }

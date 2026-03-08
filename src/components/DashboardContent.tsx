@@ -41,6 +41,8 @@ interface WeeklyEntry {
 interface Reminder {
   id: string;
   message: string;
+  frequency: string;
+  scheduledDay: number;
   isActive: boolean;
 }
 
@@ -224,6 +226,11 @@ export default function DashboardContent() {
             {reminders.map((r) => (
               <li key={r.id} className="text-sm text-amber-700 flex items-center gap-2">
                 <span>&#8226;</span> {r.message}
+                <span className={`text-xs px-1.5 py-0.5 rounded ${
+                  r.frequency === "MONTHLY" ? "bg-blue-100 text-blue-600" : "bg-amber-200 text-amber-700"
+                }`}>
+                  {r.frequency === "MONTHLY" ? "Monthly" : "Weekly"}
+                </span>
               </li>
             ))}
           </ul>

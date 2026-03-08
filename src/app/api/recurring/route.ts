@@ -15,6 +15,8 @@ export async function POST(request: NextRequest) {
       description: body.description,
       amount: body.amount,
       category: body.category,
+      frequency: body.frequency ?? "WEEKLY",
+      scheduledDay: body.scheduledDay ?? -1,
       isActive: body.isActive ?? true,
     },
   });
@@ -29,6 +31,8 @@ export async function PUT(request: NextRequest) {
       description: body.description,
       amount: body.amount,
       category: body.category,
+      frequency: body.frequency,
+      scheduledDay: body.scheduledDay,
       isActive: body.isActive,
     },
   });
