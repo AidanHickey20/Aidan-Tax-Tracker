@@ -6,6 +6,7 @@ import { formatCurrency, formatWeekLabel } from "@/lib/utils";
 import IncomeExpenseChart from "./IncomeExpenseChart";
 import PortfolioDashboard from "./PortfolioDashboard";
 import { MaskedValue } from "./PrivacyProvider";
+import TaxAdvisor from "./TaxAdvisor";
 
 interface LineItem {
   id: string;
@@ -265,6 +266,9 @@ export default function DashboardContent() {
           );
         })}
       </div>
+
+      {/* Tax Advisor */}
+      <TaxAdvisor />
 
       {/* Chart */}
       {chartData.length > 0 && (
