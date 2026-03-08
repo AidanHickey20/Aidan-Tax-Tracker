@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { formatCurrency, formatWeekLabel, CATEGORIES } from "@/lib/utils";
 import IncomeExpenseChart from "./IncomeExpenseChart";
 import PortfolioDashboard from "./PortfolioDashboard";
+import { MaskedValue } from "./PrivacyProvider";
 
 interface LineItem {
   id: string;
@@ -45,6 +47,7 @@ export default function DashboardContent() {
   const [entries, setEntries] = useState<WeeklyEntry[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [portfolioTotal, setPortfolioTotal] = useState<number>(0);
 
   useEffect(() => {
     Promise.all([
@@ -112,15 +115,102 @@ export default function DashboardContent() {
       };
     });
 
+  // Net worth: dynamic calculations from reference date March 2026
+  const bankBalance = 35800;
+  const livePortfolio = portfolioTotal || totalInvestments;
+
+  // Home equity: $170k appreciating at 2.35%/yr, mortgage $130k at 7% with $1295/mo
+  const refDate = new Date(2026, 2, 1);
+  const now = new Date();
+  const monthsElapsed = (now.getFullYear() - refDate.getFullYear()) * 12 + (now.getMonth() - refDate.getMonth());
+  const homeValue = 170000 * Math.pow(1 + 0.0235 / 12, monthsElapsed);
+  let mortBal = 130000;
+  for (let i = 0; i < monthsElapsed; i++) {
+    if (mortBal <= 0) break;
+    mortBal -= Math.min(1295 - mortBal * (0.07 / 12), mortBal);
+  }
+  const homeEquity = homeValue - Math.max(mortBal, 0);
+
+  // Student loans: $50k at 7.5%, $1205/mo
+  let studentBal = 50000;
+  for (let i = 0; i < monthsElapsed; i++) {
+    if (studentBal <= 0) break;
+    studentBal -= Math.min(1205 - studentBal * (0.075 / 12), studentBal);
+  }
+  studentBal = Math.max(studentBal, 0);
+
+  // Car loan: $13k at 4%, $333/mo
+  let carBal = 13000;
+  for (let i = 0; i < monthsElapsed; i++) {
+    if (carBal <= 0) break;
+    carBal -= Math.min(333 - carBal * (0.04 / 12), carBal);
+  }
+  carBal = Math.max(carBal, 0);
+
+  const estNetWorth = homeEquity + bankBalance + livePortfolio - studentBal - carBal;
+
+  // ── Estimated tax liability for self-employed real estate professional ──
+  function estimateTax(netSEIncome: number): number {
+    if (netSEIncome <= 0) return 0;
+
+    // Self-employment tax: 15.3% on 92.35% of net SE income (12.4% SS + 2.9% Medicare)
+    const seBase = netSEIncome * 0.9235;
+    const ssTax = Math.min(seBase, 176100) * 0.124; // 2026 SS wage base ~$176,100
+    const medicareTax = seBase * 0.029;
+    const seTax = ssTax + medicareTax;
+
+    // AGI after deducting half of SE tax
+    const agi = netSEIncome - seTax / 2;
+
+    // QBI deduction (20% of qualified business income for RE professionals)
+    const qbiDeduction = netSEIncome * 0.20;
+
+    // Standard deduction 2026 (~$15,700 single)
+    const standardDeduction = 15700;
+    const taxableIncome = Math.max(agi - standardDeduction - qbiDeduction, 0);
+
+    // 2026 federal brackets (single, estimated)
+    let fedTax = 0;
+    const brackets = [
+      { limit: 11925, rate: 0.10 },
+      { limit: 48475, rate: 0.12 },
+      { limit: 103350, rate: 0.22 },
+      { limit: 197300, rate: 0.24 },
+      { limit: 250525, rate: 0.32 },
+      { limit: 626350, rate: 0.35 },
+      { limit: Infinity, rate: 0.37 },
+    ];
+    let remaining = taxableIncome;
+    let prevLimit = 0;
+    for (const b of brackets) {
+      const span = b.limit - prevLimit;
+      const taxable = Math.min(remaining, span);
+      fedTax += taxable * b.rate;
+      remaining -= taxable;
+      prevLimit = b.limit;
+      if (remaining <= 0) break;
+    }
+
+    // Ohio state tax (~3.5% effective for this income range)
+    const ohioTax = taxableIncome * 0.035;
+
+    // Lyndhurst municipal tax (2.0% on earned income)
+    const municipalTax = netSEIncome * 0.02;
+
+    return seTax + fedTax + ohioTax + municipalTax;
+  }
+
+  const estimatedTax = estimateTax(estimatedTaxableProfit);
+
   const statCards = [
-    { label: "YTD Income", value: formatCurrency(ytdIncome), color: "text-emerald-600" },
-    { label: "YTD Business Expenses", value: formatCurrency(ytdBusinessExpenses), color: "text-red-500" },
-    { label: "Est. Taxable Profit", value: formatCurrency(estimatedTaxableProfit), color: estimatedTaxableProfit >= 0 ? "text-emerald-600" : "text-red-500" },
-    { label: "YTD Personal Expenses", value: formatCurrency(ytdPersonalExpenses), color: "text-orange-500" },
-    { label: "YTD Owner Draws", value: formatCurrency(ytdOwnerDraws), color: "text-blue-500" },
-    { label: "Total Mileage", value: `${totalMileage.toLocaleString()} mi`, color: "text-purple-500" },
-    { label: "Total Investments", value: formatCurrency(totalInvestments), color: "text-indigo-500" },
-    { label: "Weeks Tracked", value: entries.length.toString(), color: "text-slate-700" },
+    { label: "YTD Income", value: formatCurrency(ytdIncome), color: "text-emerald-600", href: null },
+    { label: "YTD Business Expenses", value: formatCurrency(ytdBusinessExpenses), color: "text-red-500", href: null },
+    { label: "Est. Taxable Profit", value: formatCurrency(estimatedTaxableProfit), color: estimatedTaxableProfit >= 0 ? "text-emerald-600" : "text-red-500", href: null },
+    { label: "YTD Personal Expenses", value: formatCurrency(ytdPersonalExpenses), color: "text-orange-500", href: null },
+    { label: "Est. Net Worth", value: formatCurrency(estNetWorth), color: estNetWorth >= 0 ? "text-emerald-600" : "text-red-500", href: "/net-worth" },
+    { label: "Total Mileage", value: `${totalMileage.toLocaleString()} mi`, color: "text-purple-500", href: null },
+    { label: "Est. Tax Liability", value: formatCurrency(estimatedTax), color: "text-red-500", href: null },
+    { label: "Weeks Tracked", value: entries.length.toString(), color: "text-slate-700", href: null },
   ];
 
   return (
@@ -145,17 +235,39 @@ export default function DashboardContent() {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {statCards.map((card) => (
-          <div
-            key={card.label}
-            className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm"
-          >
-            <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">
-              {card.label}
-            </p>
-            <p className={`text-2xl font-bold ${card.color}`}>{card.value}</p>
-          </div>
-        ))}
+        {statCards.map((card) => {
+          const isMileage = card.label === "Total Mileage";
+          const isCount = card.label === "Weeks Tracked";
+          const content = (
+            <>
+              <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">
+                {card.label}
+              </p>
+              <MaskedValue
+                value={card.value}
+                className={`text-2xl font-bold ${card.color} block`}
+                isCurrency={!isMileage && !isCount}
+              />
+            </>
+          );
+
+          return card.href ? (
+            <Link
+              key={card.label}
+              href={card.href}
+              className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer"
+            >
+              {content}
+            </Link>
+          ) : (
+            <div
+              key={card.label}
+              className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm"
+            >
+              {content}
+            </div>
+          );
+        })}
       </div>
 
       {/* Chart */}
@@ -170,7 +282,7 @@ export default function DashboardContent() {
 
       {/* Investment Portfolio */}
       <div className="mb-8">
-        <PortfolioDashboard />
+        <PortfolioDashboard onTotalChange={setPortfolioTotal} />
       </div>
 
       {/* Account Balances Snapshot */}
@@ -188,9 +300,7 @@ export default function DashboardContent() {
             {latestBalances.map((b) => (
               <div key={b.id} className="flex justify-between items-center bg-slate-50 rounded-lg px-4 py-3">
                 <span className="text-sm text-slate-600">{b.accountName}</span>
-                <span className="font-semibold text-slate-800">
-                  {formatCurrency(b.balance)}
-                </span>
+                <MaskedValue value={formatCurrency(b.balance)} className="font-semibold text-slate-800" />
               </div>
             ))}
           </div>

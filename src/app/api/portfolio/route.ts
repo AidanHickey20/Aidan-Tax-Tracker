@@ -9,17 +9,24 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const body = await request.json();
-  const investment = await prisma.trackedInvestment.create({
-    data: {
-      symbol: body.symbol.toUpperCase(),
-      name: body.name,
-      type: body.type, // STOCK or CRYPTO
-      shares: body.shares || 0,
-      avgCost: body.avgCost || 0,
-    },
-  });
-  return NextResponse.json(investment, { status: 201 });
+  try {
+    const body = await request.json();
+    const investment = await prisma.trackedInvestment.create({
+      data: {
+        symbol: body.type === "CRYPTO" ? body.symbol.toLowerCase() : body.symbol.toUpperCase(),
+        name: body.name,
+        type: body.type,
+        shares: body.shares || 0,
+        avgCost: body.avgCost || 0,
+        recurringAmount: body.recurringAmount || 0,
+        recurringDay: body.recurringDay ?? -1,
+      },
+    });
+    return NextResponse.json(investment, { status: 201 });
+  } catch (error) {
+    console.error("Failed to create investment:", error);
+    return NextResponse.json({ error: "Failed to create investment" }, { status: 500 });
+  }
 }
 
 export async function PUT(request: NextRequest) {
@@ -32,6 +39,8 @@ export async function PUT(request: NextRequest) {
       type: body.type,
       shares: body.shares,
       avgCost: body.avgCost,
+      recurringAmount: body.recurringAmount || 0,
+      recurringDay: body.recurringDay ?? -1,
     },
   });
   return NextResponse.json(investment);

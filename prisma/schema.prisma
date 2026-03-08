@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model WeeklyEntry {
@@ -59,13 +60,15 @@ model RecurringItem {
 }
 
 model TrackedInvestment {
-  id          String   @id @default(uuid())
-  symbol      String   // Ticker for stocks (AAPL), CoinGecko ID for crypto (bitcoin)
-  name        String   // Display name
-  type        String   // STOCK or CRYPTO
-  shares      Float    @default(0) // Number of shares/coins owned
-  avgCost     Float    @default(0) // Average cost basis per share/coin
-  createdAt   DateTime @default(now())
+  id               String   @id @default(uuid())
+  symbol           String   // Ticker for stocks (AAPL), CoinGecko ID for crypto (bitcoin)
+  name             String   // Display name
+  type             String   // STOCK or CRYPTO
+  shares           Float    @default(0)
+  avgCost          Float    @default(0)
+  recurringAmount  Float    @default(0) // Weekly auto-invest amount in USD
+  recurringDay     Int      @default(-1) // Day of week: 0=Sun,1=Mon,...6=Sat, -1=disabled
+  createdAt        DateTime @default(now())
 }
 
 model Reminder {
