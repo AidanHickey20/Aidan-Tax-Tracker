@@ -12,6 +12,8 @@ interface TrackedInvestment {
   type: string;
   shares: number;
   avgCost: number;
+  recurringAmount: number;
+  createdAt: string;
 }
 
 interface PriceData {
@@ -108,7 +110,18 @@ export default function NetWorthPage() {
 
     const values: Record<string, number> = {};
     for (const m of manualInvs) {
-      values[m.id] = m.avgCost * m.shares;
+      const startBalance = m.avgCost * m.shares;
+      const weeklyRate = Math.pow(1 + 0.07, 1 / 52) - 1;
+      const weeksElapsed = Math.max(
+        0,
+        Math.floor((Date.now() - new Date(m.createdAt).getTime()) / (7 * 24 * 60 * 60 * 1000))
+      );
+      let balance = startBalance;
+      for (let w = 0; w < weeksElapsed; w++) {
+        balance *= 1 + weeklyRate;
+        if (m.recurringAmount > 0) balance += m.recurringAmount;
+      }
+      values[m.id] = balance;
     }
 
     if (priceableInvs.length > 0) {

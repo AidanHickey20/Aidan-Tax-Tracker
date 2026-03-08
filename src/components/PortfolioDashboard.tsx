@@ -28,6 +28,7 @@ interface TrackedInvestment {
   avgCost: number;
   recurringAmount: number;
   recurringDay: number;
+  createdAt: string;
 }
 
 interface PriceData {
@@ -105,18 +106,37 @@ export default function PortfolioDashboard({ onTotalChange }: { onTotalChange?: 
 
     const merged = invs.map((inv) => {
       if (inv.type === "MANUAL") {
-        const marketValue = inv.avgCost * inv.shares;
+        // For MANUAL investments with recurring contributions, compound at 7% annually
+        const startBalance = inv.avgCost * inv.shares;
+        const weeklyRate = Math.pow(1 + 0.07, 1 / 52) - 1; // 7% annual -> weekly
+        const weeksElapsed = Math.max(
+          0,
+          Math.floor((Date.now() - new Date(inv.createdAt).getTime()) / (7 * 24 * 60 * 60 * 1000))
+        );
+
+        let balance = startBalance;
+        for (let w = 0; w < weeksElapsed; w++) {
+          balance *= 1 + weeklyRate;
+          if (inv.recurringAmount > 0) {
+            balance += inv.recurringAmount;
+          }
+        }
+
+        const totalContributed = startBalance + inv.recurringAmount * weeksElapsed;
+        const totalGain = balance - totalContributed;
+        const totalGainPercent = totalContributed > 0 ? (totalGain / totalContributed) * 100 : 0;
+
         return {
           ...inv,
-          price: inv.avgCost,
+          price: balance,
           change: 0,
           changePercent: 0,
           dayHigh: 0,
           dayLow: 0,
           sparkline: [],
-          marketValue,
-          totalGain: 0,
-          totalGainPercent: 0,
+          marketValue: balance,
+          totalGain,
+          totalGainPercent,
         };
       }
 
