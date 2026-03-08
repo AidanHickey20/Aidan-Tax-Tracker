@@ -151,7 +151,7 @@ async function getStockChart(symbol: string, range: string) {
 
     return (result.quotes || [])
       .filter((q: { close?: number | null; date?: Date | null }) => q.close != null && q.date != null)
-      .map((q: { date: Date; close: number }) => ({
+      .map((q: { date: Date; close: number | null }) => ({
         time: q.date.toISOString(),
         price: q.close,
       }));
