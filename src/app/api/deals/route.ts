@@ -20,6 +20,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
+  const insuranceAmount = body.insurance || 0;
   const deal = await prisma.deal.create({
     data: {
       address: body.address,
@@ -30,6 +31,9 @@ export async function POST(request: NextRequest) {
       steps: {
         create: DEFAULT_STEPS,
       },
+      expenses: insuranceAmount > 0 ? {
+        create: [{ description: "Property Insurance", amount: insuranceAmount, category: "INSURANCE" }],
+      } : undefined,
     },
     include: { expenses: true, steps: { orderBy: { sortOrder: "asc" } } },
   });
