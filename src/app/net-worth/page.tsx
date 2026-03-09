@@ -40,7 +40,7 @@ const MORTGAGE_RATE = 0.07; // ~7% (back-calculated from ~$195k orig, $1,295/mo)
 const MORTGAGE_PAYMENT = 1295;
 
 // ── Bank ──
-const BANK_BALANCE = 35800;
+const BANK_BALANCE_AT_REF = 35800;
 
 // ── Student Loans ──
 const STUDENT_LOAN_AT_REF = 50000;
@@ -95,15 +95,45 @@ function ProgressBar({ pctPaid, color }: { pctPaid: number; color: string }) {
   );
 }
 
+interface LineItem {
+  amount: number;
+  category: string;
+}
+
+interface WeeklyEntry {
+  lineItems: LineItem[];
+}
+
 export default function NetWorthPage() {
   const [investments, setInvestments] = useState<TrackedInvestment[]>([]);
   const [investmentValues, setInvestmentValues] = useState<Record<string, number>>({});
+  const [bankBalance, setBankBalance] = useState(BANK_BALANCE_AT_REF);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
-    const invRes = await fetch("/api/portfolio");
-    const invs: TrackedInvestment[] = await invRes.json();
+    let invs: TrackedInvestment[] = [];
+    let entries: WeeklyEntry[] = [];
+
+    try {
+      const [invRes, entriesRes] = await Promise.all([
+        fetch("/api/portfolio"),
+        fetch("/api/entries?yearOnly=true"),
+      ]);
+      if (invRes.ok) invs = await invRes.json();
+      if (entriesRes.ok) entries = await entriesRes.json();
+    } catch {
+      // DB may be unreachable — use defaults
+    }
+
     setInvestments(invs);
+
+    // Dynamic bank balance: ref balance + income - expenses - draws
+    const allItems = entries.flatMap((e) => e.lineItems);
+    const ytdIncome = allItems.filter((i) => i.category === "INCOME").reduce((s, i) => s + i.amount, 0);
+    const ytdBizExp = allItems.filter((i) => i.category === "BUSINESS_EXPENSE").reduce((s, i) => s + i.amount, 0);
+    const ytdPersonal = allItems.filter((i) => i.category === "PERSONAL_EXPENSE").reduce((s, i) => s + i.amount, 0);
+    const ytdDraws = allItems.filter((i) => i.category === "OWNER_DRAW").reduce((s, i) => s + i.amount, 0);
+    setBankBalance(BANK_BALANCE_AT_REF + ytdIncome - ytdBizExp - ytdPersonal - ytdDraws);
 
     const priceableInvs = invs.filter((i) => i.type !== "MANUAL");
     const manualInvs = invs.filter((i) => i.type === "MANUAL");
@@ -194,7 +224,7 @@ export default function NetWorthPage() {
   }
 
   const totalInvestments = Object.values(investmentValues).reduce((s, v) => s + v, 0);
-  const totalAssets = calcs.homeEquity + BANK_BALANCE + totalInvestments;
+  const totalAssets = calcs.homeEquity + bankBalance + totalInvestments;
   const totalLiabilities = calcs.studentLoanBalance + calcs.carLoanBalance;
   const netWorth = totalAssets - totalLiabilities;
 
@@ -263,7 +293,17 @@ export default function NetWorthPage() {
             <div className="px-6 py-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium text-slate-700">Bank Accounts</span>
-                <MaskedValue value={formatCurrency(BANK_BALANCE)} className="font-semibold text-slate-800" />
+                <MaskedValue value={formatCurrency(bankBalance)} className="font-semibold text-slate-800" />
+              </div>
+              <div className="mt-2 text-xs text-slate-400 space-y-0.5">
+                <div className="flex justify-between">
+                  <span>Starting Balance (Mar 2026)</span>
+                  <MaskedValue value={formatCurrency(BANK_BALANCE_AT_REF)} />
+                </div>
+                <div className="flex justify-between">
+                  <span>Adjusted by YTD income & expenses</span>
+                  <MaskedValue value={formatCurrency(bankBalance - BANK_BALANCE_AT_REF)} />
+                </div>
               </div>
             </div>
 

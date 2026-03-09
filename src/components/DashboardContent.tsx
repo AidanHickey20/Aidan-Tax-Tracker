@@ -54,13 +54,13 @@ export default function DashboardContent() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/entries?yearOnly=true").then((r) => r.json()),
-      fetch("/api/reminders").then((r) => r.json()),
+      fetch("/api/entries?yearOnly=true").then((r) => r.ok ? r.json() : []),
+      fetch("/api/reminders").then((r) => r.ok ? r.json() : []),
     ]).then(([entriesData, remindersData]) => {
       setEntries(entriesData);
       setReminders(remindersData.filter((r: Reminder) => r.isActive));
       setLoading(false);
-    });
+    }).catch(() => setLoading(false));
   }, []);
 
   if (loading) {
@@ -115,8 +115,12 @@ export default function DashboardContent() {
     });
 
   // Net worth: dynamic calculations from reference date March 2026
-  const bankBalance = 35800;
-  const livePortfolio = portfolioTotal || totalInvestments;
+  // Bank balance starts at $35,800 (ref: March 2026) and adjusts with income/expenses
+  const ytdOwnerDraws = allLineItems
+    .filter((i) => i.category === "OWNER_DRAW")
+    .reduce((sum, i) => sum + i.amount, 0);
+  const bankBalance = 35800 + ytdIncome - ytdPersonalExpenses - ytdOwnerDraws - ytdBusinessExpenses;
+  const livePortfolio = portfolioTotal > 0 ? portfolioTotal : totalInvestments;
 
   // Home equity: $170k appreciating at 2.35%/yr, mortgage $130k at 7% with $1295/mo
   const refDate = new Date(2026, 2, 1);
