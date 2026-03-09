@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireUserId } from "@/lib/get-user";
 
 interface ImportLineItem {
   description: string;
@@ -28,6 +29,7 @@ interface ImportEntry {
 }
 
 export async function POST(request: NextRequest) {
+  const userId = await requireUserId();
   const { entries }: { entries: ImportEntry[] } = await request.json();
 
   const created = [];
@@ -35,6 +37,7 @@ export async function POST(request: NextRequest) {
   for (const entry of entries) {
     const result = await prisma.weeklyEntry.create({
       data: {
+        userId,
         weekStart: new Date(entry.weekStart),
         weekEnd: new Date(entry.weekEnd),
         mileage: entry.mileage || 0,

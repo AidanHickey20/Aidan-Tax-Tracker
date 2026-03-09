@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireUserId } from "@/lib/get-user";
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const userId = await requireUserId();
   const { id } = await params;
-  const entry = await prisma.weeklyEntry.findUnique({
-    where: { id },
+  const entry = await prisma.weeklyEntry.findFirst({
+    where: { id, userId },
     include: { lineItems: true, accountBalances: true, investments: true },
   });
 
@@ -22,8 +24,13 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const userId = await requireUserId();
   const { id } = await params;
   const body = await request.json();
+
+  // Verify ownership
+  const existing = await prisma.weeklyEntry.findFirst({ where: { id, userId } });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   // Delete existing related records and recreate
   await prisma.lineItem.deleteMany({ where: { weeklyEntryId: id } });
@@ -73,7 +80,12 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const userId = await requireUserId();
   const { id } = await params;
+
+  const existing = await prisma.weeklyEntry.findFirst({ where: { id, userId } });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   await prisma.weeklyEntry.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }

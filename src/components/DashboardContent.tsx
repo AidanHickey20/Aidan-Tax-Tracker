@@ -46,19 +46,35 @@ interface Reminder {
   isActive: boolean;
 }
 
+interface RecurringItem {
+  id: string;
+  amount: number;
+  category: string;
+  frequency: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export default function DashboardContent() {
   const [entries, setEntries] = useState<WeeklyEntry[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
   const [portfolioTotal, setPortfolioTotal] = useState<number>(0);
 
+  const [recurringItems, setRecurringItems] = useState<RecurringItem[]>([]);
+
   useEffect(() => {
+    // Claim any unclaimed data on first login
+    fetch("/api/auth/claim-data", { method: "POST" }).catch(() => {});
+
     Promise.all([
       fetch("/api/entries?yearOnly=true").then((r) => r.ok ? r.json() : []),
       fetch("/api/reminders").then((r) => r.ok ? r.json() : []),
-    ]).then(([entriesData, remindersData]) => {
+      fetch("/api/recurring").then((r) => r.ok ? r.json() : []),
+    ]).then(([entriesData, remindersData, recurringData]) => {
       setEntries(entriesData);
       setReminders(remindersData.filter((r: Reminder) => r.isActive));
+      setRecurringItems(recurringData);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -119,7 +135,27 @@ export default function DashboardContent() {
   const ytdOwnerDraws = allLineItems
     .filter((i) => i.category === "OWNER_DRAW")
     .reduce((sum, i) => sum + i.amount, 0);
-  const bankBalance = 35800 + ytdIncome - ytdPersonalExpenses - ytdOwnerDraws - ytdBusinessExpenses;
+
+  // Calculate recurring items impact on bank balance
+  const refDate2 = new Date(2026, 2, 1);
+  const now2 = new Date();
+  let recurringImpact = 0;
+  for (const item of recurringItems) {
+    if (!item.isActive || item.category === "INVESTMENT") continue;
+    const created = new Date(item.createdAt);
+    const start = created > refDate2 ? created : refDate2;
+    let occurrences = 0;
+    if (item.frequency === "WEEKLY") {
+      occurrences = Math.floor((now2.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000));
+    } else {
+      occurrences = (now2.getFullYear() - start.getFullYear()) * 12 + (now2.getMonth() - start.getMonth());
+    }
+    if (occurrences < 0) occurrences = 0;
+    const sign = item.category === "INCOME" ? 1 : -1;
+    recurringImpact += sign * item.amount * occurrences;
+  }
+
+  const bankBalance = 35800 + ytdIncome - ytdPersonalExpenses - ytdOwnerDraws - ytdBusinessExpenses + recurringImpact;
   const livePortfolio = portfolioTotal > 0 ? portfolioTotal : totalInvestments;
 
   // Home equity: $170k appreciating at 2.35%/yr, mortgage $130k at 7% with $1295/mo

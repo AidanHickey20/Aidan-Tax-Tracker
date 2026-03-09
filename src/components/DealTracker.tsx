@@ -48,6 +48,25 @@ export default function DealTracker() {
   const [newArv, setNewArv] = useState("");
   const [newInsurance, setNewInsurance] = useState("");
   const [error, setError] = useState("");
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  async function deleteDeal(id: string) {
+    if (!confirm("Delete this deal? This cannot be undone.")) return;
+    setDeleting(id);
+    try {
+      const res = await fetch("/api/deals", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) throw new Error(`Failed (${res.status})`);
+      setDeals(deals.filter((d) => d.id !== id));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to delete deal");
+    } finally {
+      setDeleting(null);
+    }
+  }
 
   useEffect(() => {
     fetch("/api/deals")
@@ -218,13 +237,29 @@ export default function DealTracker() {
                         <p className="text-sm text-slate-500">{deal.address}</p>
                       )}
                     </div>
-                    <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                      deal.status === "CLOSED"
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-blue-100 text-blue-700"
-                    }`}>
-                      {STEP_LABELS[deal.status] || deal.status}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                        deal.status === "CLOSED"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-blue-100 text-blue-700"
+                      }`}>
+                        {STEP_LABELS[deal.status] || deal.status}
+                      </span>
+                      <button
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteDeal(deal.id); }}
+                        disabled={deleting === deal.id}
+                        className="w-7 h-7 flex items-center justify-center rounded-md bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 transition-colors"
+                        title="Delete deal"
+                      >
+                        {deleting === deal.id ? (
+                          <span className="text-xs">...</span>
+                        ) : (
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Progress bar */}

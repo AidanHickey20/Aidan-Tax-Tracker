@@ -104,23 +104,36 @@ interface WeeklyEntry {
   lineItems: LineItem[];
 }
 
+interface RecurringItem {
+  id: string;
+  amount: number;
+  category: string;
+  frequency: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export default function NetWorthPage() {
   const [investments, setInvestments] = useState<TrackedInvestment[]>([]);
   const [investmentValues, setInvestmentValues] = useState<Record<string, number>>({});
   const [bankBalance, setBankBalance] = useState(BANK_BALANCE_AT_REF);
+  const [recurringImpact, setRecurringImpact] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
     let invs: TrackedInvestment[] = [];
     let entries: WeeklyEntry[] = [];
+    let recurring: RecurringItem[] = [];
 
     try {
-      const [invRes, entriesRes] = await Promise.all([
+      const [invRes, entriesRes, recurringRes] = await Promise.all([
         fetch("/api/portfolio"),
         fetch("/api/entries?yearOnly=true"),
+        fetch("/api/recurring"),
       ]);
       if (invRes.ok) invs = await invRes.json();
       if (entriesRes.ok) entries = await entriesRes.json();
+      if (recurringRes.ok) recurring = await recurringRes.json();
     } catch {
       // DB may be unreachable — use defaults
     }
@@ -133,7 +146,26 @@ export default function NetWorthPage() {
     const ytdBizExp = allItems.filter((i) => i.category === "BUSINESS_EXPENSE").reduce((s, i) => s + i.amount, 0);
     const ytdPersonal = allItems.filter((i) => i.category === "PERSONAL_EXPENSE").reduce((s, i) => s + i.amount, 0);
     const ytdDraws = allItems.filter((i) => i.category === "OWNER_DRAW").reduce((s, i) => s + i.amount, 0);
-    setBankBalance(BANK_BALANCE_AT_REF + ytdIncome - ytdBizExp - ytdPersonal - ytdDraws);
+
+    // Calculate recurring items impact on bank balance
+    const now = new Date();
+    let recImpact = 0;
+    for (const item of recurring) {
+      if (!item.isActive || item.category === "INVESTMENT") continue;
+      const created = new Date(item.createdAt);
+      const start = created > REF_DATE ? created : REF_DATE;
+      let occurrences = 0;
+      if (item.frequency === "WEEKLY") {
+        occurrences = Math.floor((now.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000));
+      } else {
+        occurrences = monthsElapsed(start, now);
+      }
+      if (occurrences < 0) occurrences = 0;
+      const sign = item.category === "INCOME" ? 1 : -1;
+      recImpact += sign * item.amount * occurrences;
+    }
+    setRecurringImpact(recImpact);
+    setBankBalance(BANK_BALANCE_AT_REF + ytdIncome - ytdBizExp - ytdPersonal - ytdDraws + recImpact);
 
     const priceableInvs = invs.filter((i) => i.type !== "MANUAL");
     const manualInvs = invs.filter((i) => i.type === "MANUAL");
@@ -301,9 +333,15 @@ export default function NetWorthPage() {
                   <MaskedValue value={formatCurrency(BANK_BALANCE_AT_REF)} />
                 </div>
                 <div className="flex justify-between">
-                  <span>Adjusted by YTD income & expenses</span>
-                  <MaskedValue value={formatCurrency(bankBalance - BANK_BALANCE_AT_REF)} />
+                  <span>YTD weekly entries (income - expenses)</span>
+                  <MaskedValue value={formatCurrency(bankBalance - BANK_BALANCE_AT_REF - recurringImpact)} />
                 </div>
+                {recurringImpact !== 0 && (
+                  <div className="flex justify-between">
+                    <span>Recurring items impact</span>
+                    <MaskedValue value={formatCurrency(recurringImpact)} />
+                  </div>
+                )}
               </div>
             </div>
 

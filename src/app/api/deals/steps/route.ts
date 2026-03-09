@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireUserId } from "@/lib/get-user";
 
 export async function PUT(request: NextRequest) {
+  const userId = await requireUserId();
   const body = await request.json();
+
+  // Verify ownership through the deal
+  const stepCheck = await prisma.dealStep.findUnique({ where: { id: body.id }, include: { deal: true } });
+  if (!stepCheck || stepCheck.deal.userId !== userId) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const step = await prisma.dealStep.update({
     where: { id: body.id },
     data: {

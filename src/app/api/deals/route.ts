@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireUserId } from "@/lib/get-user";
 
 const DEFAULT_STEPS = [
   { name: "ACQUISITION", sortOrder: 0 },
@@ -11,7 +12,9 @@ const DEFAULT_STEPS = [
 ];
 
 export async function GET() {
+  const userId = await requireUserId();
   const deals = await prisma.deal.findMany({
+    where: { userId },
     include: { expenses: true, steps: { orderBy: { sortOrder: "asc" } } },
     orderBy: { createdAt: "desc" },
   });
@@ -19,10 +22,12 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const userId = await requireUserId();
   const body = await request.json();
   const insuranceAmount = body.insurance || 0;
   const deal = await prisma.deal.create({
     data: {
+      userId,
       address: body.address,
       nickname: body.nickname || "",
       purchasePrice: body.purchasePrice || 0,
@@ -41,7 +46,12 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const userId = await requireUserId();
   const body = await request.json();
+
+  const existing = await prisma.deal.findFirst({ where: { id: body.id, userId } });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   const deal = await prisma.deal.update({
     where: { id: body.id },
     data: {
@@ -59,7 +69,12 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const userId = await requireUserId();
   const { id } = await request.json();
+
+  const existing = await prisma.deal.findFirst({ where: { id, userId } });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   await prisma.deal.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }
