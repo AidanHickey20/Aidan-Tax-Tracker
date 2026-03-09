@@ -1,0 +1,61 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+
+const DEFAULT_STEPS = [
+  { name: "ACQUISITION", sortOrder: 0 },
+  { name: "DEMO", sortOrder: 1 },
+  { name: "RENOVATION", sortOrder: 2 },
+  { name: "LISTING", sortOrder: 3 },
+  { name: "UNDER_CONTRACT", sortOrder: 4 },
+  { name: "CLOSED", sortOrder: 5 },
+];
+
+export async function GET() {
+  const deals = await prisma.deal.findMany({
+    include: { expenses: true, steps: { orderBy: { sortOrder: "asc" } } },
+    orderBy: { createdAt: "desc" },
+  });
+  return NextResponse.json(deals);
+}
+
+export async function POST(request: NextRequest) {
+  const body = await request.json();
+  const deal = await prisma.deal.create({
+    data: {
+      address: body.address,
+      nickname: body.nickname || "",
+      purchasePrice: body.purchasePrice || 0,
+      arv: body.arv || 0,
+      notes: body.notes || "",
+      steps: {
+        create: DEFAULT_STEPS,
+      },
+    },
+    include: { expenses: true, steps: { orderBy: { sortOrder: "asc" } } },
+  });
+  return NextResponse.json(deal, { status: 201 });
+}
+
+export async function PUT(request: NextRequest) {
+  const body = await request.json();
+  const deal = await prisma.deal.update({
+    where: { id: body.id },
+    data: {
+      address: body.address,
+      nickname: body.nickname,
+      purchasePrice: body.purchasePrice,
+      arv: body.arv,
+      status: body.status,
+      notes: body.notes,
+      closedAt: body.closedAt ? new Date(body.closedAt) : null,
+    },
+    include: { expenses: true, steps: { orderBy: { sortOrder: "asc" } } },
+  });
+  return NextResponse.json(deal);
+}
+
+export async function DELETE(request: NextRequest) {
+  const { id } = await request.json();
+  await prisma.deal.delete({ where: { id } });
+  return NextResponse.json({ success: true });
+}

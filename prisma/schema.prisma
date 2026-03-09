@@ -73,6 +73,45 @@ model TrackedInvestment {
   createdAt        DateTime @default(now())
 }
 
+model Deal {
+  id           String        @id @default(uuid())
+  address      String
+  nickname     String        @default("")
+  purchasePrice Float        @default(0)
+  arv          Float         @default(0) // After Repair Value
+  status       String        @default("ACQUISITION") // current phase
+  notes        String        @default("")
+  closedAt     DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  expenses     DealExpense[]
+  steps        DealStep[]
+}
+
+model DealExpense {
+  id          String   @id @default(uuid())
+  description String
+  amount      Float
+  category    String   // ACQUISITION, DEMO, MATERIALS, LABOR, PERMITS, UTILITIES, INSURANCE, CLOSING, OTHER
+  paidAt      DateTime @default(now())
+
+  deal        Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  dealId      String
+}
+
+model DealStep {
+  id          String    @id @default(uuid())
+  name        String    // ACQUISITION, DEMO, RENOVATION, LISTING, UNDER_CONTRACT, CLOSED
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  notes       String    @default("")
+  sortOrder   Int       @default(0)
+
+  deal        Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  dealId      String
+}
+
 model Reminder {
   id           String   @id @default(uuid())
   message      String
