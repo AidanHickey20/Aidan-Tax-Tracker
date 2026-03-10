@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import YahooFinance from "yahoo-finance2";
+import { requireUserId } from "@/lib/get-user";
 
 const yf = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 
 export async function GET(request: NextRequest) {
+  await requireUserId();
   const symbol = request.nextUrl.searchParams.get("symbol");
   const type = request.nextUrl.searchParams.get("type");
   const range = request.nextUrl.searchParams.get("range") || "1mo";

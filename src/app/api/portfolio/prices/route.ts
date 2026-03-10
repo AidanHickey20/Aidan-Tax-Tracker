@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import YahooFinance from "yahoo-finance2";
+import { requireUserId } from "@/lib/get-user";
 
 const yf = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 
@@ -16,6 +17,7 @@ interface PriceResult {
 }
 
 export async function GET(request: NextRequest) {
+  await requireUserId();
   const symbols = request.nextUrl.searchParams.get("symbols");
   const types = request.nextUrl.searchParams.get("types");
 

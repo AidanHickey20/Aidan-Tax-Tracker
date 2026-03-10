@@ -81,9 +81,6 @@ export default function DashboardContent() {
   const [settings, setSettings] = useState<Settings | null>(null);
 
   useEffect(() => {
-    // Claim any unclaimed data on first login
-    fetch("/api/auth/claim-data", { method: "POST" }).catch(() => {});
-
     Promise.all([
       fetch("/api/entries?yearOnly=true").then((r) => r.ok ? r.json() : []),
       fetch("/api/reminders").then((r) => r.ok ? r.json() : []),
