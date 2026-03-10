@@ -55,13 +55,30 @@ interface RecurringItem {
   createdAt: string;
 }
 
+interface Settings {
+  incomeGoal: number;
+  bankBalance: number;
+  homeValue: number;
+  homeAppreciation: number;
+  mortgageBalance: number;
+  mortgageRate: number;
+  mortgagePayment: number;
+  studentLoanBalance: number;
+  studentLoanRate: number;
+  studentLoanPayment: number;
+  carLoanBalance: number;
+  carLoanRate: number;
+  carLoanPayment: number;
+  refDate: string;
+}
+
 export default function DashboardContent() {
   const [entries, setEntries] = useState<WeeklyEntry[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
   const [portfolioTotal, setPortfolioTotal] = useState<number>(0);
-
   const [recurringItems, setRecurringItems] = useState<RecurringItem[]>([]);
+  const [settings, setSettings] = useState<Settings | null>(null);
 
   useEffect(() => {
     // Claim any unclaimed data on first login
@@ -71,10 +88,12 @@ export default function DashboardContent() {
       fetch("/api/entries?yearOnly=true").then((r) => r.ok ? r.json() : []),
       fetch("/api/reminders").then((r) => r.ok ? r.json() : []),
       fetch("/api/recurring").then((r) => r.ok ? r.json() : []),
-    ]).then(([entriesData, remindersData, recurringData]) => {
+      fetch("/api/settings").then((r) => r.ok ? r.json() : null),
+    ]).then(([entriesData, remindersData, recurringData, settingsData]) => {
       setEntries(entriesData);
       setReminders(remindersData.filter((r: Reminder) => r.isActive));
       setRecurringItems(recurringData);
+      setSettings(settingsData);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -130,85 +149,92 @@ export default function DashboardContent() {
       };
     });
 
-  // Net worth: dynamic calculations from reference date March 2026
-  // Bank balance starts at $35,800 (ref: March 2026) and adjusts with income/expenses
+  // Net worth calculations using user settings
+  const s = settings;
+  const hasSettings = s && (s.bankBalance > 0 || s.homeValue > 0);
+
   const ytdOwnerDraws = allLineItems
     .filter((i) => i.category === "OWNER_DRAW")
     .reduce((sum, i) => sum + i.amount, 0);
 
   // Calculate recurring items impact on bank balance
-  const refDate2 = new Date(2026, 2, 1);
-  const now2 = new Date();
+  const refDate = s ? new Date(s.refDate) : new Date();
+  const now = new Date();
   let recurringImpact = 0;
   for (const item of recurringItems) {
     if (!item.isActive || item.category === "INVESTMENT") continue;
     const created = new Date(item.createdAt);
-    const start = created > refDate2 ? created : refDate2;
+    const start = created > refDate ? created : refDate;
     let occurrences = 0;
     if (item.frequency === "WEEKLY") {
-      occurrences = Math.floor((now2.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000));
+      occurrences = Math.floor((now.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000));
     } else {
-      occurrences = (now2.getFullYear() - start.getFullYear()) * 12 + (now2.getMonth() - start.getMonth());
+      occurrences = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
     }
     if (occurrences < 0) occurrences = 0;
     const sign = item.category === "INCOME" ? 1 : -1;
     recurringImpact += sign * item.amount * occurrences;
   }
 
-  const bankBalance = 35800 + ytdIncome - ytdPersonalExpenses - ytdOwnerDraws - ytdBusinessExpenses + recurringImpact;
+  const bankBalanceStart = s?.bankBalance ?? 0;
+  const bankBalance = bankBalanceStart + ytdIncome - ytdPersonalExpenses - ytdOwnerDraws - ytdBusinessExpenses + recurringImpact;
   const livePortfolio = portfolioTotal > 0 ? portfolioTotal : totalInvestments;
 
-  // Home equity: $170k appreciating at 2.35%/yr, mortgage $130k at 7% with $1295/mo
-  const refDate = new Date(2026, 2, 1);
-  const now = new Date();
-  const monthsElapsed = (now.getFullYear() - refDate.getFullYear()) * 12 + (now.getMonth() - refDate.getMonth());
-  const homeValue = 170000 * Math.pow(1 + 0.0235 / 12, monthsElapsed);
-  let mortBal = 130000;
-  for (let i = 0; i < monthsElapsed; i++) {
-    if (mortBal <= 0) break;
-    mortBal -= Math.min(1295 - mortBal * (0.07 / 12), mortBal);
-  }
-  const homeEquity = homeValue - Math.max(mortBal, 0);
+  let homeEquity = 0;
+  let studentBal = 0;
+  let carBal = 0;
 
-  // Student loans: $50k at 7.5%, $1205/mo
-  let studentBal = 50000;
-  for (let i = 0; i < monthsElapsed; i++) {
-    if (studentBal <= 0) break;
-    studentBal -= Math.min(1205 - studentBal * (0.075 / 12), studentBal);
-  }
-  studentBal = Math.max(studentBal, 0);
+  if (hasSettings) {
+    const monthsElapsed = (now.getFullYear() - refDate.getFullYear()) * 12 + (now.getMonth() - refDate.getMonth());
 
-  // Car loan: $13k at 4%, $333/mo
-  let carBal = 13000;
-  for (let i = 0; i < monthsElapsed; i++) {
-    if (carBal <= 0) break;
-    carBal -= Math.min(333 - carBal * (0.04 / 12), carBal);
+    // Home equity
+    if (s.homeValue > 0) {
+      const homeValue = s.homeValue * Math.pow(1 + (s.homeAppreciation || 0) / 12, monthsElapsed);
+      let mortBal = s.mortgageBalance;
+      for (let i = 0; i < monthsElapsed; i++) {
+        if (mortBal <= 0) break;
+        mortBal -= Math.min((s.mortgagePayment || 0) - mortBal * ((s.mortgageRate || 0) / 12), mortBal);
+      }
+      homeEquity = homeValue - Math.max(mortBal, 0);
+    }
+
+    // Student loans
+    if (s.studentLoanBalance > 0) {
+      studentBal = s.studentLoanBalance;
+      for (let i = 0; i < monthsElapsed; i++) {
+        if (studentBal <= 0) break;
+        studentBal -= Math.min((s.studentLoanPayment || 0) - studentBal * ((s.studentLoanRate || 0) / 12), studentBal);
+      }
+      studentBal = Math.max(studentBal, 0);
+    }
+
+    // Car loan
+    if (s.carLoanBalance > 0) {
+      carBal = s.carLoanBalance;
+      for (let i = 0; i < monthsElapsed; i++) {
+        if (carBal <= 0) break;
+        carBal -= Math.min((s.carLoanPayment || 0) - carBal * ((s.carLoanRate || 0) / 12), carBal);
+      }
+      carBal = Math.max(carBal, 0);
+    }
   }
-  carBal = Math.max(carBal, 0);
 
   const estNetWorth = homeEquity + bankBalance + livePortfolio - studentBal - carBal;
 
-  // ── Estimated tax liability for self-employed real estate professional ──
+  // ── Estimated tax liability for self-employed ──
   function estimateTax(netSEIncome: number): number {
     if (netSEIncome <= 0) return 0;
 
-    // Self-employment tax: 15.3% on 92.35% of net SE income (12.4% SS + 2.9% Medicare)
     const seBase = netSEIncome * 0.9235;
-    const ssTax = Math.min(seBase, 176100) * 0.124; // 2026 SS wage base ~$176,100
+    const ssTax = Math.min(seBase, 176100) * 0.124;
     const medicareTax = seBase * 0.029;
     const seTax = ssTax + medicareTax;
 
-    // AGI after deducting half of SE tax
     const agi = netSEIncome - seTax / 2;
-
-    // QBI deduction (20% of qualified business income for RE professionals)
     const qbiDeduction = netSEIncome * 0.20;
-
-    // Standard deduction 2026 (~$15,700 single)
     const standardDeduction = 15700;
     const taxableIncome = Math.max(agi - standardDeduction - qbiDeduction, 0);
 
-    // 2026 federal brackets (single, estimated)
     let fedTax = 0;
     const brackets = [
       { limit: 11925, rate: 0.10 },
@@ -230,10 +256,7 @@ export default function DashboardContent() {
       if (remaining <= 0) break;
     }
 
-    // Ohio state tax (~3.5% effective for this income range)
     const ohioTax = taxableIncome * 0.035;
-
-    // Lyndhurst municipal tax (2.0% on earned income)
     const municipalTax = netSEIncome * 0.02;
 
     return seTax + fedTax + ohioTax + municipalTax;

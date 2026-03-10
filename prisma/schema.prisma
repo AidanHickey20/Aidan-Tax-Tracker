@@ -26,6 +26,28 @@ model User {
   trackedInvestments TrackedInvestment[]
   deals              Deal[]
   reminders          Reminder[]
+  settings           UserSettings?
+}
+
+model UserSettings {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  incomeGoal          Float @default(0)
+  bankBalance         Float @default(0)
+  homeValue           Float @default(0)
+  homeAppreciation    Float @default(0)
+  mortgageBalance     Float @default(0)
+  mortgageRate        Float @default(0)
+  mortgagePayment     Float @default(0)
+  studentLoanBalance  Float @default(0)
+  studentLoanRate     Float @default(0)
+  studentLoanPayment  Float @default(0)
+  carLoanBalance      Float @default(0)
+  carLoanRate         Float @default(0)
+  carLoanPayment      Float @default(0)
+  refDate             DateTime @default(now())
 }
 
 model Account {

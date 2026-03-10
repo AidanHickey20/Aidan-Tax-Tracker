@@ -21,6 +21,22 @@ interface PriceData {
   price: number;
 }
 
+interface Settings {
+  bankBalance: number;
+  homeValue: number;
+  homeAppreciation: number;
+  mortgageBalance: number;
+  mortgageRate: number;
+  mortgagePayment: number;
+  studentLoanBalance: number;
+  studentLoanRate: number;
+  studentLoanPayment: number;
+  carLoanBalance: number;
+  carLoanRate: number;
+  carLoanPayment: number;
+  refDate: string;
+}
+
 const CRYPTO_TICKERS: Record<string, string> = {
   bitcoin: "BTC",
   ethereum: "ETH",
@@ -28,30 +44,6 @@ const CRYPTO_TICKERS: Record<string, string> = {
   solana: "SOL",
   dogecoin: "DOGE",
 };
-
-// ── Reference date: March 2026 ──
-const REF_DATE = new Date(2026, 2, 1); // March 1, 2026
-
-// ── Home ──
-const HOME_VALUE_AT_REF = 170000;
-const HOME_ANNUAL_APPRECIATION = 0.0235; // Lyndhurst OH 30-yr avg
-const MORTGAGE_BALANCE_AT_REF = 130000;
-const MORTGAGE_RATE = 0.07; // ~7% (back-calculated from ~$195k orig, $1,295/mo)
-const MORTGAGE_PAYMENT = 1295;
-
-// ── Bank ──
-const BANK_BALANCE_AT_REF = 35800;
-
-// ── Student Loans ──
-const STUDENT_LOAN_AT_REF = 50000;
-const STUDENT_LOAN_RATE = 0.075; // ~7.5% (back-calculated from $1,205/mo over 4yr)
-const STUDENT_LOAN_PAYMENT = 1205;
-
-// ── Car Loan ──
-const CAR_LOAN_AT_REF = 13000;
-const CAR_LOAN_RATE = 0.04; // ~4% (back-calculated from $333/mo over 3.5yr)
-const CAR_LOAN_PAYMENT = 333;
-
 
 function monthsElapsed(from: Date, to: Date): number {
   return (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
@@ -116,29 +108,37 @@ interface RecurringItem {
 export default function NetWorthPage() {
   const [investments, setInvestments] = useState<TrackedInvestment[]>([]);
   const [investmentValues, setInvestmentValues] = useState<Record<string, number>>({});
-  const [bankBalance, setBankBalance] = useState(BANK_BALANCE_AT_REF);
+  const [bankBalance, setBankBalance] = useState(0);
   const [recurringImpact, setRecurringImpact] = useState(0);
+  const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
     let invs: TrackedInvestment[] = [];
     let entries: WeeklyEntry[] = [];
     let recurring: RecurringItem[] = [];
+    let s: Settings | null = null;
 
     try {
-      const [invRes, entriesRes, recurringRes] = await Promise.all([
+      const [invRes, entriesRes, recurringRes, settingsRes] = await Promise.all([
         fetch("/api/portfolio"),
         fetch("/api/entries?yearOnly=true"),
         fetch("/api/recurring"),
+        fetch("/api/settings"),
       ]);
       if (invRes.ok) invs = await invRes.json();
       if (entriesRes.ok) entries = await entriesRes.json();
       if (recurringRes.ok) recurring = await recurringRes.json();
+      if (settingsRes.ok) s = await settingsRes.json();
     } catch {
       // DB may be unreachable — use defaults
     }
 
     setInvestments(invs);
+    setSettings(s);
+
+    const refDate = s ? new Date(s.refDate) : new Date();
+    const bankStart = s?.bankBalance ?? 0;
 
     // Dynamic bank balance: ref balance + income - expenses - draws
     const allItems = entries.flatMap((e) => e.lineItems);
@@ -153,7 +153,7 @@ export default function NetWorthPage() {
     for (const item of recurring) {
       if (!item.isActive || item.category === "INVESTMENT") continue;
       const created = new Date(item.createdAt);
-      const start = created > REF_DATE ? created : REF_DATE;
+      const start = created > refDate ? created : refDate;
       let occurrences = 0;
       if (item.frequency === "WEEKLY") {
         occurrences = Math.floor((now.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000));
@@ -165,7 +165,7 @@ export default function NetWorthPage() {
       recImpact += sign * item.amount * occurrences;
     }
     setRecurringImpact(recImpact);
-    setBankBalance(BANK_BALANCE_AT_REF + ytdIncome - ytdBizExp - ytdPersonal - ytdDraws + recImpact);
+    setBankBalance(bankStart + ytdIncome - ytdBizExp - ytdPersonal - ytdDraws + recImpact);
 
     const priceableInvs = invs.filter((i) => i.type !== "MANUAL");
     const manualInvs = invs.filter((i) => i.type === "MANUAL");
@@ -203,58 +203,74 @@ export default function NetWorthPage() {
     setLoading(false);
   }, []);
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 60000);
     return () => clearInterval(interval);
   }, [fetchData]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
-  // ── Dynamic calculations based on current date ──
+  // ── Dynamic calculations based on current date and user settings ──
   const calcs = useMemo(() => {
+    if (!settings) {
+      return {
+        homeValue: 0, mortgageBalance: 0, homeEquity: 0,
+        studentLoanBalance: 0, studentPaidOff: 0, studentMonthsLeft: 0, studentPayoffDate: new Date(),
+        carLoanBalance: 0, carPaidOff: 0, carMonthsLeft: 0, carPayoffDate: new Date(),
+      };
+    }
+
     const now = new Date();
-    const months = monthsElapsed(REF_DATE, now);
+    const refDate = new Date(settings.refDate);
+    const months = monthsElapsed(refDate, now);
 
     // Home value with monthly appreciation
-    const monthlyAppreciation = HOME_ANNUAL_APPRECIATION / 12;
-    const homeValue = HOME_VALUE_AT_REF * Math.pow(1 + monthlyAppreciation, months);
+    const monthlyAppreciation = (settings.homeAppreciation || 0) / 12;
+    const homeValue = settings.homeValue > 0
+      ? settings.homeValue * Math.pow(1 + monthlyAppreciation, months)
+      : 0;
 
     // Mortgage balance after amortization
-    const mortgageBalance = amortize(MORTGAGE_BALANCE_AT_REF, MORTGAGE_RATE, MORTGAGE_PAYMENT, months);
+    const mortgageBalance = settings.mortgageBalance > 0
+      ? amortize(settings.mortgageBalance, settings.mortgageRate, settings.mortgagePayment, months)
+      : 0;
     const homeEquity = homeValue - mortgageBalance;
 
     // Student loan balance
-    const studentLoanBalance = amortize(STUDENT_LOAN_AT_REF, STUDENT_LOAN_RATE, STUDENT_LOAN_PAYMENT, months);
-    const studentPaidOff = ((STUDENT_LOAN_AT_REF - studentLoanBalance) / STUDENT_LOAN_AT_REF) * 100;
-    const studentMonthsLeft = monthsToPayoff(studentLoanBalance, STUDENT_LOAN_RATE, STUDENT_LOAN_PAYMENT);
+    const studentLoanBal = settings.studentLoanBalance > 0
+      ? amortize(settings.studentLoanBalance, settings.studentLoanRate, settings.studentLoanPayment, months)
+      : 0;
+    const studentPaidOff = settings.studentLoanBalance > 0
+      ? ((settings.studentLoanBalance - studentLoanBal) / settings.studentLoanBalance) * 100
+      : 0;
+    const studentMonthsLeft = settings.studentLoanBalance > 0
+      ? monthsToPayoff(studentLoanBal, settings.studentLoanRate, settings.studentLoanPayment)
+      : 0;
     const studentPayoffDate = new Date(now.getFullYear(), now.getMonth() + studentMonthsLeft, 1);
 
     // Car loan balance
-    const carLoanBalance = amortize(CAR_LOAN_AT_REF, CAR_LOAN_RATE, CAR_LOAN_PAYMENT, months);
-    const carPaidOff = ((CAR_LOAN_AT_REF - carLoanBalance) / CAR_LOAN_AT_REF) * 100;
-    const carMonthsLeft = monthsToPayoff(carLoanBalance, CAR_LOAN_RATE, CAR_LOAN_PAYMENT);
+    const carLoanBal = settings.carLoanBalance > 0
+      ? amortize(settings.carLoanBalance, settings.carLoanRate, settings.carLoanPayment, months)
+      : 0;
+    const carPaidOff = settings.carLoanBalance > 0
+      ? ((settings.carLoanBalance - carLoanBal) / settings.carLoanBalance) * 100
+      : 0;
+    const carMonthsLeft = settings.carLoanBalance > 0
+      ? monthsToPayoff(carLoanBal, settings.carLoanRate, settings.carLoanPayment)
+      : 0;
     const carPayoffDate = new Date(now.getFullYear(), now.getMonth() + carMonthsLeft, 1);
 
     return {
-      homeValue,
-      mortgageBalance,
-      homeEquity,
-      studentLoanBalance,
-      studentPaidOff,
-      studentMonthsLeft,
-      studentPayoffDate,
-      carLoanBalance,
-      carPaidOff,
-      carMonthsLeft,
-      carPayoffDate,
+      homeValue, mortgageBalance, homeEquity,
+      studentLoanBalance: studentLoanBal, studentPaidOff, studentMonthsLeft, studentPayoffDate,
+      carLoanBalance: carLoanBal, carPaidOff, carMonthsLeft, carPayoffDate,
     };
-  }, []);
+  }, [settings]);
 
   if (loading) {
     return <div className="text-slate-400 py-8">Loading net worth...</div>;
   }
 
+  const bankStart = settings?.bankBalance ?? 0;
   const totalInvestments = Object.values(investmentValues).reduce((s, v) => s + v, 0);
   const totalAssets = calcs.homeEquity + bankBalance + totalInvestments;
   const totalLiabilities = calcs.studentLoanBalance + calcs.carLoanBalance;
@@ -263,6 +279,11 @@ export default function NetWorthPage() {
   function formatDate(d: Date) {
     return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
   }
+
+  const hasHome = (settings?.homeValue ?? 0) > 0;
+  const hasStudentLoan = (settings?.studentLoanBalance ?? 0) > 0;
+  const hasCarLoan = (settings?.carLoanBalance ?? 0) > 0;
+  const hasAnySetup = hasHome || hasStudentLoan || hasCarLoan || bankStart > 0;
 
   return (
     <div>
@@ -274,6 +295,18 @@ export default function NetWorthPage() {
         </Link>
         <h2 className="text-2xl font-bold text-slate-800">Estimated Net Worth</h2>
       </div>
+
+      {!hasAnySetup && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8 text-center">
+          <p className="text-blue-800 font-medium mb-2">Set up your financial profile</p>
+          <p className="text-sm text-blue-600 mb-4">
+            Head to Settings to enter your starting bank balance, home value, loans, and more.
+          </p>
+          <Link href="/settings" className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
+            Go to Settings
+          </Link>
+        </div>
+      )}
 
       {/* Net Worth Hero */}
       <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm mb-8 text-center">
@@ -300,26 +333,30 @@ export default function NetWorthPage() {
           </div>
           <div className="divide-y divide-slate-50">
             {/* Home */}
-            <div className="px-6 py-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-slate-700">Primary Residence (Equity)</span>
-                <MaskedValue value={formatCurrency(calcs.homeEquity)} className="font-semibold text-slate-800" />
+            {hasHome && (
+              <div className="px-6 py-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-slate-700">Primary Residence (Equity)</span>
+                  <MaskedValue value={formatCurrency(calcs.homeEquity)} className="font-semibold text-slate-800" />
+                </div>
+                <div className="mt-2 text-xs text-slate-400 space-y-0.5">
+                  <div className="flex justify-between">
+                    <span>Home Value ({((settings?.homeAppreciation ?? 0) * 100).toFixed(2)}%/yr appreciation)</span>
+                    <MaskedValue value={formatCurrency(calcs.homeValue)} />
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Mortgage Balance</span>
+                    <MaskedValue value={`-${formatCurrency(calcs.mortgageBalance)}`} />
+                  </div>
+                  {(settings?.mortgagePayment ?? 0) > 0 && (
+                    <div className="flex justify-between">
+                      <span>Monthly Payment</span>
+                      <MaskedValue value={`${formatCurrency(settings!.mortgagePayment)}/mo`} />
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="mt-2 text-xs text-slate-400 space-y-0.5">
-                <div className="flex justify-between">
-                  <span>Home Value (2.35%/yr appreciation)</span>
-                  <MaskedValue value={formatCurrency(calcs.homeValue)} />
-                </div>
-                <div className="flex justify-between">
-                  <span>Mortgage Balance</span>
-                  <MaskedValue value={`-${formatCurrency(calcs.mortgageBalance)}`} />
-                </div>
-                <div className="flex justify-between">
-                  <span>Monthly Payment</span>
-                  <MaskedValue value={`${formatCurrency(MORTGAGE_PAYMENT)}/mo`} />
-                </div>
-              </div>
-            </div>
+            )}
 
             {/* Bank */}
             <div className="px-6 py-4">
@@ -327,22 +364,24 @@ export default function NetWorthPage() {
                 <span className="text-sm font-medium text-slate-700">Bank Accounts</span>
                 <MaskedValue value={formatCurrency(bankBalance)} className="font-semibold text-slate-800" />
               </div>
-              <div className="mt-2 text-xs text-slate-400 space-y-0.5">
-                <div className="flex justify-between">
-                  <span>Starting Balance (Mar 2026)</span>
-                  <MaskedValue value={formatCurrency(BANK_BALANCE_AT_REF)} />
-                </div>
-                <div className="flex justify-between">
-                  <span>YTD weekly entries (income - expenses)</span>
-                  <MaskedValue value={formatCurrency(bankBalance - BANK_BALANCE_AT_REF - recurringImpact)} />
-                </div>
-                {recurringImpact !== 0 && (
+              {bankStart > 0 && (
+                <div className="mt-2 text-xs text-slate-400 space-y-0.5">
                   <div className="flex justify-between">
-                    <span>Recurring items impact</span>
-                    <MaskedValue value={formatCurrency(recurringImpact)} />
+                    <span>Starting Balance</span>
+                    <MaskedValue value={formatCurrency(bankStart)} />
                   </div>
-                )}
-              </div>
+                  <div className="flex justify-between">
+                    <span>YTD weekly entries (income - expenses)</span>
+                    <MaskedValue value={formatCurrency(bankBalance - bankStart - recurringImpact)} />
+                  </div>
+                  {recurringImpact !== 0 && (
+                    <div className="flex justify-between">
+                      <span>Recurring items impact</span>
+                      <MaskedValue value={formatCurrency(recurringImpact)} />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Investments */}
@@ -379,54 +418,64 @@ export default function NetWorthPage() {
           </div>
           <div className="divide-y divide-slate-50">
             {/* Student Loans */}
-            <div className="px-6 py-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-slate-700">Student Loans</span>
-                <MaskedValue value={formatCurrency(calcs.studentLoanBalance)} className="font-semibold text-red-500" />
-              </div>
-              <ProgressBar pctPaid={calcs.studentPaidOff} color="bg-emerald-500" />
-              <div className="flex justify-between mt-2 text-xs text-slate-400">
-                <span>{calcs.studentPaidOff.toFixed(1)}% paid off</span>
-                <span>
-                  <MaskedValue value={`${formatCurrency(STUDENT_LOAN_AT_REF - calcs.studentLoanBalance)} of ${formatCurrency(STUDENT_LOAN_AT_REF)}`} />
-                </span>
-              </div>
-              <div className="mt-2 text-xs text-slate-400 space-y-0.5">
-                <div className="flex justify-between">
-                  <span>Monthly Payment</span>
-                  <MaskedValue value={`${formatCurrency(STUDENT_LOAN_PAYMENT)}/mo`} />
+            {hasStudentLoan && (
+              <div className="px-6 py-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-slate-700">Student Loans</span>
+                  <MaskedValue value={formatCurrency(calcs.studentLoanBalance)} className="font-semibold text-red-500" />
                 </div>
-                <div className="flex justify-between">
-                  <span>Estimated Payoff</span>
-                  <span>{formatDate(calcs.studentPayoffDate)} ({calcs.studentMonthsLeft} months)</span>
+                <ProgressBar pctPaid={calcs.studentPaidOff} color="bg-emerald-500" />
+                <div className="flex justify-between mt-2 text-xs text-slate-400">
+                  <span>{calcs.studentPaidOff.toFixed(1)}% paid off</span>
+                  <span>
+                    <MaskedValue value={`${formatCurrency(settings!.studentLoanBalance - calcs.studentLoanBalance)} of ${formatCurrency(settings!.studentLoanBalance)}`} />
+                  </span>
+                </div>
+                <div className="mt-2 text-xs text-slate-400 space-y-0.5">
+                  <div className="flex justify-between">
+                    <span>Monthly Payment</span>
+                    <MaskedValue value={`${formatCurrency(settings!.studentLoanPayment)}/mo`} />
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Estimated Payoff</span>
+                    <span>{formatDate(calcs.studentPayoffDate)} ({calcs.studentMonthsLeft} months)</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Car Loan */}
-            <div className="px-6 py-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-slate-700">Car Loan</span>
-                <MaskedValue value={formatCurrency(calcs.carLoanBalance)} className="font-semibold text-red-500" />
-              </div>
-              <ProgressBar pctPaid={calcs.carPaidOff} color="bg-emerald-500" />
-              <div className="flex justify-between mt-2 text-xs text-slate-400">
-                <span>{calcs.carPaidOff.toFixed(1)}% paid off</span>
-                <span>
-                  <MaskedValue value={`${formatCurrency(CAR_LOAN_AT_REF - calcs.carLoanBalance)} of ${formatCurrency(CAR_LOAN_AT_REF)}`} />
-                </span>
-              </div>
-              <div className="mt-2 text-xs text-slate-400 space-y-0.5">
-                <div className="flex justify-between">
-                  <span>Monthly Payment</span>
-                  <MaskedValue value={`${formatCurrency(CAR_LOAN_PAYMENT)}/mo`} />
+            {hasCarLoan && (
+              <div className="px-6 py-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-slate-700">Car Loan</span>
+                  <MaskedValue value={formatCurrency(calcs.carLoanBalance)} className="font-semibold text-red-500" />
                 </div>
-                <div className="flex justify-between">
-                  <span>Estimated Payoff</span>
-                  <span>{formatDate(calcs.carPayoffDate)} ({calcs.carMonthsLeft} months)</span>
+                <ProgressBar pctPaid={calcs.carPaidOff} color="bg-emerald-500" />
+                <div className="flex justify-between mt-2 text-xs text-slate-400">
+                  <span>{calcs.carPaidOff.toFixed(1)}% paid off</span>
+                  <span>
+                    <MaskedValue value={`${formatCurrency(settings!.carLoanBalance - calcs.carLoanBalance)} of ${formatCurrency(settings!.carLoanBalance)}`} />
+                  </span>
+                </div>
+                <div className="mt-2 text-xs text-slate-400 space-y-0.5">
+                  <div className="flex justify-between">
+                    <span>Monthly Payment</span>
+                    <MaskedValue value={`${formatCurrency(settings!.carLoanPayment)}/mo`} />
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Estimated Payoff</span>
+                    <span>{formatDate(calcs.carPayoffDate)} ({calcs.carMonthsLeft} months)</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {!hasStudentLoan && !hasCarLoan && (
+              <div className="px-6 py-4 text-sm text-slate-400 text-center">
+                No liabilities configured. Add them in Settings.
+              </div>
+            )}
           </div>
         </div>
       </div>
