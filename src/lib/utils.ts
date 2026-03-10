@@ -1,4 +1,4 @@
-import { startOfWeek, endOfWeek, format, startOfYear, endOfYear } from "date-fns";
+import { startOfWeek, endOfWeek, format } from "date-fns";
 
 export function getCurrentWeekRange() {
   const now = new Date();
@@ -8,10 +8,10 @@ export function getCurrentWeekRange() {
 }
 
 export function getCurrentYearRange() {
-  const now = new Date();
+  const year = new Date().getFullYear();
   return {
-    start: startOfYear(now),
-    end: endOfYear(now),
+    start: new Date(`${year}-01-01T00:00:00.000Z`),
+    end: new Date(`${year}-12-31T23:59:59.999Z`),
   };
 }
 
