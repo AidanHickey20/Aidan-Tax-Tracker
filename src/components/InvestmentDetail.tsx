@@ -16,6 +16,15 @@ interface TrackedInvestment {
   recurringDay: number;
 }
 
+interface Transaction {
+  id: string;
+  type: string;
+  amount: number;
+  price: number;
+  shares: number;
+  executedAt: string;
+}
+
 interface DetailData {
   symbol: string;
   type: string;
@@ -86,6 +95,7 @@ export default function InvestmentDetail({ investmentId }: { investmentId: strin
   const [investment, setInvestment] = useState<TrackedInvestment | null>(null);
   const [detail, setDetail] = useState<DetailData | null>(null);
   const [range, setRange] = useState("1mo");
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [chartLoading, setChartLoading] = useState(false);
 
@@ -109,6 +119,10 @@ export default function InvestmentDetail({ investmentId }: { investmentId: strin
         }
         setLoading(false);
       });
+    fetch(`/api/portfolio/transactions?investmentId=${investmentId}`)
+      .then((r) => r.json())
+      .then((data) => setTransactions(data))
+      .catch(() => {});
   }, [investmentId, fetchDetail]);
 
   function handleRangeChange(r: string) {
@@ -450,6 +464,39 @@ export default function InvestmentDetail({ investmentId }: { investmentId: strin
               <p className="text-indigo-400 text-xs uppercase">Yearly Estimate</p>
               <p className="font-bold text-indigo-800">{formatCurrency(investment.recurringAmount * 52)}</p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Auto-Invest History */}
+      {transactions.length > 0 && (
+        <div className="bg-white border border-slate-200 rounded-lg shadow-sm p-5 mb-6">
+          <h3 className="font-semibold text-slate-700 mb-4">Auto-Invest History</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-slate-500 border-b border-slate-100">
+                  <th className="pb-2 font-medium">Date</th>
+                  <th className="pb-2 font-medium">Amount</th>
+                  <th className="pb-2 font-medium">Price</th>
+                  <th className="pb-2 font-medium">Shares Acquired</th>
+                </tr>
+              </thead>
+              <tbody>
+                {transactions.map((tx) => (
+                  <tr key={tx.id} className="border-b border-slate-50">
+                    <td className="py-2 text-slate-700">
+                      {new Date(tx.executedAt).toLocaleDateString()}
+                    </td>
+                    <td className="py-2 text-slate-700">{formatCurrency(tx.amount)}</td>
+                    <td className="py-2 text-slate-700">{formatCurrency(tx.price)}</td>
+                    <td className="py-2 text-slate-700">
+                      {tx.shares.toLocaleString(undefined, { maximumFractionDigits: 8 })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

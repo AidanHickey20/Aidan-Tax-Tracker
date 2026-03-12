@@ -59,9 +59,18 @@ interface Reminder {
   isActive: boolean;
 }
 
+interface WeeklyEntry {
+  weekStart: string;
+  lineItems: { category: string; amount: number }[];
+  investments: { amount: number }[];
+}
+
 export default function RecurringManager() {
   const [items, setItems] = useState<RecurringItem[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [actualMonthlyIncome, setActualMonthlyIncome] = useState(0);
+  const [actualMonthlyExpenses, setActualMonthlyExpenses] = useState(0);
+  const [actualMonthlyInvesting, setActualMonthlyInvesting] = useState(0);
   const [showAddItem, setShowAddItem] = useState(false);
   const [showAddReminder, setShowAddReminder] = useState(false);
   const [newDescription, setNewDescription] = useState("");
@@ -78,10 +87,30 @@ export default function RecurringManager() {
     Promise.all([
       fetch("/api/recurring").then((r) => (r.ok ? r.json() : [])),
       fetch("/api/reminders").then((r) => (r.ok ? r.json() : [])),
+      fetch("/api/entries?yearOnly=true").then((r) => (r.ok ? r.json() : [])),
     ])
-      .then(([itemsData, remindersData]) => {
+      .then(([itemsData, remindersData, entries]) => {
         setItems(itemsData);
         setReminders(remindersData);
+
+        // Calculate actuals for the current month
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+        const monthEntries = (entries as WeeklyEntry[]).filter((e) => {
+          const ws = new Date(e.weekStart);
+          return ws >= monthStart && ws <= monthEnd;
+        });
+        const monthLineItems = monthEntries.flatMap((e) => e.lineItems);
+        setActualMonthlyIncome(
+          monthLineItems.filter((i) => i.category === "INCOME").reduce((sum, i) => sum + i.amount, 0)
+        );
+        setActualMonthlyExpenses(
+          monthLineItems.filter((i) => i.category !== "INCOME").reduce((sum, i) => sum + i.amount, 0)
+        );
+        setActualMonthlyInvesting(
+          monthEntries.flatMap((e) => e.investments).reduce((sum, i) => sum + i.amount, 0)
+        );
       })
       .catch(() => {});
   }, []);
@@ -235,32 +264,45 @@ export default function RecurringManager() {
         <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-2 h-2 rounded-full bg-emerald-500" />
-            <p className="text-xs text-slate-500 uppercase tracking-wide">Monthly Income</p>
+            <p className="text-xs text-slate-500 uppercase tracking-wide">
+              {new Date().toLocaleString("default", { month: "long" })} Revenue
+            </p>
           </div>
-          <p className="text-2xl font-bold text-emerald-600">{formatCurrency(monthlyIncome)}</p>
+          <p className="text-2xl font-bold text-emerald-600">{formatCurrency(actualMonthlyIncome)}</p>
+          <p className="text-xs text-slate-400 mt-1">Est. {formatCurrency(monthlyIncome)}/mo from recurring</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-2 h-2 rounded-full bg-red-500" />
-            <p className="text-xs text-slate-500 uppercase tracking-wide">Monthly Expenses</p>
+            <p className="text-xs text-slate-500 uppercase tracking-wide">
+              {new Date().toLocaleString("default", { month: "long" })} Expenses
+            </p>
           </div>
           <p className="text-2xl font-bold text-red-500">{formatCurrency(monthlyExpenses)}</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-2 h-2 rounded-full bg-blue-500" />
-            <p className="text-xs text-slate-500 uppercase tracking-wide">Monthly Investing</p>
+            <p className="text-xs text-slate-500 uppercase tracking-wide">
+              {new Date().toLocaleString("default", { month: "long" })} Investing
+            </p>
           </div>
-          <p className="text-2xl font-bold text-blue-600">{formatCurrency(monthlyInvestments)}</p>
+          <p className="text-2xl font-bold text-blue-600">{formatCurrency(actualMonthlyInvesting)}</p>
+          <p className="text-xs text-slate-400 mt-1">Est. {formatCurrency(monthlyInvestments)}/mo from recurring</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-2 h-2 rounded-full bg-slate-500" />
             <p className="text-xs text-slate-500 uppercase tracking-wide">Net Cash Flow</p>
           </div>
-          <p className={`text-2xl font-bold ${netMonthly >= 0 ? "text-emerald-600" : "text-red-500"}`}>
-            {formatCurrency(netMonthly)}
-          </p>
+          {(() => {
+            const actualNet = actualMonthlyIncome - monthlyExpenses - actualMonthlyInvesting;
+            return (
+              <p className={`text-2xl font-bold ${actualNet >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+                {formatCurrency(actualNet)}
+              </p>
+            );
+          })()}
         </div>
       </div>
 

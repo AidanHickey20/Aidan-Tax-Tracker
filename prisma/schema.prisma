@@ -23,7 +23,8 @@ model User {
 
   weeklyEntries      WeeklyEntry[]
   recurringItems     RecurringItem[]
-  trackedInvestments TrackedInvestment[]
+  trackedInvestments      TrackedInvestment[]
+  investmentTransactions  InvestmentTransaction[]
   deals              Deal[]
   reminders          Reminder[]
   settings           UserSettings?
@@ -154,9 +155,26 @@ model TrackedInvestment {
   type             String   // STOCK or CRYPTO
   shares           Float    @default(0)
   avgCost          Float    @default(0)
-  recurringAmount  Float    @default(0) // Weekly auto-invest amount in USD
-  recurringDay     Int      @default(-1) // Day of week: 0=Sun,1=Mon,...6=Sat, -1=disabled
-  createdAt        DateTime @default(now())
+  recurringAmount   Float     @default(0) // Weekly auto-invest amount in USD
+  recurringDay      Int       @default(-1) // Day of week: 0=Sun,1=Mon,...6=Sat, -1=disabled
+  lastProcessedDate DateTime? // Last auto-invest execution date
+  createdAt         DateTime  @default(now())
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  transactions InvestmentTransaction[]
+}
+
+model InvestmentTransaction {
+  id           String            @id @default(uuid())
+  investmentId String
+  investment   TrackedInvestment @relation(fields: [investmentId], references: [id], onDelete: Cascade)
+  type         String            // "AUTO_INVEST"
+  amount       Float             // USD spent
+  price        Float             // Price per share at time of purchase
+  shares       Float             // Shares acquired
+  executedAt   DateTime          @default(now())
 
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)

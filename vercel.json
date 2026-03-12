@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/process-investments",
+      "schedule": "0 14 * * *"
+    }
+  ]
+}
