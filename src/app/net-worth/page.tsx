@@ -61,18 +61,22 @@ function amortize(balance: number, annualRate: number, monthlyPayment: number, m
   return Math.max(bal, 0);
 }
 
-function monthsToPayoff(balance: number, annualRate: number, monthlyPayment: number): number {
-  const r = annualRate / 12;
-  let bal = balance;
-  let months = 0;
-  while (bal > 0.01 && months < 600) {
-    const interest = bal * r;
-    const principal = monthlyPayment - interest;
-    if (principal <= 0) return Infinity;
-    bal -= principal;
-    months++;
+function monthsToPayoff(balance: number, monthlyPayment: number): number {
+  if (monthlyPayment <= 0) return Infinity;
+  return Math.ceil(balance / monthlyPayment);
+}
+
+function paymentsSinceRef(refDate: Date, now: Date, paymentDay: number): number {
+  let count = 0;
+  let current = new Date(refDate.getFullYear(), refDate.getMonth(), paymentDay);
+  if (current < refDate) {
+    current.setMonth(current.getMonth() + 1);
   }
-  return months;
+  while (current <= now) {
+    count++;
+    current.setMonth(current.getMonth() + 1);
+  }
+  return count;
 }
 
 function ProgressBar({ pctPaid, color }: { pctPaid: number; color: string }) {
@@ -93,6 +97,7 @@ interface LineItem {
 }
 
 interface WeeklyEntry {
+  weekStart: string;
   lineItems: LineItem[];
 }
 
@@ -109,7 +114,7 @@ export default function NetWorthPage() {
   const [investments, setInvestments] = useState<TrackedInvestment[]>([]);
   const [investmentValues, setInvestmentValues] = useState<Record<string, number>>({});
   const [bankBalance, setBankBalance] = useState(0);
-  const [recurringImpact, setRecurringImpact] = useState(0);
+  const [bankBreakdown, setBankBreakdown] = useState({ income: 0, bizExp: 0, recExpenses: 0, unlogged: 0 });
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -139,19 +144,22 @@ export default function NetWorthPage() {
 
     const refDate = s ? new Date(s.refDate) : new Date();
     const bankStart = s?.bankBalance ?? 0;
-
-    // Dynamic bank balance: ref balance + income - expenses - draws
-    const allItems = entries.flatMap((e) => e.lineItems);
-    const ytdIncome = allItems.filter((i) => i.category === "INCOME").reduce((s, i) => s + i.amount, 0);
-    const ytdBizExp = allItems.filter((i) => i.category === "BUSINESS_EXPENSE").reduce((s, i) => s + i.amount, 0);
-    const ytdPersonal = allItems.filter((i) => i.category === "PERSONAL_EXPENSE").reduce((s, i) => s + i.amount, 0);
-    const ytdDraws = allItems.filter((i) => i.category === "OWNER_DRAW").reduce((s, i) => s + i.amount, 0);
-
-    // Calculate recurring items impact on bank balance
     const now = new Date();
-    let recImpact = 0;
+
+    // Filter entries to only those after refDate
+    const entriesSinceRef = entries.filter((e) => new Date(e.weekStart) >= refDate);
+    const allItems = entriesSinceRef.flatMap((e) => e.lineItems);
+
+    // Actual income from weekly entries
+    const entryIncome = allItems.filter((i) => i.category === "INCOME").reduce((s, i) => s + i.amount, 0);
+
+    // Business expenses from weekly entries
+    const entryBizExp = allItems.filter((i) => i.category === "BUSINESS_EXPENSE").reduce((s, i) => s + i.amount, 0);
+
+    // Recurring expenses impact (matches recurring page — weekly * occurrences, monthly * occurrences)
+    let recExpenses = 0;
     for (const item of recurring) {
-      if (!item.isActive || item.category === "INVESTMENT") continue;
+      if (!item.isActive || item.category === "INCOME" || item.category === "INVESTMENT") continue;
       const created = new Date(item.createdAt);
       const start = created > refDate ? created : refDate;
       let occurrences = 0;
@@ -161,11 +169,16 @@ export default function NetWorthPage() {
         occurrences = monthsElapsed(start, now);
       }
       if (occurrences < 0) occurrences = 0;
-      const sign = item.category === "INCOME" ? 1 : -1;
-      recImpact += sign * item.amount * occurrences;
+      recExpenses += item.amount * occurrences;
     }
-    setRecurringImpact(recImpact);
-    setBankBalance(bankStart + ytdIncome - ytdBizExp - ytdPersonal - ytdDraws + recImpact);
+
+    // $1,000/month for unlogged personal expenses
+    const monthsSinceRef = monthsElapsed(refDate, now);
+    const unloggedPersonal = Math.max(0, monthsSinceRef) * 1000;
+
+    const totalBankBalance = bankStart + entryIncome - entryBizExp - recExpenses - unloggedPersonal;
+    setBankBreakdown({ income: entryIncome, bizExp: entryBizExp, recExpenses, unlogged: unloggedPersonal });
+    setBankBalance(totalBankBalance);
 
     const priceableInvs = invs.filter((i) => i.type !== "MANUAL");
     const manualInvs = invs.filter((i) => i.type === "MANUAL");
@@ -214,8 +227,8 @@ export default function NetWorthPage() {
     if (!settings) {
       return {
         homeValue: 0, mortgageBalance: 0, homeEquity: 0,
-        studentLoanBalance: 0, studentPaidOff: 0, studentMonthsLeft: 0, studentPayoffDate: new Date(),
-        carLoanBalance: 0, carPaidOff: 0, carMonthsLeft: 0, carPayoffDate: new Date(),
+        studentLoanBalance: 0, studentPaidOff: 0, studentMonthsLeft: 0, studentPayoffDate: new Date(), studentPaymentsMade: 0,
+        carLoanBalance: 0, carPaidOff: 0, carMonthsLeft: 0, carPayoffDate: new Date(), carPaymentsMade: 0,
       };
     }
 
@@ -235,34 +248,36 @@ export default function NetWorthPage() {
       : 0;
     const homeEquity = homeValue - mortgageBalance;
 
-    // Student loan balance
-    const studentLoanBal = settings.studentLoanBalance > 0
-      ? amortize(settings.studentLoanBalance, settings.studentLoanRate, settings.studentLoanPayment, months)
+    // Student loan balance — flat reduction on the 1st of each month
+    const studentPaymentsMade = settings.studentLoanBalance > 0
+      ? paymentsSinceRef(refDate, now, 1)
       : 0;
+    const studentLoanBal = Math.max(0, settings.studentLoanBalance - studentPaymentsMade * settings.studentLoanPayment);
     const studentPaidOff = settings.studentLoanBalance > 0
       ? ((settings.studentLoanBalance - studentLoanBal) / settings.studentLoanBalance) * 100
       : 0;
     const studentMonthsLeft = settings.studentLoanBalance > 0
-      ? monthsToPayoff(studentLoanBal, settings.studentLoanRate, settings.studentLoanPayment)
+      ? monthsToPayoff(studentLoanBal, settings.studentLoanPayment)
       : 0;
     const studentPayoffDate = new Date(now.getFullYear(), now.getMonth() + studentMonthsLeft, 1);
 
-    // Car loan balance
-    const carLoanBal = settings.carLoanBalance > 0
-      ? amortize(settings.carLoanBalance, settings.carLoanRate, settings.carLoanPayment, months)
+    // Car loan balance — flat reduction on the 16th of each month
+    const carPaymentsMade = settings.carLoanBalance > 0
+      ? paymentsSinceRef(refDate, now, 16)
       : 0;
+    const carLoanBal = Math.max(0, settings.carLoanBalance - carPaymentsMade * settings.carLoanPayment);
     const carPaidOff = settings.carLoanBalance > 0
       ? ((settings.carLoanBalance - carLoanBal) / settings.carLoanBalance) * 100
       : 0;
     const carMonthsLeft = settings.carLoanBalance > 0
-      ? monthsToPayoff(carLoanBal, settings.carLoanRate, settings.carLoanPayment)
+      ? monthsToPayoff(carLoanBal, settings.carLoanPayment)
       : 0;
     const carPayoffDate = new Date(now.getFullYear(), now.getMonth() + carMonthsLeft, 1);
 
     return {
       homeValue, mortgageBalance, homeEquity,
-      studentLoanBalance: studentLoanBal, studentPaidOff, studentMonthsLeft, studentPayoffDate,
-      carLoanBalance: carLoanBal, carPaidOff, carMonthsLeft, carPayoffDate,
+      studentLoanBalance: studentLoanBal, studentPaidOff, studentMonthsLeft, studentPayoffDate, studentPaymentsMade,
+      carLoanBalance: carLoanBal, carPaidOff, carMonthsLeft, carPayoffDate, carPaymentsMade,
     };
   }, [settings]);
 
@@ -370,14 +385,28 @@ export default function NetWorthPage() {
                     <span>Starting Balance</span>
                     <MaskedValue value={formatCurrency(bankStart)} />
                   </div>
-                  <div className="flex justify-between">
-                    <span>YTD weekly entries (income - expenses)</span>
-                    <MaskedValue value={formatCurrency(bankBalance - bankStart - recurringImpact)} />
-                  </div>
-                  {recurringImpact !== 0 && (
+                  {bankBreakdown.income > 0 && (
                     <div className="flex justify-between">
-                      <span>Recurring items impact</span>
-                      <MaskedValue value={formatCurrency(recurringImpact)} />
+                      <span>Income (weekly entries)</span>
+                      <MaskedValue value={`+${formatCurrency(bankBreakdown.income)}`} className="text-emerald-500" />
+                    </div>
+                  )}
+                  {bankBreakdown.bizExp > 0 && (
+                    <div className="flex justify-between">
+                      <span>Business expenses (weekly entries)</span>
+                      <MaskedValue value={`-${formatCurrency(bankBreakdown.bizExp)}`} className="text-red-400" />
+                    </div>
+                  )}
+                  {bankBreakdown.recExpenses > 0 && (
+                    <div className="flex justify-between">
+                      <span>Recurring expenses</span>
+                      <MaskedValue value={`-${formatCurrency(bankBreakdown.recExpenses)}`} className="text-red-400" />
+                    </div>
+                  )}
+                  {bankBreakdown.unlogged > 0 && (
+                    <div className="flex justify-between">
+                      <span>Unlogged personal (~$1,000/mo)</span>
+                      <MaskedValue value={`-${formatCurrency(bankBreakdown.unlogged)}`} className="text-red-400" />
                     </div>
                   )}
                 </div>
@@ -433,8 +462,12 @@ export default function NetWorthPage() {
                 </div>
                 <div className="mt-2 text-xs text-slate-400 space-y-0.5">
                   <div className="flex justify-between">
-                    <span>Monthly Payment</span>
+                    <span>Monthly Payment (1st of month)</span>
                     <MaskedValue value={`${formatCurrency(settings!.studentLoanPayment)}/mo`} />
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Payments Made</span>
+                    <span>{calcs.studentPaymentsMade}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Estimated Payoff</span>
@@ -460,8 +493,12 @@ export default function NetWorthPage() {
                 </div>
                 <div className="mt-2 text-xs text-slate-400 space-y-0.5">
                   <div className="flex justify-between">
-                    <span>Monthly Payment</span>
+                    <span>Monthly Payment (16th of month)</span>
                     <MaskedValue value={`${formatCurrency(settings!.carLoanPayment)}/mo`} />
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Payments Made</span>
+                    <span>{calcs.carPaymentsMade}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Estimated Payoff</span>
