@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { formatCurrency } from "@/lib/utils";
 import { MaskedValue } from "./PrivacyProvider";
 
 export default function IncomeGoalBar() {
+  const { status } = useSession();
   const [ytdIncome, setYtdIncome] = useState<number | null>(null);
   const [incomeGoal, setIncomeGoal] = useState<number>(0);
 
   useEffect(() => {
+    if (status !== "authenticated") return;
     Promise.all([
       fetch("/api/entries?yearOnly=true").then((r) => r.ok ? r.json() : []),
       fetch("/api/settings").then((r) => r.ok ? r.json() : null),
@@ -20,7 +23,7 @@ export default function IncomeGoalBar() {
       setYtdIncome(total);
       if (settings) setIncomeGoal(settings.incomeGoal || 0);
     });
-  }, []);
+  }, [status]);
 
   if (incomeGoal <= 0) return null;
 
