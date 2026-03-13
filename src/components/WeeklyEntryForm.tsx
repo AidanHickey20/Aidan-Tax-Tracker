@@ -133,8 +133,9 @@ export default function WeeklyEntryForm() {
             category: r.category as Category,
           }));
 
-        const recurringInvestments = activeItems
-          .filter((r: RecurringItem) => r.category === "INVESTMENT")
+        // Always include ALL active investments regardless of frequency/date
+        const recurringInvestments = recurringItems
+          .filter((r: RecurringItem) => r.isActive && r.category === "INVESTMENT")
           .map((r: RecurringItem) => ({
             tempId: tempId(),
             name: r.description,
@@ -177,23 +178,25 @@ export default function WeeklyEntryForm() {
           });
           setBalances(balanceMap);
 
-          // Build investment list: recurring templates with saved amounts + any extras
-          const recurringInvNames = recurringItems
-            .filter((r: RecurringItem) => r.isActive && r.category === "INVESTMENT")
-            .map((r: RecurringItem) => r.description);
+          // Build investment list: all recurring investments with saved or default amounts + extras
+          const activeRecurringInvs = recurringItems
+            .filter((r: RecurringItem) => r.isActive && r.category === "INVESTMENT");
 
           const savedInvMap = new Map<string, number>();
           entry.investments.forEach((inv: { name: string; amount: number }) => {
             savedInvMap.set(inv.name, inv.amount);
           });
 
-          const recurringInvs: InvestmentInput[] = recurringInvNames.map((name: string) => ({
+          const recurringInvs: InvestmentInput[] = activeRecurringInvs.map((r: RecurringItem) => ({
             tempId: tempId(),
-            name,
-            amount: savedInvMap.has(name) ? savedInvMap.get(name)!.toString() : "",
+            name: r.description,
+            amount: savedInvMap.has(r.description)
+              ? savedInvMap.get(r.description)!.toString()
+              : r.amount.toString(),
             isRecurring: true,
           }));
 
+          const recurringInvNames = activeRecurringInvs.map((r: RecurringItem) => r.description);
           const extraInvs: InvestmentInput[] = entry.investments
             .filter((inv: { name: string; amount: number }) => !recurringInvNames.includes(inv.name))
             .map((inv: { name: string; amount: number }) => ({
