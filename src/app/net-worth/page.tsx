@@ -238,9 +238,13 @@ export default function NetWorthPage() {
     return <div className="text-slate-400 py-8">Loading net worth...</div>;
   }
 
-  const totalAccountBalances = latestBalances.reduce((sum, b) => sum + b.balance, 0);
+  // Only count cash accounts (Personal, Money Markets, Savings, Business) — not investment accounts
+  const bankBalances = latestBalances.filter(
+    (b) => !b.accountName.startsWith("Coinbase - ") && !b.accountName.startsWith("Robinhood - ") && b.accountName !== "Acorns Roth IRA"
+  );
+  const totalBankAccounts = bankBalances.reduce((sum, b) => sum + b.balance, 0);
   const totalInvestments = Object.values(investmentValues).reduce((s, v) => s + v, 0);
-  const totalAssets = calcs.homeEquity + totalAccountBalances + totalInvestments;
+  const totalAssets = calcs.homeEquity + totalBankAccounts + totalInvestments;
   const totalLiabilities = calcs.studentLoanBalance + calcs.carLoanBalance;
   const netWorth = totalAssets - totalLiabilities;
 
@@ -326,66 +330,23 @@ export default function NetWorthPage() {
               </div>
             )}
 
-            {/* Account Balances */}
-            {latestBalances.length > 0 && (() => {
-              const coinbaseItems = latestBalances.filter((b) => b.accountName.startsWith("Coinbase - "));
-              const robinhoodItems = latestBalances.filter((b) => b.accountName.startsWith("Robinhood - "));
-              const cashItems = latestBalances.filter(
-                (b) => !b.accountName.startsWith("Coinbase - ") && !b.accountName.startsWith("Robinhood - ")
-              );
-              const coinbaseTotal = coinbaseItems.reduce((sum, b) => sum + b.balance, 0);
-              const robinhoodTotal = robinhoodItems.reduce((sum, b) => sum + b.balance, 0);
-
-              return (
-                <>
-                  {/* Cash Accounts */}
-                  {cashItems.map((b) => (
-                    <div key={b.accountName} className="px-6 py-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-slate-700">{b.accountName}</span>
-                        <MaskedValue value={formatCurrency(b.balance)} className="font-semibold text-slate-800" />
-                      </div>
+            {/* Bank Accounts */}
+            {bankBalances.length > 0 && (
+              <div className="px-6 py-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-slate-700">Bank Accounts</span>
+                  <MaskedValue value={formatCurrency(totalBankAccounts)} className="font-semibold text-slate-800" />
+                </div>
+                <div className="mt-2 text-xs text-slate-400 space-y-0.5">
+                  {bankBalances.map((b) => (
+                    <div key={b.accountName} className="flex justify-between">
+                      <span>{b.accountName}</span>
+                      <MaskedValue value={formatCurrency(b.balance)} />
                     </div>
                   ))}
-
-                  {/* Coinbase */}
-                  {coinbaseItems.length > 0 && (
-                    <div className="px-6 py-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-slate-700">Coinbase</span>
-                        <MaskedValue value={formatCurrency(coinbaseTotal)} className="font-semibold text-slate-800" />
-                      </div>
-                      <div className="mt-2 text-xs text-slate-400 space-y-0.5">
-                        {coinbaseItems.map((b) => (
-                          <div key={b.accountName} className="flex justify-between">
-                            <span>{b.accountName.replace("Coinbase - ", "")}</span>
-                            <MaskedValue value={formatCurrency(b.balance)} />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Robinhood */}
-                  {robinhoodItems.length > 0 && (
-                    <div className="px-6 py-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-slate-700">Robinhood</span>
-                        <MaskedValue value={formatCurrency(robinhoodTotal)} className="font-semibold text-slate-800" />
-                      </div>
-                      <div className="mt-2 text-xs text-slate-400 space-y-0.5">
-                        {robinhoodItems.map((b) => (
-                          <div key={b.accountName} className="flex justify-between">
-                            <span>{b.accountName.replace("Robinhood - ", "")}</span>
-                            <MaskedValue value={formatCurrency(b.balance)} />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </>
-              );
-            })()}
+                </div>
+              </div>
+            )}
 
             {/* Investments */}
             <div className="px-6 py-4">

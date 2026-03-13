@@ -216,8 +216,11 @@ export default function DashboardContent() {
     }
   }
 
-  const totalAccountBalances = latestBalances.reduce((sum, b) => sum + b.balance, 0);
-  const estNetWorth = homeEquity + totalAccountBalances + livePortfolio - studentBal - carBal;
+  // Only count cash accounts — Coinbase, Robinhood, Acorns already in livePortfolio
+  const totalBankAccounts = latestBalances
+    .filter((b) => !b.accountName.startsWith("Coinbase - ") && !b.accountName.startsWith("Robinhood - ") && b.accountName !== "Acorns Roth IRA")
+    .reduce((sum, b) => sum + b.balance, 0);
+  const estNetWorth = homeEquity + totalBankAccounts + livePortfolio - studentBal - carBal;
 
   // ── Estimated tax liability for self-employed ──
   function estimateTax(netSEIncome: number): number {
