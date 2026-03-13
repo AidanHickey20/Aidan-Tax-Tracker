@@ -86,12 +86,13 @@ export default function WeeklyEntryForm() {
   const [investments, setInvestments] = useState<InvestmentInput[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
 
-  // Load recurring items and reminders
+  // Load recurring items, reminders, and portfolio investments
   useEffect(() => {
     Promise.all([
       fetch("/api/recurring").then((r) => r.json()),
       fetch("/api/reminders").then((r) => r.json()),
-    ]).then(([recurringItems, remindersData]) => {
+      fetch("/api/portfolio").then((r) => r.json()),
+    ]).then(([recurringItems, remindersData, portfolioItems]) => {
       setReminders(remindersData.filter((r: Reminder) => r.isActive));
 
       if (!editId) {
@@ -133,33 +134,33 @@ export default function WeeklyEntryForm() {
             category: r.category as Category,
           }));
 
-        // Always include ALL active investments regardless of frequency/date
-        const recurringInvestments = recurringItems
-          .filter((r: RecurringItem) => r.isActive && r.category === "INVESTMENT")
-          .map((r: RecurringItem) => ({
+        // Preload investments from portfolio auto-invest amounts
+        const portfolioInvestments = portfolioItems
+          .filter((inv: { recurringAmount: number }) => inv.recurringAmount > 0)
+          .map((inv: { name: string; recurringAmount: number }) => ({
             tempId: tempId(),
-            name: r.description,
-            amount: r.amount.toString(),
+            name: inv.name,
+            amount: inv.recurringAmount.toString(),
             isRecurring: true,
           }));
 
         if (recurringLineItems.length > 0) {
           setLineItems((prev) => [...prev, ...recurringLineItems]);
         }
-        if (recurringInvestments.length > 0) {
-          setInvestments((prev) => [...prev, ...recurringInvestments]);
+        if (portfolioInvestments.length > 0) {
+          setInvestments((prev) => [...prev, ...portfolioInvestments]);
         }
       }
     });
   }, [editId]);
 
-  // Load existing entry when editing (also fetch recurring to mark investment labels)
+  // Load existing entry when editing (also fetch portfolio for investment labels)
   useEffect(() => {
     if (editId) {
       Promise.all([
         fetch(`/api/entries/${editId}`).then((r) => r.json()),
-        fetch("/api/recurring").then((r) => r.json()),
-      ]).then(([entry, recurringItems]) => {
+        fetch("/api/portfolio").then((r) => r.json()),
+      ]).then(([entry, portfolioItems]) => {
           setWeekStart(format(new Date(entry.weekStart), "yyyy-MM-dd"));
           setWeekEnd(format(new Date(entry.weekEnd), "yyyy-MM-dd"));
           setMileage(entry.mileage.toString());
@@ -178,34 +179,36 @@ export default function WeeklyEntryForm() {
           });
           setBalances(balanceMap);
 
-          // Build investment list: all recurring investments with saved or default amounts + extras
-          const activeRecurringInvs = recurringItems
-            .filter((r: RecurringItem) => r.isActive && r.category === "INVESTMENT");
+          // Build investment list from portfolio auto-invest items + saved entry data
+          const autoInvestItems = portfolioItems
+            .filter((inv: { recurringAmount: number }) => inv.recurringAmount > 0);
 
           const savedInvMap = new Map<string, number>();
           entry.investments.forEach((inv: { name: string; amount: number }) => {
             savedInvMap.set(inv.name, inv.amount);
           });
 
-          const recurringInvs: InvestmentInput[] = activeRecurringInvs.map((r: RecurringItem) => ({
-            tempId: tempId(),
-            name: r.description,
-            amount: savedInvMap.has(r.description)
-              ? savedInvMap.get(r.description)!.toString()
-              : r.amount.toString(),
-            isRecurring: true,
-          }));
+          const portfolioInvs: InvestmentInput[] = autoInvestItems.map(
+            (inv: { name: string; recurringAmount: number }) => ({
+              tempId: tempId(),
+              name: inv.name,
+              amount: savedInvMap.has(inv.name)
+                ? savedInvMap.get(inv.name)!.toString()
+                : inv.recurringAmount.toString(),
+              isRecurring: true,
+            })
+          );
 
-          const recurringInvNames = activeRecurringInvs.map((r: RecurringItem) => r.description);
+          const portfolioNames = autoInvestItems.map((inv: { name: string }) => inv.name);
           const extraInvs: InvestmentInput[] = entry.investments
-            .filter((inv: { name: string; amount: number }) => !recurringInvNames.includes(inv.name))
+            .filter((inv: { name: string; amount: number }) => !portfolioNames.includes(inv.name))
             .map((inv: { name: string; amount: number }) => ({
               tempId: tempId(),
               name: inv.name,
               amount: inv.amount.toString(),
             }));
 
-          setInvestments([...recurringInvs, ...extraInvs]);
+          setInvestments([...portfolioInvs, ...extraInvs]);
         });
     }
   }, [editId]);
