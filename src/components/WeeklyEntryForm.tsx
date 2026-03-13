@@ -152,12 +152,13 @@ export default function WeeklyEntryForm() {
     });
   }, [editId]);
 
-  // Load existing entry when editing
+  // Load existing entry when editing (also fetch recurring to mark investment labels)
   useEffect(() => {
     if (editId) {
-      fetch(`/api/entries/${editId}`)
-        .then((r) => r.json())
-        .then((entry) => {
+      Promise.all([
+        fetch(`/api/entries/${editId}`).then((r) => r.json()),
+        fetch("/api/recurring").then((r) => r.json()),
+      ]).then(([entry, recurringItems]) => {
           setWeekStart(format(new Date(entry.weekStart), "yyyy-MM-dd"));
           setWeekEnd(format(new Date(entry.weekEnd), "yyyy-MM-dd"));
           setMileage(entry.mileage.toString());
@@ -175,13 +176,33 @@ export default function WeeklyEntryForm() {
             balanceMap[b.accountName] = b.balance.toString();
           });
           setBalances(balanceMap);
-          setInvestments(
-            entry.investments.map((inv: { name: string; amount: number }) => ({
+
+          // Build investment list: recurring templates with saved amounts + any extras
+          const recurringInvNames = recurringItems
+            .filter((r: RecurringItem) => r.isActive && r.category === "INVESTMENT")
+            .map((r: RecurringItem) => r.description);
+
+          const savedInvMap = new Map<string, number>();
+          entry.investments.forEach((inv: { name: string; amount: number }) => {
+            savedInvMap.set(inv.name, inv.amount);
+          });
+
+          const recurringInvs: InvestmentInput[] = recurringInvNames.map((name: string) => ({
+            tempId: tempId(),
+            name,
+            amount: savedInvMap.has(name) ? savedInvMap.get(name)!.toString() : "",
+            isRecurring: true,
+          }));
+
+          const extraInvs: InvestmentInput[] = entry.investments
+            .filter((inv: { name: string; amount: number }) => !recurringInvNames.includes(inv.name))
+            .map((inv: { name: string; amount: number }) => ({
               tempId: tempId(),
               name: inv.name,
               amount: inv.amount.toString(),
-            }))
-          );
+            }));
+
+          setInvestments([...recurringInvs, ...extraInvs]);
         });
     }
   }, [editId]);
