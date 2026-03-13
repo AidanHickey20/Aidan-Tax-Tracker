@@ -201,17 +201,54 @@ export default function HistoryView() {
                   )}
 
                   {/* Account Balances */}
-                  {entry.accountBalances.length > 0 && (
-                    <div className="mt-3">
-                      <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Account Balances</p>
-                      {entry.accountBalances.map((b) => (
-                        <div key={b.id} className="flex justify-between text-sm py-0.5">
-                          <span className="text-slate-600">{b.accountName}</span>
-                          <span className="text-slate-800">{formatCurrency(b.balance)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  {entry.accountBalances.length > 0 && (() => {
+                    const coinbaseItems = entry.accountBalances.filter((b) => b.accountName.startsWith("Coinbase - "));
+                    const robinhoodItems = entry.accountBalances.filter((b) => b.accountName.startsWith("Robinhood - "));
+                    const otherItems = entry.accountBalances.filter(
+                      (b) => !b.accountName.startsWith("Coinbase - ") && !b.accountName.startsWith("Robinhood - ")
+                    );
+                    const coinbaseTotal = coinbaseItems.reduce((sum, b) => sum + b.balance, 0);
+                    const robinhoodTotal = robinhoodItems.reduce((sum, b) => sum + b.balance, 0);
+                    return (
+                      <div className="mt-3">
+                        <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Account Balances</p>
+                        {otherItems.map((b) => (
+                          <div key={b.id} className="flex justify-between text-sm py-0.5">
+                            <span className="text-slate-600">{b.accountName}</span>
+                            <span className="text-slate-800">{formatCurrency(b.balance)}</span>
+                          </div>
+                        ))}
+                        {coinbaseItems.length > 0 && (
+                          <>
+                            <div className="flex justify-between text-sm py-0.5 font-medium">
+                              <span className="text-slate-700">Coinbase</span>
+                              <span className="text-slate-800">{formatCurrency(coinbaseTotal)}</span>
+                            </div>
+                            {coinbaseItems.map((b) => (
+                              <div key={b.id} className="flex justify-between text-sm py-0.5 ml-4">
+                                <span className="text-slate-500">{b.accountName.replace("Coinbase - ", "")}</span>
+                                <span className="text-slate-600">{formatCurrency(b.balance)}</span>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                        {robinhoodItems.length > 0 && (
+                          <>
+                            <div className="flex justify-between text-sm py-0.5 font-medium">
+                              <span className="text-slate-700">Robinhood</span>
+                              <span className="text-slate-800">{formatCurrency(robinhoodTotal)}</span>
+                            </div>
+                            {robinhoodItems.map((b) => (
+                              <div key={b.id} className="flex justify-between text-sm py-0.5 ml-4">
+                                <span className="text-slate-500">{b.accountName.replace("Robinhood - ", "")}</span>
+                                <span className="text-slate-600">{formatCurrency(b.balance)}</span>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Notes */}
                   {entry.notes && (

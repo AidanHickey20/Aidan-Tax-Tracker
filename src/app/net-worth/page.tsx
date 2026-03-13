@@ -91,49 +91,36 @@ function ProgressBar({ pctPaid, color }: { pctPaid: number; color: string }) {
   );
 }
 
-interface LineItem {
-  amount: number;
-  category: string;
+interface AccountBalance {
+  accountName: string;
+  balance: number;
 }
 
 interface WeeklyEntry {
   weekStart: string;
-  lineItems: LineItem[];
-}
-
-interface RecurringItem {
-  id: string;
-  amount: number;
-  category: string;
-  frequency: string;
-  isActive: boolean;
-  createdAt: string;
+  accountBalances: AccountBalance[];
 }
 
 export default function NetWorthPage() {
   const [investments, setInvestments] = useState<TrackedInvestment[]>([]);
   const [investmentValues, setInvestmentValues] = useState<Record<string, number>>({});
-  const [bankBalance, setBankBalance] = useState(0);
-  const [bankBreakdown, setBankBreakdown] = useState({ income: 0, bizExp: 0, recExpenses: 0, unlogged: 0 });
+  const [latestBalances, setLatestBalances] = useState<AccountBalance[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
     let invs: TrackedInvestment[] = [];
     let entries: WeeklyEntry[] = [];
-    let recurring: RecurringItem[] = [];
     let s: Settings | null = null;
 
     try {
-      const [invRes, entriesRes, recurringRes, settingsRes] = await Promise.all([
+      const [invRes, entriesRes, settingsRes] = await Promise.all([
         fetch("/api/portfolio"),
         fetch("/api/entries?yearOnly=true"),
-        fetch("/api/recurring"),
         fetch("/api/settings"),
       ]);
       if (invRes.ok) invs = await invRes.json();
       if (entriesRes.ok) entries = await entriesRes.json();
-      if (recurringRes.ok) recurring = await recurringRes.json();
       if (settingsRes.ok) s = await settingsRes.json();
     } catch {
       // DB may be unreachable — use defaults
@@ -142,43 +129,9 @@ export default function NetWorthPage() {
     setInvestments(invs);
     setSettings(s);
 
-    const refDate = s ? new Date(s.refDate) : new Date();
-    const bankStart = s?.bankBalance ?? 0;
-    const now = new Date();
-
-    // Filter entries to only those after refDate
-    const entriesSinceRef = entries.filter((e) => new Date(e.weekStart) >= refDate);
-    const allItems = entriesSinceRef.flatMap((e) => e.lineItems);
-
-    // Actual income from weekly entries
-    const entryIncome = allItems.filter((i) => i.category === "INCOME").reduce((s, i) => s + i.amount, 0);
-
-    // Business expenses from weekly entries
-    const entryBizExp = allItems.filter((i) => i.category === "BUSINESS_EXPENSE").reduce((s, i) => s + i.amount, 0);
-
-    // Recurring expenses impact (matches recurring page — weekly * occurrences, monthly * occurrences)
-    let recExpenses = 0;
-    for (const item of recurring) {
-      if (!item.isActive || item.category === "INCOME" || item.category === "INVESTMENT") continue;
-      const created = new Date(item.createdAt);
-      const start = created > refDate ? created : refDate;
-      let occurrences = 0;
-      if (item.frequency === "WEEKLY") {
-        occurrences = Math.floor((now.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000));
-      } else {
-        occurrences = monthsElapsed(start, now);
-      }
-      if (occurrences < 0) occurrences = 0;
-      recExpenses += item.amount * occurrences;
-    }
-
-    // $1,000/month for unlogged personal expenses
-    const monthsSinceRef = monthsElapsed(refDate, now);
-    const unloggedPersonal = Math.max(0, monthsSinceRef) * 1000;
-
-    const totalBankBalance = bankStart + entryIncome - entryBizExp - recExpenses - unloggedPersonal;
-    setBankBreakdown({ income: entryIncome, bizExp: entryBizExp, recExpenses, unlogged: unloggedPersonal });
-    setBankBalance(totalBankBalance);
+    // Get the latest entry's account balances
+    const latestEntry = entries[0];
+    setLatestBalances(latestEntry?.accountBalances || []);
 
     const priceableInvs = invs.filter((i) => i.type !== "MANUAL");
     const manualInvs = invs.filter((i) => i.type === "MANUAL");
@@ -285,9 +238,9 @@ export default function NetWorthPage() {
     return <div className="text-slate-400 py-8">Loading net worth...</div>;
   }
 
-  const bankStart = settings?.bankBalance ?? 0;
+  const totalAccountBalances = latestBalances.reduce((sum, b) => sum + b.balance, 0);
   const totalInvestments = Object.values(investmentValues).reduce((s, v) => s + v, 0);
-  const totalAssets = calcs.homeEquity + bankBalance + totalInvestments;
+  const totalAssets = calcs.homeEquity + totalAccountBalances + totalInvestments;
   const totalLiabilities = calcs.studentLoanBalance + calcs.carLoanBalance;
   const netWorth = totalAssets - totalLiabilities;
 
@@ -298,7 +251,7 @@ export default function NetWorthPage() {
   const hasHome = (settings?.homeValue ?? 0) > 0;
   const hasStudentLoan = (settings?.studentLoanBalance ?? 0) > 0;
   const hasCarLoan = (settings?.carLoanBalance ?? 0) > 0;
-  const hasAnySetup = hasHome || hasStudentLoan || hasCarLoan || bankStart > 0;
+  const hasAnySetup = hasHome || hasStudentLoan || hasCarLoan || latestBalances.length > 0;
 
   return (
     <div>
@@ -373,45 +326,66 @@ export default function NetWorthPage() {
               </div>
             )}
 
-            {/* Bank */}
-            <div className="px-6 py-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-slate-700">Bank Accounts</span>
-                <MaskedValue value={formatCurrency(bankBalance)} className="font-semibold text-slate-800" />
-              </div>
-              {bankStart > 0 && (
-                <div className="mt-2 text-xs text-slate-400 space-y-0.5">
-                  <div className="flex justify-between">
-                    <span>Starting Balance</span>
-                    <MaskedValue value={formatCurrency(bankStart)} />
-                  </div>
-                  {bankBreakdown.income > 0 && (
-                    <div className="flex justify-between">
-                      <span>Income (weekly entries)</span>
-                      <MaskedValue value={`+${formatCurrency(bankBreakdown.income)}`} className="text-emerald-500" />
+            {/* Account Balances */}
+            {latestBalances.length > 0 && (() => {
+              const coinbaseItems = latestBalances.filter((b) => b.accountName.startsWith("Coinbase - "));
+              const robinhoodItems = latestBalances.filter((b) => b.accountName.startsWith("Robinhood - "));
+              const cashItems = latestBalances.filter(
+                (b) => !b.accountName.startsWith("Coinbase - ") && !b.accountName.startsWith("Robinhood - ")
+              );
+              const coinbaseTotal = coinbaseItems.reduce((sum, b) => sum + b.balance, 0);
+              const robinhoodTotal = robinhoodItems.reduce((sum, b) => sum + b.balance, 0);
+
+              return (
+                <>
+                  {/* Cash Accounts */}
+                  {cashItems.map((b) => (
+                    <div key={b.accountName} className="px-6 py-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-slate-700">{b.accountName}</span>
+                        <MaskedValue value={formatCurrency(b.balance)} className="font-semibold text-slate-800" />
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Coinbase */}
+                  {coinbaseItems.length > 0 && (
+                    <div className="px-6 py-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-slate-700">Coinbase</span>
+                        <MaskedValue value={formatCurrency(coinbaseTotal)} className="font-semibold text-slate-800" />
+                      </div>
+                      <div className="mt-2 text-xs text-slate-400 space-y-0.5">
+                        {coinbaseItems.map((b) => (
+                          <div key={b.accountName} className="flex justify-between">
+                            <span>{b.accountName.replace("Coinbase - ", "")}</span>
+                            <MaskedValue value={formatCurrency(b.balance)} />
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
-                  {bankBreakdown.bizExp > 0 && (
-                    <div className="flex justify-between">
-                      <span>Business expenses (weekly entries)</span>
-                      <MaskedValue value={`-${formatCurrency(bankBreakdown.bizExp)}`} className="text-red-400" />
+
+                  {/* Robinhood */}
+                  {robinhoodItems.length > 0 && (
+                    <div className="px-6 py-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-slate-700">Robinhood</span>
+                        <MaskedValue value={formatCurrency(robinhoodTotal)} className="font-semibold text-slate-800" />
+                      </div>
+                      <div className="mt-2 text-xs text-slate-400 space-y-0.5">
+                        {robinhoodItems.map((b) => (
+                          <div key={b.accountName} className="flex justify-between">
+                            <span>{b.accountName.replace("Robinhood - ", "")}</span>
+                            <MaskedValue value={formatCurrency(b.balance)} />
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
-                  {bankBreakdown.recExpenses > 0 && (
-                    <div className="flex justify-between">
-                      <span>Recurring expenses</span>
-                      <MaskedValue value={`-${formatCurrency(bankBreakdown.recExpenses)}`} className="text-red-400" />
-                    </div>
-                  )}
-                  {bankBreakdown.unlogged > 0 && (
-                    <div className="flex justify-between">
-                      <span>Unlogged personal (~$1,000/mo)</span>
-                      <MaskedValue value={`-${formatCurrency(bankBreakdown.unlogged)}`} className="text-red-400" />
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+                </>
+              );
+            })()}
 
             {/* Investments */}
             <div className="px-6 py-4">

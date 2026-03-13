@@ -12,16 +12,37 @@ interface LineItemInput {
   category: Category;
 }
 
-interface AccountBalanceInput {
-  tempId: string;
-  accountName: string;
-  balance: string;
-}
+const SIMPLE_ACCOUNTS = [
+  { key: "Personal", label: "Personal" },
+  { key: "Money Markets Account", label: "Money Markets Account" },
+  { key: "Savings", label: "Savings" },
+  { key: "Business", label: "Business" },
+  { key: "Acorns Roth IRA", label: "Acorns Roth IRA" },
+];
+
+const COINBASE_FIELDS = [
+  { key: "Coinbase - Bitcoin", label: "Bitcoin" },
+  { key: "Coinbase - Ethereum", label: "Ethereum" },
+  { key: "Coinbase - XRP", label: "XRP" },
+];
+
+const ROBINHOOD_FIELDS = [
+  { key: "Robinhood - TSLA", label: "TSLA" },
+  { key: "Robinhood - AAPL", label: "AAPL" },
+  { key: "Robinhood - GLXY", label: "GLXY" },
+];
+
+const ALL_ACCOUNT_KEYS = [
+  ...SIMPLE_ACCOUNTS.map((a) => a.key),
+  ...COINBASE_FIELDS.map((a) => a.key),
+  ...ROBINHOOD_FIELDS.map((a) => a.key),
+];
 
 interface InvestmentInput {
   tempId: string;
   name: string;
   amount: string;
+  isRecurring?: boolean;
 }
 
 interface RecurringItem {
@@ -61,7 +82,7 @@ export default function WeeklyEntryForm() {
   const [saved, setSaved] = useState(false);
 
   const [lineItems, setLineItems] = useState<LineItemInput[]>([]);
-  const [accountBalances, setAccountBalances] = useState<AccountBalanceInput[]>([]);
+  const [balances, setBalances] = useState<Record<string, string>>({});
   const [investments, setInvestments] = useState<InvestmentInput[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
 
@@ -118,6 +139,7 @@ export default function WeeklyEntryForm() {
             tempId: tempId(),
             name: r.description,
             amount: r.amount.toString(),
+            isRecurring: true,
           }));
 
         if (recurringLineItems.length > 0) {
@@ -148,13 +170,11 @@ export default function WeeklyEntryForm() {
               category: i.category as Category,
             }))
           );
-          setAccountBalances(
-            entry.accountBalances.map((b: { accountName: string; balance: number }) => ({
-              tempId: tempId(),
-              accountName: b.accountName,
-              balance: b.balance.toString(),
-            }))
-          );
+          const balanceMap: Record<string, string> = {};
+          entry.accountBalances.forEach((b: { accountName: string; balance: number }) => {
+            balanceMap[b.accountName] = b.balance.toString();
+          });
+          setBalances(balanceMap);
           setInvestments(
             entry.investments.map((inv: { name: string; amount: number }) => ({
               tempId: tempId(),
@@ -178,16 +198,8 @@ export default function WeeklyEntryForm() {
     setLineItems(lineItems.map((i) => (i.tempId === id ? { ...i, [field]: value } : i)));
   }
 
-  function addAccountBalance() {
-    setAccountBalances([...accountBalances, { tempId: tempId(), accountName: "", balance: "" }]);
-  }
-
-  function removeAccountBalance(id: string) {
-    setAccountBalances(accountBalances.filter((b) => b.tempId !== id));
-  }
-
-  function updateAccountBalance(id: string, field: "accountName" | "balance", value: string) {
-    setAccountBalances(accountBalances.map((b) => (b.tempId === id ? { ...b, [field]: value } : b)));
+  function updateBalance(key: string, value: string) {
+    setBalances((prev) => ({ ...prev, [key]: value }));
   }
 
   function addInvestment() {
@@ -218,11 +230,11 @@ export default function WeeklyEntryForm() {
           amount: parseFloat(i.amount),
           category: i.category,
         })),
-      accountBalances: accountBalances
-        .filter((b) => b.accountName && b.balance)
-        .map((b) => ({
-          accountName: b.accountName,
-          balance: parseFloat(b.balance),
+      accountBalances: ALL_ACCOUNT_KEYS
+        .filter((key) => balances[key] && parseFloat(balances[key]) !== 0)
+        .map((key) => ({
+          accountName: key,
+          balance: parseFloat(balances[key]),
         })),
       investments: investments
         .filter((inv) => inv.name && inv.amount)
@@ -361,39 +373,71 @@ export default function WeeklyEntryForm() {
       {/* Account Balances */}
       <div className="bg-white border border-slate-200 rounded-lg p-4 mb-4 shadow-sm">
         <h3 className="font-semibold text-slate-700 mb-3">Account Balances</h3>
-        {accountBalances.map((b) => (
-          <div key={b.tempId} className="flex gap-2 mb-2">
-            <input
-              type="text"
-              placeholder="Account Name"
-              value={b.accountName}
-              onChange={(e) => updateAccountBalance(b.tempId, "accountName", e.target.value)}
-              className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm"
-            />
+
+        {/* Simple accounts */}
+        {SIMPLE_ACCOUNTS.map((field) => (
+          <div key={field.key} className="flex items-center gap-2 mb-2">
+            <label className="flex-1 text-sm text-slate-600">{field.label}</label>
             <input
               type="number"
-              placeholder="Balance"
+              placeholder="0.00"
               step="0.01"
-              value={b.balance}
-              onChange={(e) => updateAccountBalance(b.tempId, "balance", e.target.value)}
-              className="w-32 border border-slate-300 rounded-lg px-3 py-2 text-sm"
+              value={balances[field.key] || ""}
+              onChange={(e) => updateBalance(field.key, e.target.value)}
+              className="w-40 border border-slate-300 rounded-lg px-3 py-2 text-sm text-right"
             />
-            <button
-              type="button"
-              onClick={() => removeAccountBalance(b.tempId)}
-              className="text-red-400 hover:text-red-600 px-2"
-            >
-              &times;
-            </button>
           </div>
         ))}
-        <button
-          type="button"
-          onClick={addAccountBalance}
-          className="text-sm text-slate-500 hover:text-slate-700 mt-1"
-        >
-          + Add Account
-        </button>
+
+        {/* Coinbase */}
+        <div className="mt-4 border-t border-slate-100 pt-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-slate-700">Coinbase</span>
+            <span className="text-sm font-medium text-slate-500">
+              Total: {formatCurrency(
+                COINBASE_FIELDS.reduce((sum, f) => sum + (parseFloat(balances[f.key] || "0") || 0), 0)
+              )}
+            </span>
+          </div>
+          {COINBASE_FIELDS.map((field) => (
+            <div key={field.key} className="flex items-center gap-2 mb-2 ml-4">
+              <label className="flex-1 text-sm text-slate-500">{field.label}</label>
+              <input
+                type="number"
+                placeholder="0.00"
+                step="0.01"
+                value={balances[field.key] || ""}
+                onChange={(e) => updateBalance(field.key, e.target.value)}
+                className="w-40 border border-slate-300 rounded-lg px-3 py-2 text-sm text-right"
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Robinhood */}
+        <div className="mt-4 border-t border-slate-100 pt-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-semibold text-slate-700">Robinhood</span>
+            <span className="text-sm font-medium text-slate-500">
+              Total: {formatCurrency(
+                ROBINHOOD_FIELDS.reduce((sum, f) => sum + (parseFloat(balances[f.key] || "0") || 0), 0)
+              )}
+            </span>
+          </div>
+          {ROBINHOOD_FIELDS.map((field) => (
+            <div key={field.key} className="flex items-center gap-2 mb-2 ml-4">
+              <label className="flex-1 text-sm text-slate-500">{field.label}</label>
+              <input
+                type="number"
+                placeholder="0.00"
+                step="0.01"
+                value={balances[field.key] || ""}
+                onChange={(e) => updateBalance(field.key, e.target.value)}
+                className="w-40 border border-slate-300 rounded-lg px-3 py-2 text-sm text-right"
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Investments */}
@@ -406,7 +450,22 @@ export default function WeeklyEntryForm() {
             </span>
           )}
         </div>
-        {investments.map((inv) => (
+        {/* Recurring investments - fixed labels, editable amounts */}
+        {investments.filter((inv) => inv.isRecurring).map((inv) => (
+          <div key={inv.tempId} className="flex items-center gap-2 mb-2">
+            <label className="flex-1 text-sm text-slate-600">{inv.name}</label>
+            <input
+              type="number"
+              placeholder="0.00"
+              step="0.01"
+              value={inv.amount}
+              onChange={(e) => updateInvestment(inv.tempId, "amount", e.target.value)}
+              className="w-40 border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white text-right"
+            />
+          </div>
+        ))}
+        {/* Extra one-off investments */}
+        {investments.filter((inv) => !inv.isRecurring).map((inv) => (
           <div key={inv.tempId} className="flex gap-2 mb-2">
             <input
               type="text"
@@ -421,7 +480,7 @@ export default function WeeklyEntryForm() {
               step="0.01"
               value={inv.amount}
               onChange={(e) => updateInvestment(inv.tempId, "amount", e.target.value)}
-              className="w-32 border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"
+              className="w-40 border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white text-right"
             />
             <button
               type="button"
