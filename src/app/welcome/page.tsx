@@ -1,4 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Tax Tracker — Financial Tool for Real Estate Professionals",
+  description: "Track income, expenses, mileage, and taxes in one place. Built for realtors and real estate professionals. AI tax advisor, deal tracker, and investment portfolio included.",
+  openGraph: {
+    title: "Tax Tracker — Financial Tool for Real Estate Professionals",
+    description: "Track income, expenses, mileage, and taxes in one place. Built for realtors and real estate professionals.",
+    type: "website",
+  },
+};
 
 const FEATURES = [
   {
@@ -219,6 +230,8 @@ export default function WelcomePage() {
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
           <p className="text-sm text-slate-500">&copy; {new Date().getFullYear()} Tax Tracker. All rights reserved.</p>
           <div className="flex gap-6">
+            <Link href="/terms" className="text-sm text-slate-500 hover:text-slate-300">Terms</Link>
+            <Link href="/privacy" className="text-sm text-slate-500 hover:text-slate-300">Privacy</Link>
             <Link href="/login" className="text-sm text-slate-500 hover:text-slate-300">Log in</Link>
             <Link href="/signup" className="text-sm text-slate-500 hover:text-slate-300">Sign up</Link>
           </div>

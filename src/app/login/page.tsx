@@ -77,13 +77,20 @@ export default function LoginPage() {
               placeholder="Your password"
             />
           </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-emerald-600 text-white py-2.5 rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 transition-colors"
-          >
-            {loading ? "Signing in..." : "Sign In"}
-          </button>
+          <div className="flex items-center justify-between">
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-emerald-600 text-white py-2.5 rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+            >
+              {loading ? "Signing in..." : "Sign In"}
+            </button>
+          </div>
+          <div className="text-right">
+            <Link href="/forgot-password" className="text-xs text-slate-400 hover:text-emerald-600">
+              Forgot password?
+            </Link>
+          </div>
         </form>
 
         <div className="relative my-6">
