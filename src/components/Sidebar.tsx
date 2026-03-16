@@ -21,7 +21,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
 
-  if (pathname === "/login" || pathname === "/signup") return null;
+  if (pathname === "/login" || pathname === "/signup" || pathname === "/welcome") return null;
 
   return (
     <aside className="w-64 bg-slate-900 text-white min-h-screen p-4 flex flex-col">
