@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/get-user";
+import { validate, updateEntrySchema } from "@/lib/validations";
 
 export async function GET(
   _request: NextRequest,
@@ -27,6 +28,8 @@ export async function PUT(
   const userId = await requireUserId();
   const { id } = await params;
   const body = await request.json();
+  const parsed = validate(updateEntrySchema, body);
+  if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
 
   // Verify ownership
   const existing = await prisma.weeklyEntry.findFirst({ where: { id, userId } });
@@ -40,12 +43,12 @@ export async function PUT(
   const entry = await prisma.weeklyEntry.update({
     where: { id },
     data: {
-      weekStart: new Date(body.weekStart),
-      weekEnd: new Date(body.weekEnd),
-      mileage: body.mileage || 0,
-      notes: body.notes || "",
+      weekStart: new Date(parsed.data.weekStart),
+      weekEnd: new Date(parsed.data.weekEnd),
+      mileage: parsed.data.mileage || 0,
+      notes: parsed.data.notes || "",
       lineItems: {
-        create: (body.lineItems || []).map(
+        create: (parsed.data.lineItems || []).map(
           (item: { description: string; amount: number; category: string }) => ({
             description: item.description,
             amount: item.amount,
@@ -54,7 +57,7 @@ export async function PUT(
         ),
       },
       accountBalances: {
-        create: (body.accountBalances || []).map(
+        create: (parsed.data.accountBalances || []).map(
           (item: { accountName: string; balance: number }) => ({
             accountName: item.accountName,
             balance: item.balance,
@@ -62,7 +65,7 @@ export async function PUT(
         ),
       },
       investments: {
-        create: (body.investments || []).map(
+        create: (parsed.data.investments || []).map(
           (item: { name: string; amount: number }) => ({
             name: item.name,
             amount: item.amount,

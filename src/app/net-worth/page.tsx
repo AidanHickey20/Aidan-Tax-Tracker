@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { formatCurrency } from "@/lib/utils";
+import { CRYPTO_TICKERS, DEFAULT_INVESTMENT_GROWTH_RATE } from "@/lib/constants";
 import Link from "next/link";
 import { MaskedValue } from "@/components/PrivacyProvider";
 
@@ -31,19 +32,24 @@ interface Settings {
   studentLoanBalance: number;
   studentLoanRate: number;
   studentLoanPayment: number;
+  studentLoanPaymentDay: number;
   carLoanBalance: number;
   carLoanRate: number;
   carLoanPayment: number;
+  carLoanPaymentDay: number;
   refDate: string;
+  investmentGrowthRate: number;
 }
 
-const CRYPTO_TICKERS: Record<string, string> = {
-  bitcoin: "BTC",
-  ethereum: "ETH",
-  ripple: "XRP",
-  solana: "SOL",
-  dogecoin: "DOGE",
-};
+function ordinalSuffix(n: number): string {
+  if (n >= 11 && n <= 13) return "th";
+  switch (n % 10) {
+    case 1: return "st";
+    case 2: return "nd";
+    case 3: return "rd";
+    default: return "th";
+  }
+}
 
 function monthsElapsed(from: Date, to: Date): number {
   return (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
@@ -106,6 +112,7 @@ export default function NetWorthPage() {
   const [investmentValues, setInvestmentValues] = useState<Record<string, number>>({});
   const [latestBalances, setLatestBalances] = useState<AccountBalance[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [cashAccountNames, setCashAccountNames] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
@@ -113,21 +120,25 @@ export default function NetWorthPage() {
     let entries: WeeklyEntry[] = [];
     let s: Settings | null = null;
 
+    let accounts: { name: string; category: string }[] = [];
     try {
-      const [invRes, entriesRes, settingsRes] = await Promise.all([
+      const [invRes, entriesRes, settingsRes, accountsRes] = await Promise.all([
         fetch("/api/portfolio"),
         fetch("/api/entries?yearOnly=true"),
         fetch("/api/settings"),
+        fetch("/api/accounts"),
       ]);
       if (invRes.ok) invs = await invRes.json();
       if (entriesRes.ok) entries = await entriesRes.json();
       if (settingsRes.ok) s = await settingsRes.json();
+      if (accountsRes.ok) accounts = await accountsRes.json();
     } catch {
       // DB may be unreachable — use defaults
     }
 
     setInvestments(invs);
     setSettings(s);
+    setCashAccountNames(new Set(accounts.filter((a) => a.category === "CASH").map((a) => a.name)));
 
     // Get the latest entry's account balances
     const latestEntry = entries[0];
@@ -139,7 +150,8 @@ export default function NetWorthPage() {
     const values: Record<string, number> = {};
     for (const m of manualInvs) {
       const startBalance = m.avgCost * m.shares;
-      const weeklyRate = Math.pow(1 + 0.07, 1 / 52) - 1;
+      const growthRate = s?.investmentGrowthRate ?? DEFAULT_INVESTMENT_GROWTH_RATE;
+      const weeklyRate = Math.pow(1 + growthRate, 1 / 52) - 1;
       const weeksElapsed = Math.max(
         0,
         Math.floor((Date.now() - new Date(m.createdAt).getTime()) / (7 * 24 * 60 * 60 * 1000))
@@ -201,9 +213,9 @@ export default function NetWorthPage() {
       : 0;
     const homeEquity = homeValue - mortgageBalance;
 
-    // Student loan balance — flat reduction on the 1st of each month
+    // Student loan balance — flat reduction on payment day each month
     const studentPaymentsMade = settings.studentLoanBalance > 0
-      ? paymentsSinceRef(refDate, now, 1)
+      ? paymentsSinceRef(refDate, now, settings.studentLoanPaymentDay ?? 1)
       : 0;
     const studentLoanBal = Math.max(0, settings.studentLoanBalance - studentPaymentsMade * settings.studentLoanPayment);
     const studentPaidOff = settings.studentLoanBalance > 0
@@ -214,9 +226,9 @@ export default function NetWorthPage() {
       : 0;
     const studentPayoffDate = new Date(now.getFullYear(), now.getMonth() + studentMonthsLeft, 1);
 
-    // Car loan balance — flat reduction on the 16th of each month
+    // Car loan balance — flat reduction on payment day each month
     const carPaymentsMade = settings.carLoanBalance > 0
-      ? paymentsSinceRef(refDate, now, 16)
+      ? paymentsSinceRef(refDate, now, settings.carLoanPaymentDay ?? 16)
       : 0;
     const carLoanBal = Math.max(0, settings.carLoanBalance - carPaymentsMade * settings.carLoanPayment);
     const carPaidOff = settings.carLoanBalance > 0
@@ -238,9 +250,9 @@ export default function NetWorthPage() {
     return <div className="text-slate-400 py-8">Loading net worth...</div>;
   }
 
-  // Only count cash accounts (Personal, Money Markets, Savings, Business) — not investment accounts
+  // Only count cash accounts — not investment/crypto/retirement accounts
   const bankBalances = latestBalances.filter(
-    (b) => !b.accountName.startsWith("Coinbase - ") && !b.accountName.startsWith("Robinhood - ") && b.accountName !== "Acorns Roth IRA"
+    (b) => cashAccountNames.size === 0 || cashAccountNames.has(b.accountName)
   );
   const totalBankAccounts = bankBalances.reduce((sum, b) => sum + b.balance, 0);
   const totalInvestments = Object.values(investmentValues).reduce((s, v) => s + v, 0);
@@ -397,7 +409,7 @@ export default function NetWorthPage() {
                 </div>
                 <div className="mt-2 text-xs text-slate-400 space-y-0.5">
                   <div className="flex justify-between">
-                    <span>Monthly Payment (1st of month)</span>
+                    <span>Monthly Payment ({settings!.studentLoanPaymentDay ?? 1}{ordinalSuffix(settings!.studentLoanPaymentDay ?? 1)} of month)</span>
                     <MaskedValue value={`${formatCurrency(settings!.studentLoanPayment)}/mo`} />
                   </div>
                   <div className="flex justify-between">
@@ -428,7 +440,7 @@ export default function NetWorthPage() {
                 </div>
                 <div className="mt-2 text-xs text-slate-400 space-y-0.5">
                   <div className="flex justify-between">
-                    <span>Monthly Payment (16th of month)</span>
+                    <span>Monthly Payment ({settings!.carLoanPaymentDay ?? 16}{ordinalSuffix(settings!.carLoanPaymentDay ?? 16)} of month)</span>
                     <MaskedValue value={`${formatCurrency(settings!.carLoanPayment)}/mo`} />
                   </div>
                   <div className="flex justify-between">

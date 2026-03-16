@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/get-user";
+import { validate, createInvestmentSchema, updateInvestmentSchema, deleteByIdSchema } from "@/lib/validations";
+import { isProUser } from "@/lib/subscription";
+
+const PRO_REQUIRED = { error: "Pro plan required" } as const;
 
 export async function GET() {
   const userId = await requireUserId();
+  if (!(await isProUser(userId))) return NextResponse.json(PRO_REQUIRED, { status: 403 });
   const investments = await prisma.trackedInvestment.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
@@ -13,18 +18,22 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const userId = await requireUserId();
+  if (!(await isProUser(userId))) return NextResponse.json(PRO_REQUIRED, { status: 403 });
   try {
     const body = await request.json();
+    const parsed = validate(createInvestmentSchema, body);
+    if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
+
     const investment = await prisma.trackedInvestment.create({
       data: {
         userId,
-        symbol: body.type === "CRYPTO" ? body.symbol.toLowerCase() : body.symbol.toUpperCase(),
-        name: body.name,
-        type: body.type,
-        shares: body.shares || 0,
-        avgCost: body.avgCost || 0,
-        recurringAmount: body.recurringAmount || 0,
-        recurringDay: body.recurringDay ?? -1,
+        symbol: parsed.data.type === "CRYPTO" ? parsed.data.symbol.toLowerCase() : parsed.data.symbol.toUpperCase(),
+        name: parsed.data.name,
+        type: parsed.data.type,
+        shares: parsed.data.shares || 0,
+        avgCost: parsed.data.avgCost || 0,
+        recurringAmount: parsed.data.recurringAmount || 0,
+        recurringDay: parsed.data.recurringDay ?? -1,
       },
     });
     return NextResponse.json(investment, { status: 201 });
@@ -36,21 +45,24 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   const userId = await requireUserId();
+  if (!(await isProUser(userId))) return NextResponse.json(PRO_REQUIRED, { status: 403 });
   const body = await request.json();
+  const parsed = validate(updateInvestmentSchema, body);
+  if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
 
-  const existing = await prisma.trackedInvestment.findFirst({ where: { id: body.id, userId } });
+  const existing = await prisma.trackedInvestment.findFirst({ where: { id: parsed.data.id, userId } });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const investment = await prisma.trackedInvestment.update({
-    where: { id: body.id },
+    where: { id: parsed.data.id },
     data: {
-      symbol: body.symbol,
-      name: body.name,
-      type: body.type,
-      shares: body.shares,
-      avgCost: body.avgCost,
-      recurringAmount: body.recurringAmount || 0,
-      recurringDay: body.recurringDay ?? -1,
+      symbol: parsed.data.symbol,
+      name: parsed.data.name,
+      type: parsed.data.type,
+      shares: parsed.data.shares,
+      avgCost: parsed.data.avgCost,
+      recurringAmount: parsed.data.recurringAmount || 0,
+      recurringDay: parsed.data.recurringDay ?? -1,
     },
   });
   return NextResponse.json(investment);
@@ -58,7 +70,11 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const userId = await requireUserId();
-  const { id } = await request.json();
+  if (!(await isProUser(userId))) return NextResponse.json(PRO_REQUIRED, { status: 403 });
+  const body = await request.json();
+  const parsed = validate(deleteByIdSchema, body);
+  if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
+  const { id } = parsed.data;
 
   const existing = await prisma.trackedInvestment.findFirst({ where: { id, userId } });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });

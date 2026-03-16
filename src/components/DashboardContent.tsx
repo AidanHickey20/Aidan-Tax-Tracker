@@ -3,10 +3,17 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatCurrency, formatWeekLabel } from "@/lib/utils";
+import {
+  SE_TAX_BASE_RATE, SS_RATE, MEDICARE_RATE, SS_WAGE_BASE,
+  STANDARD_DEDUCTION, QBI_DEDUCTION_RATE, FEDERAL_BRACKETS,
+  STATE_TAX_RATE, MUNICIPAL_TAX_RATE,
+} from "@/lib/tax-constants";
 import IncomeExpenseChart from "./IncomeExpenseChart";
 import PortfolioDashboard from "./PortfolioDashboard";
 import { MaskedValue } from "./PrivacyProvider";
 import TaxAdvisor from "./TaxAdvisor";
+import UpgradePrompt from "./UpgradePrompt";
+import { useSubscription } from "./SubscriptionProvider";
 
 interface LineItem {
   id: string;
@@ -19,6 +26,13 @@ interface AccountBalance {
   id: string;
   accountName: string;
   balance: number;
+}
+
+interface UserAccount {
+  id: string;
+  name: string;
+  category: string;
+  group: string | null;
 }
 
 interface InvestmentEntry {
@@ -70,15 +84,18 @@ interface Settings {
   carLoanRate: number;
   carLoanPayment: number;
   refDate: string;
+  investmentGrowthRate: number;
 }
 
 export default function DashboardContent() {
+  const { isProUser } = useSubscription();
   const [entries, setEntries] = useState<WeeklyEntry[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
   const [portfolioTotal, setPortfolioTotal] = useState<number>(0);
   const [recurringItems, setRecurringItems] = useState<RecurringItem[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [userAccounts, setUserAccounts] = useState<UserAccount[]>([]);
 
   useEffect(() => {
     Promise.all([
@@ -86,11 +103,13 @@ export default function DashboardContent() {
       fetch("/api/reminders").then((r) => r.ok ? r.json() : []),
       fetch("/api/recurring").then((r) => r.ok ? r.json() : []),
       fetch("/api/settings").then((r) => r.ok ? r.json() : null),
-    ]).then(([entriesData, remindersData, recurringData, settingsData]) => {
+      fetch("/api/accounts").then((r) => r.ok ? r.json() : []),
+    ]).then(([entriesData, remindersData, recurringData, settingsData, accountsData]) => {
       setEntries(entriesData);
       setReminders(remindersData.filter((r: Reminder) => r.isActive));
       setRecurringItems(recurringData);
       setSettings(settingsData);
+      setUserAccounts(accountsData);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -216,9 +235,10 @@ export default function DashboardContent() {
     }
   }
 
-  // Only count cash accounts — Coinbase, Robinhood, Acorns already in livePortfolio
+  // Only count cash accounts — investment/crypto/retirement accounts are in livePortfolio
+  const cashAccountNames = new Set(userAccounts.filter((a) => a.category === "CASH").map((a) => a.name));
   const totalBankAccounts = latestBalances
-    .filter((b) => !b.accountName.startsWith("Coinbase - ") && !b.accountName.startsWith("Robinhood - ") && b.accountName !== "Acorns Roth IRA")
+    .filter((b) => cashAccountNames.size === 0 || cashAccountNames.has(b.accountName))
     .reduce((sum, b) => sum + b.balance, 0);
   const estNetWorth = homeEquity + totalBankAccounts + livePortfolio - studentBal - carBal;
 
@@ -226,29 +246,19 @@ export default function DashboardContent() {
   function estimateTax(netSEIncome: number): number {
     if (netSEIncome <= 0) return 0;
 
-    const seBase = netSEIncome * 0.9235;
-    const ssTax = Math.min(seBase, 176100) * 0.124;
-    const medicareTax = seBase * 0.029;
+    const seBase = netSEIncome * SE_TAX_BASE_RATE;
+    const ssTax = Math.min(seBase, SS_WAGE_BASE) * SS_RATE;
+    const medicareTax = seBase * MEDICARE_RATE;
     const seTax = ssTax + medicareTax;
 
     const agi = netSEIncome - seTax / 2;
-    const qbiDeduction = netSEIncome * 0.20;
-    const standardDeduction = 15700;
-    const taxableIncome = Math.max(agi - standardDeduction - qbiDeduction, 0);
+    const qbiDeduction = netSEIncome * QBI_DEDUCTION_RATE;
+    const taxableIncome = Math.max(agi - STANDARD_DEDUCTION - qbiDeduction, 0);
 
     let fedTax = 0;
-    const brackets = [
-      { limit: 11925, rate: 0.10 },
-      { limit: 48475, rate: 0.12 },
-      { limit: 103350, rate: 0.22 },
-      { limit: 197300, rate: 0.24 },
-      { limit: 250525, rate: 0.32 },
-      { limit: 626350, rate: 0.35 },
-      { limit: Infinity, rate: 0.37 },
-    ];
     let remaining = taxableIncome;
     let prevLimit = 0;
-    for (const b of brackets) {
+    for (const b of FEDERAL_BRACKETS) {
       const span = b.limit - prevLimit;
       const taxable = Math.min(remaining, span);
       fedTax += taxable * b.rate;
@@ -257,10 +267,10 @@ export default function DashboardContent() {
       if (remaining <= 0) break;
     }
 
-    const ohioTax = taxableIncome * 0.035;
-    const municipalTax = netSEIncome * 0.02;
+    const stateTax = taxableIncome * STATE_TAX_RATE;
+    const municipalTax = netSEIncome * MUNICIPAL_TAX_RATE;
 
-    return seTax + fedTax + ohioTax + municipalTax;
+    return seTax + fedTax + stateTax + municipalTax;
   }
 
   const estimatedTax = estimateTax(estimatedTaxableProfit);
@@ -339,7 +349,7 @@ export default function DashboardContent() {
       </div>
 
       {/* Tax Advisor */}
-      <TaxAdvisor />
+      {isProUser ? <TaxAdvisor /> : <div className="mb-8"><UpgradePrompt feature="AI Tax Advisor" /></div>}
 
       {/* Chart */}
       {chartData.length > 0 && (
@@ -353,7 +363,11 @@ export default function DashboardContent() {
 
       {/* Investment Portfolio */}
       <div className="mb-8">
-        <PortfolioDashboard onTotalChange={setPortfolioTotal} />
+        {isProUser ? (
+          <PortfolioDashboard onTotalChange={setPortfolioTotal} investmentGrowthRate={settings?.investmentGrowthRate} />
+        ) : (
+          <UpgradePrompt feature="Investment Tracker" />
+        )}
       </div>
 
       {/* Account Balances Snapshot */}
@@ -368,49 +382,45 @@ export default function DashboardContent() {
             )}
           </h3>
           {(() => {
-            const coinbaseItems = latestBalances.filter((b) => b.accountName.startsWith("Coinbase - "));
-            const robinhoodItems = latestBalances.filter((b) => b.accountName.startsWith("Robinhood - "));
-            const otherItems = latestBalances.filter(
-              (b) => !b.accountName.startsWith("Coinbase - ") && !b.accountName.startsWith("Robinhood - ")
-            );
-            const coinbaseTotal = coinbaseItems.reduce((sum, b) => sum + b.balance, 0);
-            const robinhoodTotal = robinhoodItems.reduce((sum, b) => sum + b.balance, 0);
+            // Dynamically group accounts by "Group - Item" pattern
+            const groups = new Map<string, AccountBalance[]>();
+            const standalone: AccountBalance[] = [];
+            for (const b of latestBalances) {
+              const dashIdx = b.accountName.indexOf(" - ");
+              if (dashIdx > 0) {
+                const groupName = b.accountName.substring(0, dashIdx);
+                const list = groups.get(groupName) || [];
+                list.push(b);
+                groups.set(groupName, list);
+              } else {
+                standalone.push(b);
+              }
+            }
             return (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {otherItems.map((b) => (
+                {standalone.map((b) => (
                   <div key={b.id} className="flex justify-between items-center bg-slate-50 rounded-lg px-4 py-3">
                     <span className="text-sm text-slate-600">{b.accountName}</span>
                     <MaskedValue value={formatCurrency(b.balance)} className="font-semibold text-slate-800" />
                   </div>
                 ))}
-                {coinbaseItems.length > 0 && (
-                  <div className="bg-slate-50 rounded-lg px-4 py-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-slate-700">Coinbase</span>
-                      <MaskedValue value={formatCurrency(coinbaseTotal)} className="font-semibold text-slate-800" />
-                    </div>
-                    {coinbaseItems.map((b) => (
-                      <div key={b.id} className="flex justify-between items-center mt-1 ml-2">
-                        <span className="text-xs text-slate-500">{b.accountName.replace("Coinbase - ", "")}</span>
-                        <MaskedValue value={formatCurrency(b.balance)} className="text-xs text-slate-600" />
+                {Array.from(groups.entries()).map(([groupName, items]) => {
+                  const groupTotal = items.reduce((sum, b) => sum + b.balance, 0);
+                  return (
+                    <div key={groupName} className="bg-slate-50 rounded-lg px-4 py-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-slate-700">{groupName}</span>
+                        <MaskedValue value={formatCurrency(groupTotal)} className="font-semibold text-slate-800" />
                       </div>
-                    ))}
-                  </div>
-                )}
-                {robinhoodItems.length > 0 && (
-                  <div className="bg-slate-50 rounded-lg px-4 py-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-slate-700">Robinhood</span>
-                      <MaskedValue value={formatCurrency(robinhoodTotal)} className="font-semibold text-slate-800" />
+                      {items.map((b) => (
+                        <div key={b.id} className="flex justify-between items-center mt-1 ml-2">
+                          <span className="text-xs text-slate-500">{b.accountName.replace(`${groupName} - `, "")}</span>
+                          <MaskedValue value={formatCurrency(b.balance)} className="text-xs text-slate-600" />
+                        </div>
+                      ))}
                     </div>
-                    {robinhoodItems.map((b) => (
-                      <div key={b.id} className="flex justify-between items-center mt-1 ml-2">
-                        <span className="text-xs text-slate-500">{b.accountName.replace("Robinhood - ", "")}</span>
-                        <MaskedValue value={formatCurrency(b.balance)} className="text-xs text-slate-600" />
-                      </div>
-                    ))}
-                  </div>
-                )}
+                  );
+                })}
               </div>
             );
           })()}

@@ -5,6 +5,8 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import { MaskedValue } from "@/components/PrivacyProvider";
+import UpgradePrompt from "@/components/UpgradePrompt";
+import { useSubscription } from "@/components/SubscriptionProvider";
 
 const STEP_LABELS: Record<string, string> = {
   ACQUISITION: "Acquisition",
@@ -75,6 +77,7 @@ interface Deal {
 }
 
 export default function DealDetailPage() {
+  const { isProUser, loading: subLoading } = useSubscription();
   const params = useParams();
   const dealId = params.id as string;
 
@@ -170,7 +173,8 @@ export default function DealDetailPage() {
     }
   }
 
-  if (loading) return <div className="text-slate-400 py-8">Loading deal...</div>;
+  if (loading || subLoading) return <div className="text-slate-400 py-8">Loading deal...</div>;
+  if (!isProUser) return <div className="max-w-2xl mx-auto mt-12"><UpgradePrompt feature="Deal Tracker" /></div>;
   if (!deal) return <div className="text-slate-400 py-8">Deal not found.</div>;
 
   const totalSpent = deal.expenses.reduce((s, e) => s + e.amount, 0);

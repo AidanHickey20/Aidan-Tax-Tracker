@@ -3,21 +3,11 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
+import { CRYPTO_TICKERS, DEFAULT_INVESTMENT_GROWTH_RATE } from "@/lib/constants";
 import Sparkline from "./Sparkline";
 import { MaskedValue } from "./PrivacyProvider";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
-const CRYPTO_TICKERS: Record<string, string> = {
-  bitcoin: "BTC",
-  ethereum: "ETH",
-  ripple: "XRP",
-  solana: "SOL",
-  dogecoin: "DOGE",
-  cardano: "ADA",
-  polkadot: "DOT",
-  litecoin: "LTC",
-};
 
 interface TrackedInvestment {
   id: string;
@@ -55,7 +45,7 @@ interface PortfolioRow extends TrackedInvestment {
   totalGainPercent: number;
 }
 
-export default function PortfolioDashboard({ onTotalChange }: { onTotalChange?: (total: number) => void }) {
+export default function PortfolioDashboard({ onTotalChange, investmentGrowthRate }: { onTotalChange?: (total: number) => void; investmentGrowthRate?: number }) {
   const [investments, setInvestments] = useState<TrackedInvestment[]>([]);
   const [rows, setRows] = useState<PortfolioRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,7 +98,8 @@ export default function PortfolioDashboard({ onTotalChange }: { onTotalChange?: 
       if (inv.type === "MANUAL") {
         // For MANUAL investments with recurring contributions, compound at 7% annually
         const startBalance = inv.avgCost * inv.shares;
-        const weeklyRate = Math.pow(1 + 0.07, 1 / 52) - 1; // 7% annual -> weekly
+        const growthRate = investmentGrowthRate ?? DEFAULT_INVESTMENT_GROWTH_RATE;
+        const weeklyRate = Math.pow(1 + growthRate, 1 / 52) - 1;
         const weeksElapsed = Math.max(
           0,
           Math.floor((Date.now() - new Date(inv.createdAt).getTime()) / (7 * 24 * 60 * 60 * 1000))
@@ -166,7 +157,7 @@ export default function PortfolioDashboard({ onTotalChange }: { onTotalChange?: 
     setRows(merged);
     setLastUpdated(new Date());
     setPricesLoading(false);
-  }, []);
+  }, [investmentGrowthRate]);
 
   useEffect(() => {
     fetch("/api/portfolio")

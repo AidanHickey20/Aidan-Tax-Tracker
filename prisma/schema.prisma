@@ -21,6 +21,8 @@ model User {
   accounts    Account[]
   sessions    Session[]
 
+  password      String?
+
   weeklyEntries      WeeklyEntry[]
   recurringItems     RecurringItem[]
   trackedInvestments      TrackedInvestment[]
@@ -28,6 +30,8 @@ model User {
   deals              Deal[]
   reminders          Reminder[]
   settings           UserSettings?
+  userAccounts       UserAccount[]
+  subscription       Subscription?
 }
 
 model UserSettings {
@@ -49,6 +53,25 @@ model UserSettings {
   carLoanRate         Float @default(0)
   carLoanPayment      Float @default(0)
   refDate             DateTime @default(now())
+
+  studentLoanPaymentDay Int   @default(1)
+  carLoanPaymentDay     Int   @default(16)
+  investmentGrowthRate  Float @default(0.07)
+}
+
+model UserAccount {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name      String   // e.g. "Personal", "Coinbase - Bitcoin"
+  category  String   // CASH, INVESTMENT, CRYPTO, RETIREMENT
+  group     String?  // e.g. "Coinbase", "Robinhood", or null for standalone
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, name])
 }
 
 model Account {
@@ -232,4 +255,18 @@ model Reminder {
 
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Subscription {
+  id                   String    @id @default(uuid())
+  userId               String    @unique
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  plan                 String    @default("TRIAL")  // TRIAL, BASIC, PRO
+  status               String    @default("ACTIVE") // ACTIVE, PAST_DUE, CANCELED, EXPIRED
+  trialEndsAt          DateTime?
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 }

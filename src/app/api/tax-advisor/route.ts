@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { requireUserId } from "@/lib/get-user";
+import { validate, taxAdvisorSchema } from "@/lib/validations";
+import { isProUser } from "@/lib/subscription";
 
 function getOpenAI() {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -16,11 +18,11 @@ const SYSTEM_PROMPT = `You are an expert real estate tax attorney and CPA who sp
 - Business expense optimization for real estate professionals
 - Retirement account strategies (Solo 401k, SEP IRA, defined benefit plans)
 - Entity structuring (LLC, S-Corp) for tax optimization
-- Ohio state tax and Lyndhurst municipal tax considerations
+- Federal, state, and local tax considerations for real estate professionals
 - Quarterly estimated tax payment strategies
 - Real estate-specific deductions: marketing, licensing, MLS fees, continuing education, staging, photography
 
-The user is a self-employed real estate professional in Lyndhurst, Ohio. They track their income, business expenses, mileage, and investments.
+The user is a self-employed real estate professional. They track their income, business expenses, mileage, and investments.
 
 Rules:
 - Always provide actionable, specific advice
@@ -28,12 +30,18 @@ Rules:
 - Be concise and direct
 - Remind the user to consult their CPA before making major decisions
 - Focus on LEGAL tax minimization strategies only
-- When relevant, mention Ohio-specific and municipal tax considerations`;
+- When relevant, mention that state and local tax rules vary by jurisdiction`;
 
 export async function POST(req: NextRequest) {
   try {
-    await requireUserId();
-    const { messages } = await req.json();
+    const userId = await requireUserId();
+    if (!(await isProUser(userId))) {
+      return NextResponse.json({ error: "Pro plan required" }, { status: 403 });
+    }
+    const body = await req.json();
+    const parsed = validate(taxAdvisorSchema, body);
+    if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
+    const { messages } = parsed.data;
 
     const response = await getOpenAI().chat.completions.create({
       model: "gpt-4o-mini",

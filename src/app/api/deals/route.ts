@@ -1,18 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/get-user";
+import { DEFAULT_DEAL_STEPS } from "@/lib/constants";
+import { validate, createDealSchema, updateDealSchema, deleteByIdSchema } from "@/lib/validations";
+import { isProUser } from "@/lib/subscription";
 
-const DEFAULT_STEPS = [
-  { name: "ACQUISITION", sortOrder: 0 },
-  { name: "DEMO", sortOrder: 1 },
-  { name: "RENOVATION", sortOrder: 2 },
-  { name: "LISTING", sortOrder: 3 },
-  { name: "UNDER_CONTRACT", sortOrder: 4 },
-  { name: "CLOSED", sortOrder: 5 },
-];
+const PRO_REQUIRED = { error: "Pro plan required" } as const;
+
 
 export async function GET() {
   const userId = await requireUserId();
+  if (!(await isProUser(userId))) return NextResponse.json(PRO_REQUIRED, { status: 403 });
   const deals = await prisma.deal.findMany({
     where: { userId },
     include: { expenses: true, steps: { orderBy: { sortOrder: "asc" } } },
@@ -23,18 +21,22 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const userId = await requireUserId();
+  if (!(await isProUser(userId))) return NextResponse.json(PRO_REQUIRED, { status: 403 });
   const body = await request.json();
-  const insuranceAmount = body.insurance || 0;
+  const parsed = validate(createDealSchema, body);
+  if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
+
+  const insuranceAmount = parsed.data.insurance || 0;
   const deal = await prisma.deal.create({
     data: {
       userId,
-      address: body.address,
-      nickname: body.nickname || "",
-      purchasePrice: body.purchasePrice || 0,
-      arv: body.arv || 0,
-      notes: body.notes || "",
+      address: parsed.data.address,
+      nickname: parsed.data.nickname || "",
+      purchasePrice: parsed.data.purchasePrice || 0,
+      arv: parsed.data.arv || 0,
+      notes: parsed.data.notes || "",
       steps: {
-        create: DEFAULT_STEPS,
+        create: DEFAULT_DEAL_STEPS,
       },
       expenses: insuranceAmount > 0 ? {
         create: [{ description: "Property Insurance", amount: insuranceAmount, category: "INSURANCE" }],
@@ -47,21 +49,24 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   const userId = await requireUserId();
+  if (!(await isProUser(userId))) return NextResponse.json(PRO_REQUIRED, { status: 403 });
   const body = await request.json();
+  const parsed = validate(updateDealSchema, body);
+  if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
 
-  const existing = await prisma.deal.findFirst({ where: { id: body.id, userId } });
+  const existing = await prisma.deal.findFirst({ where: { id: parsed.data.id, userId } });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const deal = await prisma.deal.update({
-    where: { id: body.id },
+    where: { id: parsed.data.id },
     data: {
-      address: body.address,
-      nickname: body.nickname,
-      purchasePrice: body.purchasePrice,
-      arv: body.arv,
-      status: body.status,
-      notes: body.notes,
-      closedAt: body.closedAt ? new Date(body.closedAt) : null,
+      address: parsed.data.address,
+      nickname: parsed.data.nickname,
+      purchasePrice: parsed.data.purchasePrice,
+      arv: parsed.data.arv,
+      status: parsed.data.status,
+      notes: parsed.data.notes,
+      closedAt: parsed.data.closedAt ? new Date(parsed.data.closedAt) : null,
     },
     include: { expenses: true, steps: { orderBy: { sortOrder: "asc" } } },
   });
@@ -70,7 +75,11 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const userId = await requireUserId();
-  const { id } = await request.json();
+  if (!(await isProUser(userId))) return NextResponse.json(PRO_REQUIRED, { status: 403 });
+  const body = await request.json();
+  const parsed = validate(deleteByIdSchema, body);
+  if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
+  const { id } = parsed.data;
 
   const existing = await prisma.deal.findFirst({ where: { id, userId } });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });

@@ -12,31 +12,14 @@ interface LineItemInput {
   category: Category;
 }
 
-const SIMPLE_ACCOUNTS = [
-  { key: "Personal", label: "Personal" },
-  { key: "Money Markets Account", label: "Money Markets Account" },
-  { key: "Savings", label: "Savings" },
-  { key: "Business", label: "Business" },
-  { key: "Acorns Roth IRA", label: "Acorns Roth IRA" },
-];
-
-const COINBASE_FIELDS = [
-  { key: "Coinbase - Bitcoin", label: "Bitcoin" },
-  { key: "Coinbase - Ethereum", label: "Ethereum" },
-  { key: "Coinbase - XRP", label: "XRP" },
-];
-
-const ROBINHOOD_FIELDS = [
-  { key: "Robinhood - TSLA", label: "TSLA" },
-  { key: "Robinhood - AAPL", label: "AAPL" },
-  { key: "Robinhood - GLXY", label: "GLXY" },
-];
-
-const ALL_ACCOUNT_KEYS = [
-  ...SIMPLE_ACCOUNTS.map((a) => a.key),
-  ...COINBASE_FIELDS.map((a) => a.key),
-  ...ROBINHOOD_FIELDS.map((a) => a.key),
-];
+interface UserAccount {
+  id: string;
+  name: string;
+  category: string;
+  group: string | null;
+  sortOrder: number;
+  isActive: boolean;
+}
 
 interface InvestmentInput {
   tempId: string;
@@ -85,14 +68,17 @@ export default function WeeklyEntryForm() {
   const [balances, setBalances] = useState<Record<string, string>>({});
   const [investments, setInvestments] = useState<InvestmentInput[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [userAccounts, setUserAccounts] = useState<UserAccount[]>([]);
 
-  // Load recurring items, reminders, and portfolio investments
+  // Load recurring items, reminders, portfolio investments, and user accounts
   useEffect(() => {
     Promise.all([
       fetch("/api/recurring").then((r) => r.json()),
       fetch("/api/reminders").then((r) => r.json()),
       fetch("/api/portfolio").then((r) => r.json()),
-    ]).then(([recurringItems, remindersData, portfolioItems]) => {
+      fetch("/api/accounts").then((r) => r.json()),
+    ]).then(([recurringItems, remindersData, portfolioItems, accounts]) => {
+      setUserAccounts(accounts.filter((a: UserAccount) => a.isActive));
       setReminders(remindersData.filter((r: Reminder) => r.isActive));
 
       if (!editId) {
@@ -257,7 +243,8 @@ export default function WeeklyEntryForm() {
           amount: parseFloat(i.amount),
           category: i.category,
         })),
-      accountBalances: ALL_ACCOUNT_KEYS
+      accountBalances: userAccounts
+        .map((a) => a.name)
         .filter((key) => balances[key] && parseFloat(balances[key]) !== 0)
         .map((key) => ({
           accountName: key,
@@ -401,70 +388,60 @@ export default function WeeklyEntryForm() {
       <div className="bg-white border border-slate-200 rounded-lg p-4 mb-4 shadow-sm">
         <h3 className="font-semibold text-slate-700 mb-3">Account Balances</h3>
 
-        {/* Simple accounts */}
-        {SIMPLE_ACCOUNTS.map((field) => (
-          <div key={field.key} className="flex items-center gap-2 mb-2">
-            <label className="flex-1 text-sm text-slate-600">{field.label}</label>
+        {/* Standalone accounts (no group) */}
+        {userAccounts.filter((a) => !a.group).map((account) => (
+          <div key={account.id} className="flex items-center gap-2 mb-2">
+            <label className="flex-1 text-sm text-slate-600">{account.name}</label>
             <input
               type="number"
               placeholder="0.00"
               step="0.01"
-              value={balances[field.key] || ""}
-              onChange={(e) => updateBalance(field.key, e.target.value)}
+              value={balances[account.name] || ""}
+              onChange={(e) => updateBalance(account.name, e.target.value)}
               className="w-40 border border-slate-300 rounded-lg px-3 py-2 text-sm text-right"
             />
           </div>
         ))}
 
-        {/* Coinbase */}
-        <div className="mt-4 border-t border-slate-100 pt-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-slate-700">Coinbase</span>
-            <span className="text-sm font-medium text-slate-500">
-              Total: {formatCurrency(
-                COINBASE_FIELDS.reduce((sum, f) => sum + (parseFloat(balances[f.key] || "0") || 0), 0)
-              )}
-            </span>
-          </div>
-          {COINBASE_FIELDS.map((field) => (
-            <div key={field.key} className="flex items-center gap-2 mb-2 ml-4">
-              <label className="flex-1 text-sm text-slate-500">{field.label}</label>
-              <input
-                type="number"
-                placeholder="0.00"
-                step="0.01"
-                value={balances[field.key] || ""}
-                onChange={(e) => updateBalance(field.key, e.target.value)}
-                className="w-40 border border-slate-300 rounded-lg px-3 py-2 text-sm text-right"
-              />
+        {/* Grouped accounts */}
+        {(() => {
+          const groups = new Map<string, UserAccount[]>();
+          userAccounts.filter((a) => a.group).forEach((a) => {
+            const list = groups.get(a.group!) || [];
+            list.push(a);
+            groups.set(a.group!, list);
+          });
+          return Array.from(groups.entries()).map(([groupName, accounts]) => (
+            <div key={groupName} className="mt-4 border-t border-slate-100 pt-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-slate-700">{groupName}</span>
+                <span className="text-sm font-medium text-slate-500">
+                  Total: {formatCurrency(
+                    accounts.reduce((sum, a) => sum + (parseFloat(balances[a.name] || "0") || 0), 0)
+                  )}
+                </span>
+              </div>
+              {accounts.map((account) => {
+                const displayLabel = account.group
+                  ? account.name.replace(`${account.group} - `, "")
+                  : account.name;
+                return (
+                  <div key={account.id} className="flex items-center gap-2 mb-2 ml-4">
+                    <label className="flex-1 text-sm text-slate-500">{displayLabel}</label>
+                    <input
+                      type="number"
+                      placeholder="0.00"
+                      step="0.01"
+                      value={balances[account.name] || ""}
+                      onChange={(e) => updateBalance(account.name, e.target.value)}
+                      className="w-40 border border-slate-300 rounded-lg px-3 py-2 text-sm text-right"
+                    />
+                  </div>
+                );
+              })}
             </div>
-          ))}
-        </div>
-
-        {/* Robinhood */}
-        <div className="mt-4 border-t border-slate-100 pt-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-slate-700">Robinhood</span>
-            <span className="text-sm font-medium text-slate-500">
-              Total: {formatCurrency(
-                ROBINHOOD_FIELDS.reduce((sum, f) => sum + (parseFloat(balances[f.key] || "0") || 0), 0)
-              )}
-            </span>
-          </div>
-          {ROBINHOOD_FIELDS.map((field) => (
-            <div key={field.key} className="flex items-center gap-2 mb-2 ml-4">
-              <label className="flex-1 text-sm text-slate-500">{field.label}</label>
-              <input
-                type="number"
-                placeholder="0.00"
-                step="0.01"
-                value={balances[field.key] || ""}
-                onChange={(e) => updateBalance(field.key, e.target.value)}
-                className="w-40 border border-slate-300 rounded-lg px-3 py-2 text-sm text-right"
-              />
-            </div>
-          ))}
-        </div>
+          ));
+        })()}
       </div>
 
       {/* Investments */}
