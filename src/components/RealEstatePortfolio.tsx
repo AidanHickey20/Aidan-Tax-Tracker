@@ -28,6 +28,11 @@ interface PropertyWithCalcs extends Property {
   monthsElapsed: number;
 }
 
+/** Convert 0 or falsy numbers to empty string for form display */
+function numToForm(val: number): string {
+  return val ? val.toString() : "";
+}
+
 function calcProperty(p: Property): PropertyWithCalcs {
   const start = new Date(p.startDate);
   const now = new Date();
@@ -73,17 +78,18 @@ export default function RealEstatePortfolio({ onEquityChange }: { onEquityChange
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
-  // Form state
+  // Form state — all empty strings by default so no zeros to fight
   const [address, setAddress] = useState("");
   const [nickname, setNickname] = useState("");
   const [purchasePrice, setPurchasePrice] = useState("");
   const [currentValue, setCurrentValue] = useState("");
-  const [appreciationRate, setAppreciationRate] = useState("0.03");
+  const [appreciationRate, setAppreciationRate] = useState("");
   const [mortgageBalance, setMortgageBalance] = useState("");
   const [mortgageRate, setMortgageRate] = useState("");
   const [mortgagePayment, setMortgagePayment] = useState("");
-  const [mortgageTerm, setMortgageTerm] = useState("360");
+  const [mortgageTerm, setMortgageTerm] = useState("");
   const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0]);
 
   useEffect(() => {
@@ -101,33 +107,40 @@ export default function RealEstatePortfolio({ onEquityChange }: { onEquityChange
     setNickname("");
     setPurchasePrice("");
     setCurrentValue("");
-    setAppreciationRate("0.03");
+    setAppreciationRate("");
     setMortgageBalance("");
     setMortgageRate("");
     setMortgagePayment("");
-    setMortgageTerm("360");
+    setMortgageTerm("");
     setStartDate(new Date().toISOString().split("T")[0]);
     setEditId(null);
     setShowForm(false);
+    setError("");
   }
 
   function openEdit(p: Property) {
     setAddress(p.address);
     setNickname(p.nickname);
-    setPurchasePrice(p.purchasePrice.toString());
-    setCurrentValue(p.currentValue.toString());
-    setAppreciationRate(p.appreciationRate.toString());
-    setMortgageBalance(p.mortgageBalance.toString());
-    setMortgageRate(p.mortgageRate.toString());
-    setMortgagePayment(p.mortgagePayment.toString());
-    setMortgageTerm(p.mortgageTerm.toString());
+    setPurchasePrice(numToForm(p.purchasePrice));
+    setCurrentValue(numToForm(p.currentValue));
+    setAppreciationRate(numToForm(p.appreciationRate));
+    setMortgageBalance(numToForm(p.mortgageBalance));
+    setMortgageRate(numToForm(p.mortgageRate));
+    setMortgagePayment(numToForm(p.mortgagePayment));
+    setMortgageTerm(numToForm(p.mortgageTerm));
     setStartDate(new Date(p.startDate).toISOString().split("T")[0]);
     setEditId(p.id);
     setShowForm(true);
+    setError("");
   }
 
   async function handleSubmit() {
-    if (!address) return;
+    if (!address) {
+      setError("Address is required.");
+      return;
+    }
+    setError("");
+
     const payload = {
       ...(editId ? { id: editId } : {}),
       address,
@@ -142,30 +155,46 @@ export default function RealEstatePortfolio({ onEquityChange }: { onEquityChange
       startDate,
     };
 
-    const res = await fetch("/api/properties", {
-      method: editId ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    try {
+      const res = await fetch("/api/properties", {
+        method: editId ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-    if (!res.ok) return;
-    const saved = await res.json();
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Failed to save property");
+        return;
+      }
 
-    if (editId) {
-      setProperties(properties.map((p) => (p.id === saved.id ? saved : p)));
-    } else {
-      setProperties([saved, ...properties]);
+      const saved = await res.json();
+
+      if (editId) {
+        setProperties((prev) => prev.map((p) => (p.id === saved.id ? saved : p)));
+      } else {
+        setProperties((prev) => [saved, ...prev]);
+        // Auto-expand the newly added property
+        setExpanded(saved.id);
+      }
+      resetForm();
+    } catch {
+      setError("Failed to save property. Please try again.");
     }
-    resetForm();
   }
 
   async function deleteProperty(id: string) {
-    await fetch("/api/properties", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    setProperties(properties.filter((p) => p.id !== id));
+    try {
+      const res = await fetch("/api/properties", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) {
+        setProperties((prev) => prev.filter((p) => p.id !== id));
+        if (expanded === id) setExpanded(null);
+      }
+    } catch {}
   }
 
   const calcs = properties.map(calcProperty);
@@ -200,7 +229,7 @@ export default function RealEstatePortfolio({ onEquityChange }: { onEquityChange
         </div>
         {canEdit && (
           <button
-            onClick={() => { resetForm(); setShowForm(!showForm); }}
+            onClick={() => { if (showForm && !editId) { resetForm(); } else { resetForm(); setShowForm(true); } }}
             className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
           >
             {showForm && !editId ? "Cancel" : "+ Add Property"}
@@ -223,6 +252,13 @@ export default function RealEstatePortfolio({ onEquityChange }: { onEquityChange
             <p className="text-xs text-slate-500 uppercase tracking-wide">Total Equity</p>
             <MaskedValue value={formatCurrency(totalEquity)} className={`text-lg font-bold block ${totalEquity >= 0 ? "text-emerald-600" : "text-red-500"}`} />
           </div>
+        </div>
+      )}
+
+      {/* Error */}
+      {error && (
+        <div className="mx-6 mt-4 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600">
+          {error}
         </div>
       )}
 
@@ -258,7 +294,7 @@ export default function RealEstatePortfolio({ onEquityChange }: { onEquityChange
                 <input
                   type="number"
                   step="1000"
-                  placeholder="0"
+                  placeholder="350000"
                   value={purchasePrice}
                   onChange={(e) => setPurchasePrice(e.target.value)}
                   className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -272,7 +308,7 @@ export default function RealEstatePortfolio({ onEquityChange }: { onEquityChange
                 <input
                   type="number"
                   step="1000"
-                  placeholder="0"
+                  placeholder="400000"
                   value={currentValue}
                   onChange={(e) => setCurrentValue(e.target.value)}
                   className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -285,12 +321,11 @@ export default function RealEstatePortfolio({ onEquityChange }: { onEquityChange
                 <input
                   type="number"
                   step="0.001"
-                  placeholder="0.03"
+                  placeholder="0.03 = 3%"
                   value={appreciationRate}
                   onChange={(e) => setAppreciationRate(e.target.value)}
                   className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
-                <span className="text-xs text-slate-400 whitespace-nowrap">e.g. 0.03 = 3%</span>
               </div>
             </div>
             <div>
@@ -300,7 +335,7 @@ export default function RealEstatePortfolio({ onEquityChange }: { onEquityChange
                 <input
                   type="number"
                   step="100"
-                  placeholder="0"
+                  placeholder="280000"
                   value={mortgageBalance}
                   onChange={(e) => setMortgageBalance(e.target.value)}
                   className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -313,12 +348,11 @@ export default function RealEstatePortfolio({ onEquityChange }: { onEquityChange
                 <input
                   type="number"
                   step="0.001"
-                  placeholder="0.07"
+                  placeholder="0.07 = 7%"
                   value={mortgageRate}
                   onChange={(e) => setMortgageRate(e.target.value)}
                   className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
-                <span className="text-xs text-slate-400 whitespace-nowrap">e.g. 0.07 = 7%</span>
               </div>
             </div>
             <div>
@@ -328,7 +362,7 @@ export default function RealEstatePortfolio({ onEquityChange }: { onEquityChange
                 <input
                   type="number"
                   step="1"
-                  placeholder="0"
+                  placeholder="1850"
                   value={mortgagePayment}
                   onChange={(e) => setMortgagePayment(e.target.value)}
                   className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -375,19 +409,18 @@ export default function RealEstatePortfolio({ onEquityChange }: { onEquityChange
         <div className="divide-y divide-slate-100">
           {calcs.map((p) => {
             const isOpen = expanded === p.id;
-            const equityPct = p.marketValue > 0 ? (p.equity / p.marketValue) * 100 : 0;
             const payoffPct = p.marketValue > 0
               ? ((p.marketValue - p.currentMortgageBalance) / p.marketValue) * 100
               : 100;
 
             return (
               <div key={p.id}>
-                {/* Collapsed row */}
-                <button
-                  onClick={() => setExpanded(isOpen ? null : p.id)}
-                  className="w-full px-6 py-4 flex items-center gap-4 text-left hover:bg-slate-50 transition-colors"
-                >
-                  <div className="flex-1 min-w-0">
+                {/* Row — always shows name, bar, equity, and action buttons */}
+                <div className="px-6 py-4 flex items-center gap-4">
+                  <button
+                    onClick={() => setExpanded(isOpen ? null : p.id)}
+                    className="flex-1 min-w-0 text-left"
+                  >
                     <div className="flex items-center gap-2">
                       <p className="font-medium text-slate-800 truncate">
                         {p.nickname || p.address}
@@ -411,18 +444,43 @@ export default function RealEstatePortfolio({ onEquityChange }: { onEquityChange
                         <MaskedValue value={formatCurrency(p.currentMortgageBalance)} className="inline" /> remaining
                       </span>
                     </div>
-                  </div>
+                  </button>
+
                   <div className="text-right flex-shrink-0">
                     <MaskedValue value={formatCurrency(p.equity)} className={`text-lg font-bold ${p.equity >= 0 ? "text-emerald-600" : "text-red-500"} block`} />
                     <span className="text-xs text-slate-400">equity</span>
                   </div>
-                  <svg
-                    className={`w-5 h-5 text-slate-400 flex-shrink-0 transition-transform ${isOpen ? "rotate-180" : ""}`}
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
+
+                  {/* Always-visible action buttons */}
+                  {canEdit && (
+                    <div className="flex flex-col gap-1 flex-shrink-0">
+                      <button
+                        onClick={() => openEdit(p)}
+                        className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1 rounded-md transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => deleteProperty(p.id)}
+                        className="text-xs bg-red-50 hover:bg-red-100 text-red-500 px-2.5 py-1 rounded-md transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => setExpanded(isOpen ? null : p.id)}
+                    className="flex-shrink-0"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+                    <svg
+                      className={`w-5 h-5 text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                </div>
 
                 {/* Expanded detail */}
                 {isOpen && (
@@ -503,24 +561,6 @@ export default function RealEstatePortfolio({ onEquityChange }: { onEquityChange
                     <div className="mt-3 text-xs text-slate-400">
                       Tracking since {new Date(p.startDate).toLocaleDateString()} ({p.monthsElapsed} months)
                     </div>
-
-                    {/* Actions */}
-                    {canEdit && (
-                      <div className="mt-4 flex gap-2">
-                        <button
-                          onClick={() => openEdit(p)}
-                          className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => deleteProperty(p.id)}
-                          className="text-sm bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
