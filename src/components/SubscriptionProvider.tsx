@@ -8,6 +8,8 @@ interface SubscriptionState {
   isProUser: boolean;
   canEdit: boolean;
   trialEndsAt: string | null;
+  currentPeriodEnd: string | null;
+  hasStripeCustomer: boolean;
   daysLeft: number | null;
   loading: boolean;
 }
@@ -17,6 +19,8 @@ const SubscriptionContext = createContext<SubscriptionState>({
   isProUser: true,
   canEdit: true,
   trialEndsAt: null,
+  currentPeriodEnd: null,
+  hasStripeCustomer: false,
   daysLeft: null,
   loading: true,
 });
@@ -32,6 +36,8 @@ export default function SubscriptionProvider({ children }: { children: React.Rea
     isProUser: true,
     canEdit: true,
     trialEndsAt: null,
+    currentPeriodEnd: null,
+    hasStripeCustomer: false,
     daysLeft: null,
     loading: true,
   });
@@ -47,7 +53,13 @@ export default function SubscriptionProvider({ children }: { children: React.Rea
         if (data.trialEndsAt) {
           daysLeft = Math.max(0, Math.ceil((new Date(data.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
         }
-        setState({ plan, isProUser, canEdit, trialEndsAt: data.trialEndsAt, daysLeft, loading: false });
+        setState({
+          plan, isProUser, canEdit,
+          trialEndsAt: data.trialEndsAt,
+          currentPeriodEnd: data.currentPeriodEnd ?? null,
+          hasStripeCustomer: data.hasStripeCustomer ?? false,
+          daysLeft, loading: false,
+        });
       })
       .catch(() => {
         setState((s) => ({ ...s, loading: false }));

@@ -21,13 +21,23 @@ const PRO_FEATURES = [
   "Real estate deal tracker",
 ];
 
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "long", day: "numeric", year: "numeric",
+  });
+}
+
 export default function BillingPage() {
-  const { plan, daysLeft, loading } = useSubscription();
+  const { plan, daysLeft, currentPeriodEnd, hasStripeCustomer, loading } = useSubscription();
   const searchParams = useSearchParams();
   const success = searchParams.get("success");
   const canceled = searchParams.get("canceled");
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [portalError, setPortalError] = useState("");
+  const [cancelConfirm, setCancelConfirm] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [cancelDone, setCancelDone] = useState(false);
 
   async function handleCheckout(selectedPlan: "BASIC" | "PRO") {
     setCheckoutLoading(selectedPlan);
@@ -48,20 +58,41 @@ export default function BillingPage() {
 
   async function handlePortal() {
     setPortalLoading(true);
+    setPortalError("");
     try {
       const res = await fetch("/api/stripe/portal", { method: "POST" });
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
+      } else {
+        setPortalError(data.error || "Unable to open billing portal. Please try again.");
       }
+    } catch {
+      setPortalError("Something went wrong. Please try again.");
     } finally {
       setPortalLoading(false);
+    }
+  }
+
+  async function handleCancel() {
+    setCancelLoading(true);
+    try {
+      const res = await fetch("/api/stripe/cancel", { method: "POST" });
+      if (res.ok) {
+        setCancelDone(true);
+        setCancelConfirm(false);
+        // Reload the page after a short delay to reflect the change
+        setTimeout(() => window.location.reload(), 1500);
+      }
+    } finally {
+      setCancelLoading(false);
     }
   }
 
   if (loading) return null;
 
   const showPlanCards = plan === "TRIAL" || plan === "EXPIRED";
+  const isActivePaid = plan === "BASIC" || plan === "PRO";
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -75,6 +106,11 @@ export default function BillingPage() {
       {canceled && (
         <div className="bg-amber-900/30 border border-amber-700 text-amber-400 rounded-lg p-4 mb-6">
           Checkout was canceled. You can try again anytime.
+        </div>
+      )}
+      {cancelDone && (
+        <div className="bg-amber-900/30 border border-amber-700 text-amber-400 rounded-lg p-4 mb-6">
+          Your subscription has been canceled. You&apos;ll retain access until the end of your billing period.
         </div>
       )}
 
@@ -103,8 +139,8 @@ export default function BillingPage() {
             Your trial has ended. Choose a plan below to continue using Taxora.
           </p>
         )}
-        {(plan === "BASIC" || plan === "PRO") && (
-          <div className="flex items-center gap-3 mt-3">
+        {isActivePaid && (
+          <div className="mt-3 space-y-3">
             {plan === "BASIC" && (
               <button
                 onClick={() => handleCheckout("PRO")}
@@ -114,16 +150,86 @@ export default function BillingPage() {
                 {checkoutLoading === "PRO" ? "Redirecting..." : "Upgrade to Pro"}
               </button>
             )}
-            <button
-              onClick={handlePortal}
-              disabled={portalLoading}
-              className="bg-slate-800 text-slate-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors disabled:opacity-50"
-            >
-              {portalLoading ? "Loading..." : "Manage Billing"}
-            </button>
           </div>
         )}
       </div>
+
+      {/* Billing Details — for active paid users */}
+      {isActivePaid && (
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 shadow-sm mb-6">
+          <h3 className="text-lg font-semibold text-slate-100 mb-4">Billing Details</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-400">Plan</span>
+              <span className="text-slate-100 font-medium">
+                {plan === "PRO" ? "Pro — $19.99/mo" : "Basic — $9.99/mo"}
+              </span>
+            </div>
+            {currentPeriodEnd && (
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-400">Next billing date</span>
+                <span className="text-slate-100">{formatDate(currentPeriodEnd)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-400">Payment method</span>
+              <span className="text-slate-100">
+                {hasStripeCustomer ? "On file via Stripe" : "—"}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-3 mt-6 pt-4 border-t border-slate-700">
+            {hasStripeCustomer && (
+              <button
+                onClick={handlePortal}
+                disabled={portalLoading}
+                className="bg-slate-700 text-slate-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-600 transition-colors disabled:opacity-50"
+              >
+                {portalLoading ? "Loading..." : "Manage Payment Method"}
+              </button>
+            )}
+            {plan === "BASIC" && (
+              <button
+                onClick={() => handleCheckout("PRO")}
+                disabled={checkoutLoading !== null}
+                className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50"
+              >
+                {checkoutLoading === "PRO" ? "Redirecting..." : "Upgrade to Pro"}
+              </button>
+            )}
+            {!cancelConfirm ? (
+              <button
+                onClick={() => setCancelConfirm(true)}
+                className="text-sm text-slate-500 hover:text-red-400 transition-colors ml-auto"
+              >
+                Cancel subscription
+              </button>
+            ) : (
+              <div className="flex items-center gap-3 ml-auto bg-red-900/20 border border-red-800 rounded-lg px-4 py-2">
+                <span className="text-sm text-red-400">Are you sure?</span>
+                <button
+                  onClick={handleCancel}
+                  disabled={cancelLoading}
+                  className="text-sm font-medium text-red-400 hover:text-red-300 disabled:opacity-50"
+                >
+                  {cancelLoading ? "Canceling..." : "Yes, cancel"}
+                </button>
+                <button
+                  onClick={() => setCancelConfirm(false)}
+                  className="text-sm text-slate-400 hover:text-slate-200"
+                >
+                  Never mind
+                </button>
+              </div>
+            )}
+          </div>
+
+          {portalError && (
+            <p className="text-sm text-red-400 mt-3">{portalError}</p>
+          )}
+        </div>
+      )}
 
       {/* Plan comparison cards */}
       {showPlanCards && (

@@ -20,5 +20,6 @@ export async function GET() {
     status: sub.status,
     trialEndsAt: sub.trialEndsAt?.toISOString() ?? null,
     currentPeriodEnd: sub.currentPeriodEnd?.toISOString() ?? null,
+    hasStripeCustomer: !!sub.stripeCustomerId,
   });
 }
