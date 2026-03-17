@@ -125,20 +125,32 @@ export const updatePropertySchema = z.object({
 // ── Deals ──
 
 export const createDealSchema = z.object({
+  dealType: z.enum(["FIX_AND_FLIP", "WHOLESALE", "REALTOR"]).optional().default("FIX_AND_FLIP"),
   address: z.string().min(1).max(500),
   nickname: z.string().max(200).optional().default(""),
   purchasePrice: z.number().min(0).optional().default(0),
   arv: z.number().min(0).optional().default(0),
+  assignmentFee: z.number().min(0).optional().default(0),
+  underContractDate: z.string().optional(),
+  targetCloseDate: z.string().optional(),
   insurance: z.number().min(0).optional().default(0),
   notes: z.string().max(5000).optional().default(""),
+  contingencies: z.array(z.object({
+    name: z.string().min(1).max(200),
+    deadline: z.string().optional(),
+  })).optional().default([]),
 });
 
 export const updateDealSchema = z.object({
   id: z.string().min(1),
+  dealType: z.enum(["FIX_AND_FLIP", "WHOLESALE", "REALTOR"]).optional(),
   address: z.string().min(1).max(500),
   nickname: z.string().max(200),
   purchasePrice: z.number().min(0),
   arv: z.number().min(0),
+  assignmentFee: z.number().min(0).optional().default(0),
+  underContractDate: z.string().nullable().optional(),
+  targetCloseDate: z.string().nullable().optional(),
   status: z.string().min(1),
   notes: z.string().max(5000),
   closedAt: z.string().nullable().optional(),

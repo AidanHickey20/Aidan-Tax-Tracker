@@ -225,16 +225,20 @@ model Property {
 }
 
 model Deal {
-  id           String        @id @default(uuid())
-  address      String
-  nickname     String        @default("")
-  purchasePrice Float        @default(0)
-  arv          Float         @default(0) // After Repair Value
-  status       String        @default("ACQUISITION") // current phase
-  notes        String        @default("")
-  closedAt     DateTime?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id                String        @id @default(uuid())
+  dealType          String        @default("FIX_AND_FLIP") // FIX_AND_FLIP, WHOLESALE, REALTOR
+  address           String
+  nickname          String        @default("")
+  purchasePrice     Float         @default(0)
+  arv               Float         @default(0) // After Repair Value (fix & flip)
+  assignmentFee     Float         @default(0) // Wholesale assignment fee
+  underContractDate DateTime?     // Date went under contract (realtor)
+  targetCloseDate   DateTime?     // Target closing date
+  status            String        @default("ACQUISITION") // current phase
+  notes             String        @default("")
+  closedAt          DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -256,9 +260,10 @@ model DealExpense {
 
 model DealStep {
   id          String    @id @default(uuid())
-  name        String    // ACQUISITION, DEMO, RENOVATION, LISTING, UNDER_CONTRACT, CLOSED
+  name        String    // Step identifier (e.g. ACQUISITION, CONTINGENCY:Inspection)
   completed   Boolean   @default(false)
   completedAt DateTime?
+  deadline    DateTime? // Contingency expiration date
   notes       String    @default("")
   sortOrder   Int       @default(0)
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/get-user";
-import { DEFAULT_DEAL_STEPS } from "@/lib/constants";
+import { DEFAULT_DEAL_STEPS, DEFAULT_WHOLESALE_STEPS } from "@/lib/constants";
 import { validate, createDealSchema, updateDealSchema, deleteByIdSchema } from "@/lib/validations";
 import { isProUser } from "@/lib/subscription";
 
@@ -26,17 +26,47 @@ export async function POST(request: NextRequest) {
   const parsed = validate(createDealSchema, body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
 
+  const dealType = parsed.data.dealType || "FIX_AND_FLIP";
   const insuranceAmount = parsed.data.insurance || 0;
+
+  // Build steps based on deal type
+  let steps: { name: string; sortOrder: number; deadline?: Date | null }[];
+
+  if (dealType === "REALTOR") {
+    const contingencies = parsed.data.contingencies || [];
+    steps = [
+      { name: "UNDER_CONTRACT", sortOrder: 0 },
+      { name: "EARNEST_MONEY", sortOrder: 1 },
+      ...contingencies.map((c, i) => ({
+        name: `CONTINGENCY:${c.name}`,
+        sortOrder: i + 2,
+        deadline: c.deadline ? new Date(c.deadline) : null,
+      })),
+      { name: "CONTINGENCIES_REMOVED", sortOrder: contingencies.length + 2 },
+      { name: "CLOSING", sortOrder: contingencies.length + 3 },
+      { name: "CLOSED", sortOrder: contingencies.length + 4 },
+    ];
+  } else if (dealType === "WHOLESALE") {
+    steps = DEFAULT_WHOLESALE_STEPS;
+  } else {
+    steps = DEFAULT_DEAL_STEPS;
+  }
+
   const deal = await prisma.deal.create({
     data: {
       userId,
+      dealType,
       address: parsed.data.address,
       nickname: parsed.data.nickname || "",
       purchasePrice: parsed.data.purchasePrice || 0,
       arv: parsed.data.arv || 0,
+      assignmentFee: parsed.data.assignmentFee || 0,
+      underContractDate: parsed.data.underContractDate ? new Date(parsed.data.underContractDate) : null,
+      targetCloseDate: parsed.data.targetCloseDate ? new Date(parsed.data.targetCloseDate) : null,
+      status: dealType === "REALTOR" ? "UNDER_CONTRACT" : "ACQUISITION",
       notes: parsed.data.notes || "",
       steps: {
-        create: DEFAULT_DEAL_STEPS,
+        create: steps,
       },
       expenses: insuranceAmount > 0 ? {
         create: [{ description: "Property Insurance", amount: insuranceAmount, category: "INSURANCE" }],
@@ -64,6 +94,13 @@ export async function PUT(request: NextRequest) {
       nickname: parsed.data.nickname,
       purchasePrice: parsed.data.purchasePrice,
       arv: parsed.data.arv,
+      assignmentFee: parsed.data.assignmentFee ?? existing.assignmentFee,
+      underContractDate: parsed.data.underContractDate !== undefined
+        ? (parsed.data.underContractDate ? new Date(parsed.data.underContractDate) : null)
+        : undefined,
+      targetCloseDate: parsed.data.targetCloseDate !== undefined
+        ? (parsed.data.targetCloseDate ? new Date(parsed.data.targetCloseDate) : null)
+        : undefined,
       status: parsed.data.status,
       notes: parsed.data.notes,
       closedAt: parsed.data.closedAt ? new Date(parsed.data.closedAt) : null,
