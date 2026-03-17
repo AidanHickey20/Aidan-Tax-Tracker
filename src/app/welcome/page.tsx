@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Tax Tracker — Financial Tool for Real Estate Professionals",
+  title: "Taxora — Financial Tool for Real Estate Professionals",
   description: "Track income, expenses, mileage, and taxes in one place. Built for realtors and real estate professionals. AI tax advisor, deal tracker, and investment portfolio included.",
   openGraph: {
-    title: "Tax Tracker — Financial Tool for Real Estate Professionals",
+    title: "Taxora — Financial Tool for Real Estate Professionals",
     description: "Track income, expenses, mileage, and taxes in one place. Built for realtors and real estate professionals.",
     type: "website",
   },
@@ -41,9 +41,9 @@ const PRO_FEATURES = [
     icon: "M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z",
   },
   {
-    title: "Investment & Crypto Tracker",
-    description: "Real-time stock and crypto portfolio with auto-invest tracking and growth projections.",
-    icon: "M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z",
+    title: "Real Estate Portfolio",
+    description: "Track your properties with live equity bars, appreciation growth, and principal vs. interest breakdowns.",
+    icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
   },
   {
     title: "Deal Tracker",
@@ -58,7 +58,7 @@ export default function WelcomePage() {
       {/* Nav */}
       <nav className="bg-white border-b border-slate-200">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-emerald-600">Tax Tracker</h1>
+          <h1 className="text-xl font-bold text-emerald-600">Taxora</h1>
           <div className="flex items-center gap-4">
             <Link href="/login" className="text-sm text-slate-600 hover:text-slate-800">
               Log in
@@ -159,7 +159,7 @@ export default function WelcomePage() {
             </div>
             <p className="text-sm text-slate-500 mb-6">Everything you need to track income, expenses, and taxes.</p>
             <ul className="space-y-3 mb-8">
-              {["Weekly income & expense tracking", "Mileage logging", "Tax estimation calculator", "Net worth dashboard", "Recurring items & reminders", "Accountant-ready exports"].map((f) => (
+              {["Weekly income & expense tracking", "Mileage logging", "Tax estimation calculator", "Net worth dashboard", "Recurring items & reminders", "Accountant-ready exports", "Investment & crypto portfolio tracker"].map((f) => (
                 <li key={f} className="flex items-start gap-2 text-sm text-slate-600">
                   <svg className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -188,7 +188,7 @@ export default function WelcomePage() {
             </div>
             <p className="text-sm text-slate-500 mb-6">Everything in Basic, plus powerful tools for top producers.</p>
             <ul className="space-y-3 mb-8">
-              {["Everything in Basic", "AI Tax Advisor chatbot", "Investment & crypto portfolio tracker", "Real estate deal tracker", "Priority support"].map((f) => (
+              {["Everything in Basic", "AI Tax Advisor chatbot", "Real estate portfolio tracker", "Real estate deal tracker", "Priority support"].map((f) => (
                 <li key={f} className="flex items-start gap-2 text-sm text-slate-600">
                   <svg className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -228,7 +228,7 @@ export default function WelcomePage() {
       {/* Footer */}
       <footer className="bg-slate-900 py-8">
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
-          <p className="text-sm text-slate-500">&copy; {new Date().getFullYear()} Tax Tracker. All rights reserved.</p>
+          <p className="text-sm text-slate-500">&copy; {new Date().getFullYear()} Taxora. All rights reserved.</p>
           <div className="flex gap-6">
             <Link href="/terms" className="text-sm text-slate-500 hover:text-slate-300">Terms</Link>
             <Link href="/privacy" className="text-sm text-slate-500 hover:text-slate-300">Privacy</Link>

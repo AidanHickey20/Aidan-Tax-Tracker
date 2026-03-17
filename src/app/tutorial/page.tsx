@@ -101,7 +101,6 @@ const TUTORIAL_SECTIONS = [
     id: "investments",
     title: "Tracking Investments & Crypto",
     time: "10:30",
-    badge: "PRO",
     description:
       "Add stocks and crypto to your portfolio to see real-time values, gains/losses, and growth projections. Set up auto-invest amounts that pre-fill in your weekly entry.",
     steps: [
@@ -157,7 +156,7 @@ export default function TutorialPage() {
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Getting Started</h2>
           <p className="text-sm text-slate-500 mt-1">
-            Learn how to use every feature of Tax Tracker
+            Learn how to use every feature of Taxora
             {isTrial && daysLeft !== null && (
               <span className="ml-2 text-emerald-600 font-medium">
                 — {daysLeft} days left in your free trial
@@ -180,7 +179,7 @@ export default function TutorialPage() {
           <iframe
             className="absolute inset-0 w-full h-full"
             src="https://www.youtube.com/embed/VIDEO_ID_HERE?autoplay=1&loop=1&playlist=VIDEO_ID_HERE&rel=0"
-            title="Tax Tracker Tutorial"
+            title="Taxora Tutorial"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />

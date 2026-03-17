@@ -11,12 +11,13 @@ const BASIC_FEATURES = [
   "Net worth dashboard",
   "Accountant-ready exports",
   "Tax estimation calculator",
+  "Investment & crypto portfolio tracker",
 ];
 
 const PRO_FEATURES = [
   "Everything in Basic",
   "AI Tax Advisor chatbot",
-  "Investment & crypto portfolio tracker",
+  "Real estate portfolio tracker",
   "Real estate deal tracker",
 ];
 
@@ -99,7 +100,7 @@ export default function BillingPage() {
         )}
         {plan === "EXPIRED" && (
           <p className="text-sm text-slate-500">
-            Your trial has ended. Choose a plan below to continue using Tax Tracker.
+            Your trial has ended. Choose a plan below to continue using Taxora.
           </p>
         )}
         {(plan === "BASIC" || plan === "PRO") && (

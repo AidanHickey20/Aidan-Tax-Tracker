@@ -14,7 +14,7 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Tax Tracker",
+  title: "Taxora",
   description: "Personal finance and accounting tracker",
 };
 

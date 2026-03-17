@@ -13,12 +13,12 @@ export async function sendWelcomeEmail(email: string, name: string) {
   const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
   await getResend().emails.send({
-    from: process.env.EMAIL_FROM || "Tax Tracker <noreply@resend.dev>",
+    from: process.env.EMAIL_FROM || "Taxora <noreply@resend.dev>",
     to: email,
-    subject: "Welcome to Tax Tracker!",
+    subject: "Welcome to Taxora!",
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
-        <h2 style="color: #1e293b;">Welcome to Tax Tracker${name ? `, ${name}` : ""}!</h2>
+        <h2 style="color: #1e293b;">Welcome to Taxora${name ? `, ${name}` : ""}!</h2>
         <p style="color: #475569;">You're all set with a <strong>14-day free trial</strong> with full access to every feature, including the AI Tax Advisor, Investment Tracker, and Deal Tracker.</p>
         <p style="color: #475569;">Here's how to get started:</p>
         <ol style="color: #475569;">
@@ -26,7 +26,7 @@ export async function sendWelcomeEmail(email: string, name: string) {
           <li>Check out <strong>Settings</strong> to customize your accounts and goals</li>
           <li>Explore the <strong>Dashboard</strong> to see your tax picture</li>
         </ol>
-        <a href="${baseUrl}" style="display: inline-block; background: #059669; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 16px 0;">Go to Tax Tracker</a>
+        <a href="${baseUrl}" style="display: inline-block; background: #059669; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 16px 0;">Go to Taxora</a>
         <p style="color: #94a3b8; font-size: 14px;">Questions? Just reply to this email.</p>
       </div>
     `,
@@ -37,15 +37,15 @@ export async function sendTrialEndingEmail(email: string, name: string, daysLeft
   const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
   await getResend().emails.send({
-    from: process.env.EMAIL_FROM || "Tax Tracker <noreply@resend.dev>",
+    from: process.env.EMAIL_FROM || "Taxora <noreply@resend.dev>",
     to: email,
-    subject: daysLeft > 0 ? `Your Tax Tracker trial ends in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}` : "Your Tax Tracker trial has ended",
+    subject: daysLeft > 0 ? `Your Taxora trial ends in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}` : "Your Taxora trial has ended",
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
         <h2 style="color: #1e293b;">${daysLeft > 0 ? `Your trial ends in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}` : "Your free trial has ended"}</h2>
         <p style="color: #475569;">${daysLeft > 0
           ? `Hi${name ? ` ${name}` : ""}, your 14-day free trial is almost over. Choose a plan to keep using all your favorite features.`
-          : `Hi${name ? ` ${name}` : ""}, your free trial has ended. Choose a plan to continue using Tax Tracker.`
+          : `Hi${name ? ` ${name}` : ""}, your free trial has ended. Choose a plan to continue using Taxora.`
         }</p>
         <p style="color: #475569;"><strong>Basic — $9.99/mo:</strong> Income tracking, tax estimates, exports, and net worth dashboard.</p>
         <p style="color: #475569;"><strong>Pro — $19.99/mo:</strong> Everything in Basic plus AI Tax Advisor, Investment Tracker, and Deal Tracker.</p>
@@ -60,13 +60,13 @@ export async function sendPasswordResetEmail(email: string, token: string) {
   const resetUrl = `${baseUrl}/reset-password?token=${token}`;
 
   await getResend().emails.send({
-    from: process.env.EMAIL_FROM || "Tax Tracker <noreply@resend.dev>",
+    from: process.env.EMAIL_FROM || "Taxora <noreply@resend.dev>",
     to: email,
-    subject: "Reset your Tax Tracker password",
+    subject: "Reset your Taxora password",
     html: `
       <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
         <h2 style="color: #1e293b;">Reset your password</h2>
-        <p style="color: #475569;">Click the button below to reset your Tax Tracker password. This link expires in 1 hour.</p>
+        <p style="color: #475569;">Click the button below to reset your Taxora password. This link expires in 1 hour.</p>
         <a href="${resetUrl}" style="display: inline-block; background: #059669; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 16px 0;">Reset Password</a>
         <p style="color: #94a3b8; font-size: 14px;">If you didn't request this, you can safely ignore this email.</p>
       </div>

@@ -1,13 +1,13 @@
 import Link from "next/link";
 
-export const metadata = { title: "Privacy Policy — Tax Tracker" };
+export const metadata = { title: "Privacy Policy — Taxora" };
 
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <nav className="bg-white border-b border-slate-200">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/welcome" className="text-xl font-bold text-emerald-600">Tax Tracker</Link>
+          <Link href="/welcome" className="text-xl font-bold text-emerald-600">Taxora</Link>
         </div>
       </nav>
       <div className="max-w-3xl mx-auto px-6 py-12 prose prose-slate">

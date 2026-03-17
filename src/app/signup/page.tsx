@@ -62,7 +62,7 @@ export default function SignupPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
       <div className="bg-white border border-slate-200 rounded-xl shadow-lg p-8 max-w-sm w-full">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-emerald-600">Tax Tracker</h1>
+          <h1 className="text-2xl font-bold text-emerald-600">Taxora</h1>
           <p className="text-sm text-slate-500 mt-1">Create your account</p>
         </div>
 

@@ -2,13 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/get-user";
 import { validate, createInvestmentSchema, updateInvestmentSchema, deleteByIdSchema } from "@/lib/validations";
-import { isProUser } from "@/lib/subscription";
+import { canUserEdit } from "@/lib/subscription";
 
-const PRO_REQUIRED = { error: "Pro plan required" } as const;
+const EXPIRED_MSG = { error: "Your trial has ended. Choose a plan to continue editing." };
 
 export async function GET() {
   const userId = await requireUserId();
-  if (!(await isProUser(userId))) return NextResponse.json(PRO_REQUIRED, { status: 403 });
   const investments = await prisma.trackedInvestment.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
@@ -18,7 +17,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const userId = await requireUserId();
-  if (!(await isProUser(userId))) return NextResponse.json(PRO_REQUIRED, { status: 403 });
+  if (!(await canUserEdit(userId))) return NextResponse.json(EXPIRED_MSG, { status: 403 });
   try {
     const body = await request.json();
     const parsed = validate(createInvestmentSchema, body);
@@ -45,7 +44,7 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   const userId = await requireUserId();
-  if (!(await isProUser(userId))) return NextResponse.json(PRO_REQUIRED, { status: 403 });
+  if (!(await canUserEdit(userId))) return NextResponse.json(EXPIRED_MSG, { status: 403 });
   const body = await request.json();
   const parsed = validate(updateInvestmentSchema, body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
@@ -70,7 +69,7 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const userId = await requireUserId();
-  if (!(await isProUser(userId))) return NextResponse.json(PRO_REQUIRED, { status: 403 });
+  if (!(await canUserEdit(userId))) return NextResponse.json(EXPIRED_MSG, { status: 403 });
   const body = await request.json();
   const parsed = validate(deleteByIdSchema, body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });

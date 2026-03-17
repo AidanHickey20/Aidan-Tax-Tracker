@@ -4,7 +4,6 @@ import Link from "next/link";
 
 const FEATURE_DESCRIPTIONS: Record<string, string> = {
   "AI Tax Advisor": "Get personalized tax advice powered by AI, tailored to your real estate business.",
-  "Investment Tracker": "Track your stocks, crypto, and retirement accounts with real-time market data.",
   "Deal Tracker": "Manage your real estate deals from acquisition through closing with expense tracking.",
   "Real Estate Portfolio": "Track your properties with live equity bars, appreciation growth, and principal vs. interest breakdowns.",
 };

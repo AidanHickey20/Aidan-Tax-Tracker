@@ -32,7 +32,7 @@ export default function Sidebar() {
   const nav = (
     <>
       <div className="mb-8">
-        <h1 className="text-xl font-bold text-emerald-400">Tax Tracker</h1>
+        <h1 className="text-xl font-bold text-emerald-400">Taxora</h1>
         <p className="text-xs text-slate-400 mt-1">Personal Finance & Accounting</p>
       </div>
       <nav className="flex-1 space-y-1">
