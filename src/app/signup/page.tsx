@@ -50,8 +50,8 @@ export default function SignupPage() {
     });
 
     if (result?.error) {
-      // Fallback: if auto-login fails, send to login page
-      window.location.href = "/login?registered=true";
+      // Fallback: if auto-login fails, send to landing page with email prefilled
+      window.location.href = `/welcome?registered=true&email=${encodeURIComponent(email)}`;
       return;
     }
 
@@ -129,7 +129,7 @@ export default function SignupPage() {
 
         <p className="text-sm text-slate-400 text-center mt-6">
           Already have an account?{" "}
-          <Link href="/login" className="text-emerald-400 hover:underline font-medium">
+          <Link href="/welcome" className="text-emerald-400 hover:underline font-medium">
             Sign in
           </Link>
         </p>

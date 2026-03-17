@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
+import WelcomeLoginForm from "@/components/WelcomeLoginForm";
 
 export const metadata: Metadata = {
   title: "Taxora — Financial Tool for Real Estate Professionals",
@@ -60,7 +62,7 @@ export default function WelcomePage() {
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <h1 className="text-xl font-bold text-emerald-600">Taxora</h1>
           <div className="flex items-center gap-4">
-            <Link href="/login" className="text-sm text-slate-300 hover:text-slate-100">
+            <Link href="#login" className="text-sm text-slate-300 hover:text-slate-100">
               Log in
             </Link>
             <Link
@@ -74,30 +76,42 @@ export default function WelcomePage() {
       </nav>
 
       {/* Hero */}
-      <section className="max-w-6xl mx-auto px-6 pt-20 pb-16 text-center">
-        <h2 className="text-4xl sm:text-5xl font-bold text-white leading-tight mb-6">
-          The financial tool built for<br />
-          <span className="text-emerald-600">real estate professionals</span>
-        </h2>
-        <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-10">
-          Track income, expenses, mileage, and taxes — all in one place.
-          Know exactly what you owe before tax season hits.
-        </p>
-        <div className="flex items-center justify-center gap-4">
-          <Link
-            href="/signup"
-            className="bg-emerald-600 text-white px-8 py-3 rounded-lg text-base font-medium hover:bg-emerald-700 transition-colors"
-          >
-            Start Your 14-Day Free Trial
-          </Link>
-          <Link
-            href="#pricing"
-            className="text-slate-300 px-6 py-3 rounded-lg text-base font-medium hover:text-slate-100 transition-colors"
-          >
-            View Pricing
-          </Link>
+      <section id="login" className="max-w-6xl mx-auto px-6 pt-16 pb-16">
+        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+          {/* Left — marketing text */}
+          <div className="flex-1 text-center lg:text-left">
+            <h2 className="text-4xl sm:text-5xl font-bold text-white leading-tight mb-6">
+              The financial tool built for<br />
+              <span className="text-emerald-600">real estate professionals</span>
+            </h2>
+            <p className="text-lg text-slate-400 max-w-xl mb-8">
+              Track income, expenses, mileage, and taxes — all in one place.
+              Know exactly what you owe before tax season hits.
+            </p>
+            <div className="flex items-center justify-center lg:justify-start gap-4">
+              <Link
+                href="/signup"
+                className="bg-emerald-600 text-white px-8 py-3 rounded-lg text-base font-medium hover:bg-emerald-700 transition-colors"
+              >
+                Start Your 14-Day Free Trial
+              </Link>
+              <Link
+                href="#pricing"
+                className="text-slate-300 px-6 py-3 rounded-lg text-base font-medium hover:text-slate-100 transition-colors"
+              >
+                View Pricing
+              </Link>
+            </div>
+            <p className="text-xs text-slate-500 mt-4">No credit card required. Full Pro access during trial.</p>
+          </div>
+
+          {/* Right — login form */}
+          <div className="w-full lg:w-auto flex-shrink-0">
+            <Suspense fallback={null}>
+              <WelcomeLoginForm />
+            </Suspense>
+          </div>
         </div>
-        <p className="text-xs text-slate-500 mt-4">No credit card required. Full Pro access during trial.</p>
       </section>
 
       {/* Basic Features */}
@@ -232,7 +246,7 @@ export default function WelcomePage() {
           <div className="flex gap-6">
             <Link href="/terms" className="text-sm text-slate-500 hover:text-slate-300">Terms</Link>
             <Link href="/privacy" className="text-sm text-slate-500 hover:text-slate-300">Privacy</Link>
-            <Link href="/login" className="text-sm text-slate-500 hover:text-slate-300">Log in</Link>
+            <Link href="#login" className="text-sm text-slate-500 hover:text-slate-300">Log in</Link>
             <Link href="/signup" className="text-sm text-slate-500 hover:text-slate-300">Sign up</Link>
           </div>
         </div>

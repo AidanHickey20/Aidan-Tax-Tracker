@@ -72,7 +72,7 @@ export default function Sidebar() {
             <div className="flex-1 min-w-0">
               <p className="text-xs text-slate-300 truncate">{session.user.name}</p>
               <button
-                onClick={() => signOut({ callbackUrl: "/login" })}
+                onClick={() => signOut({ callbackUrl: "/welcome" })}
                 className="text-[10px] text-slate-500 hover:text-slate-300"
               >
                 Sign out
