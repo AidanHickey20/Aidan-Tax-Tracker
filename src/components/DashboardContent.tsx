@@ -366,21 +366,21 @@ export default function DashboardContent() {
         </div>
       )}
 
-      {/* Investment Portfolio */}
-      <div className="mb-8">
-        {isProUser ? (
-          <PortfolioDashboard onTotalChange={setPortfolioTotal} investmentGrowthRate={settings?.investmentGrowthRate} />
-        ) : (
-          <UpgradePrompt feature="Investment Tracker" />
-        )}
-      </div>
-
       {/* Real Estate Portfolio */}
       <div className="mb-8">
         {isProUser ? (
           <RealEstatePortfolio onEquityChange={setRealEstateEquity} />
         ) : (
           <UpgradePrompt feature="Real Estate Portfolio" />
+        )}
+      </div>
+
+      {/* Investment Portfolio */}
+      <div className="mb-8">
+        {isProUser ? (
+          <PortfolioDashboard onTotalChange={setPortfolioTotal} investmentGrowthRate={settings?.investmentGrowthRate} />
+        ) : (
+          <UpgradePrompt feature="Investment Tracker" />
         )}
       </div>
 

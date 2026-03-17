@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSubscription } from "@/components/SubscriptionProvider";
 import ExpiredBanner from "@/components/ExpiredBanner";
+import RealEstatePortfolio from "@/components/RealEstatePortfolio";
+import UpgradePrompt from "@/components/UpgradePrompt";
 
 interface Settings {
   incomeGoal: number;
@@ -54,7 +56,7 @@ function Field({ label, value, onChange, prefix, suffix, step, hint }: {
 }
 
 export default function SettingsPage() {
-  const { canEdit } = useSubscription();
+  const { canEdit, isProUser } = useSubscription();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -161,17 +163,8 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Home */}
-        <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
-          <h3 className="font-semibold text-slate-700 mb-4">Home / Real Estate</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Home Value" value={settings.homeValue} onChange={(v) => update("homeValue", v)} prefix="$" />
-            <Field label="Annual Appreciation Rate" value={settings.homeAppreciation} onChange={(v) => update("homeAppreciation", v)} hint="e.g. 0.0235 for 2.35%" step="0.001" />
-            <Field label="Mortgage Balance" value={settings.mortgageBalance} onChange={(v) => update("mortgageBalance", v)} prefix="$" />
-            <Field label="Mortgage Interest Rate" value={settings.mortgageRate} onChange={(v) => update("mortgageRate", v)} hint="e.g. 0.07 for 7%" step="0.001" />
-            <Field label="Monthly Mortgage Payment" value={settings.mortgagePayment} onChange={(v) => update("mortgagePayment", v)} prefix="$" suffix="/mo" />
-          </div>
-        </div>
+        {/* Real Estate Portfolio */}
+        {isProUser ? <RealEstatePortfolio /> : <UpgradePrompt feature="Real Estate Portfolio" />}
 
         {/* Student Loans */}
         <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
