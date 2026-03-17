@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import YahooFinance from "yahoo-finance2";
 import { requireUserId } from "@/lib/get-user";
+import { isProUser } from "@/lib/subscription";
 
 const yf = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 
@@ -17,7 +18,8 @@ interface PriceResult {
 }
 
 export async function GET(request: NextRequest) {
-  await requireUserId();
+  const userId = await requireUserId();
+  if (!(await isProUser(userId))) return NextResponse.json({ error: "Pro plan required" }, { status: 403 });
   const symbols = request.nextUrl.searchParams.get("symbols");
   const types = request.nextUrl.searchParams.get("types");
 

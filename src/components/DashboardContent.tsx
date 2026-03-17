@@ -377,7 +377,11 @@ export default function DashboardContent() {
 
       {/* Investment Portfolio */}
       <div className="mb-8">
-        <PortfolioDashboard onTotalChange={setPortfolioTotal} investmentGrowthRate={settings?.investmentGrowthRate} />
+        {isProUser ? (
+          <PortfolioDashboard onTotalChange={setPortfolioTotal} investmentGrowthRate={settings?.investmentGrowthRate} />
+        ) : (
+          <UpgradePrompt feature="Stock & Crypto Tracker" />
+        )}
       </div>
 
       {/* Account Balances Snapshot */}

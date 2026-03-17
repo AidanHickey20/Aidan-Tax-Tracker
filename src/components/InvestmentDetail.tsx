@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils";
 import InvestmentDetailChart from "./InvestmentDetailChart";
+import UpgradePrompt from "./UpgradePrompt";
+import { useSubscription } from "./SubscriptionProvider";
 
 interface TrackedInvestment {
   id: string;
@@ -92,6 +94,7 @@ function formatVolume(n: number): string {
 }
 
 export default function InvestmentDetail({ investmentId }: { investmentId: string }) {
+  const { isProUser, loading: subLoading } = useSubscription();
   const [investment, setInvestment] = useState<TrackedInvestment | null>(null);
   const [detail, setDetail] = useState<DetailData | null>(null);
   const [range, setRange] = useState("1mo");
@@ -130,8 +133,11 @@ export default function InvestmentDetail({ investmentId }: { investmentId: strin
     if (investment) fetchDetail(investment.symbol, investment.type, r);
   }
 
-  if (loading) {
+  if (loading || subLoading) {
     return <div className="text-slate-500 py-12 text-center">Loading...</div>;
+  }
+  if (!isProUser) {
+    return <div className="max-w-2xl mx-auto mt-12"><UpgradePrompt feature="Stock & Crypto Tracker" /></div>;
   }
 
   if (!investment) {
