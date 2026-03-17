@@ -30,6 +30,8 @@ interface Settings {
   stateTaxRate: number;
   municipalTaxRate: number;
   mileageRate: number;
+  additionalW2Income: number;
+  rentalIncome: number;
 }
 
 const US_STATES = [
@@ -98,11 +100,14 @@ const NUM_FIELDS: (keyof Settings)[] = [
   "studentLoanBalance", "studentLoanRate", "studentLoanPayment", "studentLoanPaymentDay",
   "carLoanBalance", "carLoanRate", "carLoanPayment", "carLoanPaymentDay",
   "investmentGrowthRate", "stateTaxRate", "municipalTaxRate", "mileageRate",
+  "additionalW2Income", "rentalIncome",
 ];
 
 export default function SettingsPage() {
   const { canEdit, isProUser } = useSubscription();
   const [fields, setFields] = useState<Record<string, string>>({});
+  const [savedDescriptions, setSavedDescriptions] = useState<Record<string, string[]>>({});
+  const [newDesc, setNewDesc] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -119,6 +124,7 @@ export default function SettingsPage() {
         f.filingStatus = data.filingStatus || "SINGLE";
         f.state = data.state || "OH";
         setFields(f);
+        if (data.savedDescriptions) setSavedDescriptions(data.savedDescriptions);
         setLoading(false);
       });
   }, []);
@@ -131,6 +137,7 @@ export default function SettingsPage() {
       refDate: fields.refDate,
       filingStatus: fields.filingStatus,
       state: fields.state,
+      savedDescriptions: Object.keys(savedDescriptions).length > 0 ? savedDescriptions : null,
     };
     for (const key of NUM_FIELDS) {
       payload[key] = fields[key] === "" ? 0 : parseFloat(fields[key]) || 0;
@@ -240,6 +247,30 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Additional Income */}
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 shadow-sm">
+          <h3 className="font-semibold text-slate-200 mb-1">Additional Income</h3>
+          <p className="text-xs text-slate-500 mb-4">Other income sources that affect your tax bracket (not tracked weekly)</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field
+              label="Annual W-2 Income"
+              value={fields.additionalW2Income}
+              onChange={(v) => update("additionalW2Income", v)}
+              prefix="$"
+              step="1000"
+              hint="Spouse or other W-2 employment income"
+            />
+            <Field
+              label="Annual Rental Income"
+              value={fields.rentalIncome}
+              onChange={(v) => update("rentalIncome", v)}
+              prefix="$"
+              step="1000"
+              hint="Net rental income from investment properties"
+            />
+          </div>
+        </div>
+
         {/* Reference Date & Bank Balance */}
         <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 shadow-sm">
           <h3 className="font-semibold text-slate-200 mb-4">Bank Account</h3>
@@ -300,6 +331,81 @@ export default function SettingsPage() {
               step="0.01"
             />
           </div>
+        </div>
+
+        {/* Saved Descriptions */}
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 shadow-sm">
+          <h3 className="font-semibold text-slate-200 mb-1">Quick-Add Descriptions</h3>
+          <p className="text-xs text-slate-500 mb-4">
+            Save common descriptions for each category. These appear as quick-add chips in your weekly entry form.
+          </p>
+          {[
+            { key: "INCOME", label: "Income", color: "bg-emerald-900/30 border-emerald-700 text-emerald-400" },
+            { key: "BUSINESS_EXPENSE", label: "Business Expenses", color: "bg-red-900/30 border-red-700 text-red-400" },
+            { key: "PERSONAL_EXPENSE", label: "Personal Expenses", color: "bg-orange-900/30 border-orange-700 text-orange-400" },
+            { key: "OWNER_DRAW", label: "Owner Draws", color: "bg-blue-900/30 border-blue-700 text-blue-400" },
+          ].map(({ key, label, color }) => (
+            <div key={key} className="mb-4">
+              <label className="block text-sm font-medium text-slate-300 mb-2">{label}</label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {(savedDescriptions[key] || []).map((desc) => (
+                  <span key={desc} className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border ${color}`}>
+                    {desc}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSavedDescriptions((prev) => ({
+                          ...prev,
+                          [key]: (prev[key] || []).filter((d) => d !== desc),
+                        }));
+                      }}
+                      className="hover:opacity-70 ml-0.5"
+                    >
+                      &times;
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder={`Add ${label.toLowerCase()} description...`}
+                  value={newDesc[key] || ""}
+                  onChange={(e) => setNewDesc((prev) => ({ ...prev, [key]: e.target.value }))}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const val = (newDesc[key] || "").trim();
+                      if (val && !(savedDescriptions[key] || []).includes(val)) {
+                        setSavedDescriptions((prev) => ({
+                          ...prev,
+                          [key]: [...(prev[key] || []), val],
+                        }));
+                        setNewDesc((prev) => ({ ...prev, [key]: "" }));
+                      }
+                    }
+                  }}
+                  className="flex-1 border border-slate-600 rounded-lg px-3 py-1.5 text-sm bg-slate-900 text-slate-100 placeholder-slate-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const val = (newDesc[key] || "").trim();
+                    if (val && !(savedDescriptions[key] || []).includes(val)) {
+                      setSavedDescriptions((prev) => ({
+                        ...prev,
+                        [key]: [...(prev[key] || []), val],
+                      }));
+                      setNewDesc((prev) => ({ ...prev, [key]: "" }));
+                    }
+                  }}
+                  className="px-3 py-1.5 text-sm bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

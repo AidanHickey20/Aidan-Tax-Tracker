@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/get-user";
 import { validate, updateSettingsSchema } from "@/lib/validations";
@@ -53,6 +54,9 @@ export async function PUT(request: NextRequest) {
       stateTaxRate: parsed.data.stateTaxRate ?? 0.035,
       municipalTaxRate: parsed.data.municipalTaxRate ?? 0.02,
       mileageRate: parsed.data.mileageRate ?? 0.70,
+      additionalW2Income: parsed.data.additionalW2Income ?? 0,
+      rentalIncome: parsed.data.rentalIncome ?? 0,
+      savedDescriptions: (parsed.data.savedDescriptions ?? Prisma.JsonNull) as Prisma.InputJsonValue,
     },
     create: {
       userId,
@@ -78,6 +82,9 @@ export async function PUT(request: NextRequest) {
       stateTaxRate: parsed.data.stateTaxRate ?? 0.035,
       municipalTaxRate: parsed.data.municipalTaxRate ?? 0.02,
       mileageRate: parsed.data.mileageRate ?? 0.70,
+      additionalW2Income: parsed.data.additionalW2Income ?? 0,
+      rentalIncome: parsed.data.rentalIncome ?? 0,
+      savedDescriptions: (parsed.data.savedDescriptions ?? Prisma.JsonNull) as Prisma.InputJsonValue,
     },
   });
 

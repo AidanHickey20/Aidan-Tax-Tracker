@@ -72,6 +72,7 @@ export default function WeeklyEntryForm() {
   const [investments, setInvestments] = useState<InvestmentInput[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [userAccounts, setUserAccounts] = useState<UserAccount[]>([]);
+  const [savedDescriptions, setSavedDescriptions] = useState<Record<string, string[]>>({});
 
   // Load recurring items, reminders, portfolio investments, and user accounts
   useEffect(() => {
@@ -80,9 +81,11 @@ export default function WeeklyEntryForm() {
       fetch("/api/reminders").then((r) => r.json()),
       fetch("/api/portfolio").then((r) => r.json()),
       fetch("/api/accounts").then((r) => r.json()),
-    ]).then(([recurringItems, remindersData, portfolioItems, accounts]) => {
+      fetch("/api/settings").then((r) => r.json()),
+    ]).then(([recurringItems, remindersData, portfolioItems, accounts, settingsData]) => {
       setUserAccounts(accounts.filter((a: UserAccount) => a.isActive));
       setReminders(remindersData.filter((r: Reminder) => r.isActive));
+      if (settingsData.savedDescriptions) setSavedDescriptions(settingsData.savedDescriptions);
 
       if (!editId) {
         // Pre-fill from recurring items, filtering by frequency
@@ -352,6 +355,28 @@ export default function WeeklyEntryForm() {
                 </span>
               )}
             </div>
+            {/* Quick-add chips from saved descriptions */}
+            {(savedDescriptions[category] || []).length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {savedDescriptions[category].map((desc) => (
+                  <button
+                    key={desc}
+                    type="button"
+                    onClick={() => {
+                      setLineItems((prev) => [...prev, {
+                        tempId: tempId(),
+                        description: desc,
+                        amount: "",
+                        category,
+                      }]);
+                    }}
+                    className="text-xs px-2.5 py-1 rounded-full bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors"
+                  >
+                    + {desc}
+                  </button>
+                ))}
+              </div>
+            )}
             {items.map((item) => (
               <div key={item.tempId} className="flex gap-2 mb-2">
                 <input

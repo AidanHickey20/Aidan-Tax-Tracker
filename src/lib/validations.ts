@@ -69,6 +69,9 @@ export const updateSettingsSchema = z.object({
   stateTaxRate: z.number().min(0).max(1).optional().default(0.035),
   municipalTaxRate: z.number().min(0).max(1).optional().default(0.02),
   mileageRate: z.number().min(0).optional().default(0.70),
+  additionalW2Income: z.number().min(0).optional().default(0),
+  rentalIncome: z.number().min(0).optional().default(0),
+  savedDescriptions: z.record(z.string(), z.array(z.string())).optional().nullable(),
 });
 
 // ── Portfolio ──

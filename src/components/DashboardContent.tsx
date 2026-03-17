@@ -90,6 +90,8 @@ interface Settings {
   filingStatus: string;
   stateTaxRate: number;
   municipalTaxRate: number;
+  additionalW2Income: number;
+  rentalIncome: number;
 }
 
 export default function DashboardContent() {
@@ -249,14 +251,18 @@ export default function DashboardContent() {
   const estNetWorth = homeEquity + totalBankAccounts + livePortfolio + realEstateEquity - studentBal - carBal;
 
   // ── Estimated tax liability for self-employed ──
+  // Additional income (W-2, rental) affects which federal brackets SE income falls into
   function estimateTax(netSEIncome: number): number {
-    if (netSEIncome <= 0) return 0;
+    if (netSEIncome <= 0 && !(settings?.additionalW2Income) && !(settings?.rentalIncome)) return 0;
 
     const filingStatus = settings?.filingStatus || "SINGLE";
     const userStateTaxRate = settings?.stateTaxRate ?? 0.035;
     const userMunicipalTaxRate = settings?.municipalTaxRate ?? 0.02;
+    const w2Income = settings?.additionalW2Income ?? 0;
+    const rentalIncome = settings?.rentalIncome ?? 0;
 
-    const seBase = netSEIncome * SE_TAX_BASE_RATE;
+    // SE tax only applies to self-employment income
+    const seBase = Math.max(netSEIncome, 0) * SE_TAX_BASE_RATE;
     const ssTax = Math.min(seBase, SS_WAGE_BASE) * SS_RATE;
     const medicareTax = seBase * MEDICARE_RATE;
     const seTax = ssTax + medicareTax;
@@ -264,24 +270,50 @@ export default function DashboardContent() {
     const standardDeduction = STANDARD_DEDUCTIONS[filingStatus] ?? STANDARD_DEDUCTIONS.SINGLE;
     const brackets = FEDERAL_BRACKETS_BY_STATUS[filingStatus] ?? FEDERAL_BRACKETS_BY_STATUS.SINGLE;
 
-    const agi = netSEIncome - seTax / 2;
-    const qbiDeduction = netSEIncome * QBI_DEDUCTION_RATE;
-    const taxableIncome = Math.max(agi - standardDeduction - qbiDeduction, 0);
+    // AGI includes all income sources
+    const seAgi = Math.max(netSEIncome, 0) - seTax / 2;
+    const qbiDeduction = Math.max(netSEIncome, 0) * QBI_DEDUCTION_RATE;
+    const totalAgi = seAgi + w2Income + rentalIncome;
+    const taxableIncome = Math.max(totalAgi - standardDeduction - qbiDeduction, 0);
 
-    let fedTax = 0;
+    // Federal tax on total taxable income
+    let totalFedTax = 0;
     let remaining = taxableIncome;
     let prevLimit = 0;
     for (const b of brackets) {
       const span = b.limit - prevLimit;
       const taxable = Math.min(remaining, span);
-      fedTax += taxable * b.rate;
+      totalFedTax += taxable * b.rate;
       remaining -= taxable;
       prevLimit = b.limit;
       if (remaining <= 0) break;
     }
 
-    const stateTax = taxableIncome * userStateTaxRate;
-    const municipalTax = netSEIncome * userMunicipalTaxRate;
+    // Subtract the federal tax that would be owed on just the W-2/rental income alone
+    // (that portion is already withheld or paid separately)
+    const otherIncome = w2Income + rentalIncome;
+    const otherTaxableIncome = Math.max(otherIncome - standardDeduction, 0);
+    let otherFedTax = 0;
+    if (otherIncome > 0) {
+      let otherRemaining = otherTaxableIncome;
+      let otherPrevLimit = 0;
+      for (const b of brackets) {
+        const span = b.limit - otherPrevLimit;
+        const taxable = Math.min(otherRemaining, span);
+        otherFedTax += taxable * b.rate;
+        otherRemaining -= taxable;
+        otherPrevLimit = b.limit;
+        if (otherRemaining <= 0) break;
+      }
+    }
+
+    // The incremental federal tax from SE income
+    const fedTax = totalFedTax - otherFedTax;
+
+    // State/local tax on SE income only
+    const seTaxableIncome = Math.max(seAgi - qbiDeduction, 0);
+    const stateTax = seTaxableIncome * userStateTaxRate;
+    const municipalTax = Math.max(netSEIncome, 0) * userMunicipalTaxRate;
 
     return seTax + fedTax + stateTax + municipalTax;
   }

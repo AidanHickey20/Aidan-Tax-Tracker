@@ -66,6 +66,13 @@ model UserSettings {
   stateTaxRate     Float  @default(0.035)
   municipalTaxRate Float  @default(0.02)
   mileageRate      Float  @default(0.70)
+
+  // Additional income sources
+  additionalW2Income Float @default(0) // Annual W-2 income (spouse or other employment)
+  rentalIncome       Float @default(0) // Annual rental income
+
+  // Custom expense/income description templates per category
+  savedDescriptions Json? // { "INCOME": ["Commission", ...], "BUSINESS_EXPENSE": ["Marketing", ...], ... }
 }
 
 model UserAccount {
