@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { validate, registerSchema } from "@/lib/validations";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,6 +49,9 @@ export async function POST(request: NextRequest) {
         trialEndsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
       },
     });
+
+    // Send welcome email (non-blocking)
+    sendWelcomeEmail(email, name).catch(() => {});
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error: unknown) {
