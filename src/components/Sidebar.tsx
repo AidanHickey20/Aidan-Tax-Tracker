@@ -4,11 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { useSubscription } from "./SubscriptionProvider";
 
 const PRO_ROUTES = new Set(["/", "/deals"]);
 
-const navItems = [
+const navItems: { href: string; label: string; icon: string; trialOnly?: boolean }[] = [
   { href: "/", label: "Dashboard", icon: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" },
+  { href: "/tutorial", label: "Getting Started", icon: "M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z", trialOnly: true },
   { href: "/entry", label: "Weekly Entry", icon: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" },
   { href: "/history", label: "Past Weeks", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" },
   { href: "/recurring", label: "Recurring & Reminders", icon: "M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" },
@@ -22,6 +24,7 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { plan } = useSubscription();
   const [open, setOpen] = useState(false);
 
   if (pathname === "/login" || pathname === "/signup" || pathname === "/welcome" || pathname === "/forgot-password" || pathname === "/reset-password" || pathname === "/terms" || pathname === "/privacy") return null;
@@ -33,7 +36,7 @@ export default function Sidebar() {
         <p className="text-xs text-slate-400 mt-1">Personal Finance & Accounting</p>
       </div>
       <nav className="flex-1 space-y-1">
-        {navItems.map((item) => {
+        {navItems.filter((item) => !item.trialOnly || plan === "TRIAL").map((item) => {
           const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
           const isPro = PRO_ROUTES.has(item.href);
           return (

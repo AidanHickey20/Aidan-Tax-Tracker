@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import Link from "next/link";
 
 export default function SignupPage() {
-  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,7 +42,20 @@ export default function SignupPage() {
       return;
     }
 
-    router.push("/login?registered=true");
+    // Auto sign-in and go straight to the dashboard
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    if (result?.error) {
+      // Fallback: if auto-login fails, send to login page
+      window.location.href = "/login?registered=true";
+      return;
+    }
+
+    window.location.href = "/";
   }
 
   return (
