@@ -154,8 +154,8 @@ export default function TutorialPage() {
     <div className="max-w-5xl">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Getting Started</h2>
-          <p className="text-sm text-slate-500 mt-1">
+          <h2 className="text-2xl font-bold text-slate-100">Getting Started</h2>
+          <p className="text-sm text-slate-400 mt-1">
             Learn how to use every feature of Taxora
             {isTrial && daysLeft !== null && (
               <span className="ml-2 text-emerald-600 font-medium">
@@ -187,7 +187,7 @@ export default function TutorialPage() {
         <div className="px-6 py-4 flex items-center justify-between">
           <div>
             <p className="text-white font-medium">Full Walkthrough Tutorial</p>
-            <p className="text-slate-400 text-sm">Watch the complete guide or jump to a section below</p>
+            <p className="text-slate-500 text-sm">Watch the complete guide or jump to a section below</p>
           </div>
           <div className="flex gap-2 overflow-x-auto">
             {TUTORIAL_SECTIONS.map((section) => (
@@ -218,13 +218,13 @@ export default function TutorialPage() {
                 onClick={() => setActiveSection(section.id)}
                 className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors flex items-center gap-2 ${
                   activeSection === section.id
-                    ? "bg-emerald-50 text-emerald-700 font-medium"
-                    : "text-slate-600 hover:bg-slate-100"
+                    ? "bg-emerald-900/30 text-emerald-400 font-medium"
+                    : "text-slate-300 hover:bg-slate-700"
                 }`}
               >
                 <span className="flex-1">{section.title}</span>
                 {section.badge && (
-                  <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">
+                  <span className="text-[10px] font-semibold bg-emerald-800 text-emerald-400 px-1.5 py-0.5 rounded">
                     {section.badge}
                   </span>
                 )}
@@ -236,24 +236,24 @@ export default function TutorialPage() {
         {/* Active Section Detail */}
         <div className="lg:col-span-3">
           {TUTORIAL_SECTIONS.filter((s) => s.id === activeSection).map((section) => (
-            <div key={section.id} className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
+            <div key={section.id} className="bg-slate-800 border border-slate-700 rounded-lg p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
-                <h3 className="text-lg font-semibold text-slate-800">{section.title}</h3>
+                <h3 className="text-lg font-semibold text-slate-100">{section.title}</h3>
                 {section.badge && (
-                  <span className="text-xs font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                  <span className="text-xs font-semibold bg-emerald-800 text-emerald-400 px-2 py-0.5 rounded-full">
                     {section.badge}
                   </span>
                 )}
-                <span className="text-xs text-slate-400 ml-auto">{section.time} in video</span>
+                <span className="text-xs text-slate-500 ml-auto">{section.time} in video</span>
               </div>
-              <p className="text-sm text-slate-600 mb-6">{section.description}</p>
+              <p className="text-sm text-slate-300 mb-6">{section.description}</p>
               <div className="space-y-3">
                 {section.steps.map((step, i) => (
                   <div key={i} className="flex items-start gap-3">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold flex items-center justify-center mt-0.5">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-800 text-emerald-400 text-xs font-semibold flex items-center justify-center mt-0.5">
                       {i + 1}
                     </span>
-                    <p className="text-sm text-slate-700">{step}</p>
+                    <p className="text-sm text-slate-200">{step}</p>
                   </div>
                 ))}
               </div>
@@ -263,8 +263,8 @@ export default function TutorialPage() {
       </div>
 
       {/* Quick Start Checklist */}
-      <div className="mt-8 bg-gradient-to-r from-emerald-50 to-slate-50 border border-emerald-200 rounded-xl p-6">
-        <h3 className="font-semibold text-slate-800 mb-4">Quick Start Checklist</h3>
+      <div className="mt-8 bg-gradient-to-r from-emerald-900/20 to-slate-800 border border-emerald-700 rounded-xl p-6">
+        <h3 className="font-semibold text-slate-100 mb-4">Quick Start Checklist</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {[
             { label: "Set your income goal", href: "/settings" },
@@ -277,11 +277,11 @@ export default function TutorialPage() {
             <Link
               key={item.label}
               href={item.href}
-              className="flex items-center gap-3 bg-white rounded-lg px-4 py-3 border border-slate-200 hover:border-emerald-300 hover:shadow-sm transition-all"
+              className="flex items-center gap-3 bg-slate-800 rounded-lg px-4 py-3 border border-slate-700 hover:border-emerald-300 hover:shadow-sm transition-all"
             >
-              <div className="w-5 h-5 rounded border-2 border-slate-300 flex-shrink-0" />
-              <span className="text-sm text-slate-700">{item.label}</span>
-              <svg className="w-4 h-4 text-slate-400 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-5 h-5 rounded border-2 border-slate-600 flex-shrink-0" />
+              <span className="text-sm text-slate-200">{item.label}</span>
+              <svg className="w-4 h-4 text-slate-500 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>

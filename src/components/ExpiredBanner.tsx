@@ -14,8 +14,8 @@ export default function ExpiredBanner({ message, compact }: ExpiredBannerProps) 
 
   if (compact) {
     return (
-      <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 flex items-center justify-between text-sm mb-6">
-        <span className="text-amber-800">
+      <div className="bg-amber-900/30 border border-amber-700 rounded-lg px-4 py-3 flex items-center justify-between text-sm mb-6">
+        <span className="text-amber-400">
           {message || "Your free trial has ended. Choose a plan to continue editing."}
         </span>
         <Link
@@ -29,13 +29,13 @@ export default function ExpiredBanner({ message, compact }: ExpiredBannerProps) 
   }
 
   return (
-    <div className="bg-gradient-to-r from-slate-50 to-emerald-50 border border-slate-200 rounded-xl p-6 mb-8">
+    <div className="bg-gradient-to-r from-slate-800 to-emerald-900/20 border border-slate-700 rounded-xl p-6 mb-8">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-lg font-semibold text-slate-800 mb-1">
+          <h3 className="text-lg font-semibold text-slate-100 mb-1">
             Your free trial has ended
           </h3>
-          <p className="text-slate-600 text-sm">
+          <p className="text-slate-300 text-sm">
             {message || "Your data is safe and you can still view everything. Choose a plan to unlock editing, new entries, and all features."}
           </p>
           <div className="flex gap-3 mt-4">

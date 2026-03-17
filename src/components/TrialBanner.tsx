@@ -11,19 +11,19 @@ export default function TrialBanner() {
   if (plan !== "TRIAL" || dismissed || daysLeft === null) return null;
 
   return (
-    <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 flex items-center justify-between text-sm">
-      <span className="text-amber-800">
+    <div className="bg-amber-900/30 border-b border-amber-700 px-4 py-2 flex items-center justify-between text-sm">
+      <span className="text-amber-400">
         {daysLeft > 0
           ? `${daysLeft} day${daysLeft !== 1 ? "s" : ""} left in your free trial`
           : "Your free trial has ended"}
         {" — "}
-        <Link href="/billing" className="font-medium underline hover:text-amber-900">
+        <Link href="/billing" className="font-medium underline hover:text-amber-300">
           Choose a plan
         </Link>
       </span>
       <button
         onClick={() => setDismissed(true)}
-        className="text-amber-600 hover:text-amber-800 ml-4"
+        className="text-amber-600 hover:text-amber-400 ml-4"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

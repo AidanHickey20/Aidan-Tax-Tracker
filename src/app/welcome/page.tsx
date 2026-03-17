@@ -54,13 +54,13 @@ const PRO_FEATURES = [
 
 export default function WelcomePage() {
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-950">
       {/* Nav */}
-      <nav className="bg-white border-b border-slate-200">
+      <nav className="bg-slate-800 border-b border-slate-700">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <h1 className="text-xl font-bold text-emerald-600">Taxora</h1>
           <div className="flex items-center gap-4">
-            <Link href="/login" className="text-sm text-slate-600 hover:text-slate-800">
+            <Link href="/login" className="text-sm text-slate-300 hover:text-slate-100">
               Log in
             </Link>
             <Link
@@ -75,11 +75,11 @@ export default function WelcomePage() {
 
       {/* Hero */}
       <section className="max-w-6xl mx-auto px-6 pt-20 pb-16 text-center">
-        <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 leading-tight mb-6">
+        <h2 className="text-4xl sm:text-5xl font-bold text-white leading-tight mb-6">
           The financial tool built for<br />
           <span className="text-emerald-600">real estate professionals</span>
         </h2>
-        <p className="text-lg text-slate-500 max-w-2xl mx-auto mb-10">
+        <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-10">
           Track income, expenses, mileage, and taxes — all in one place.
           Know exactly what you owe before tax season hits.
         </p>
@@ -92,29 +92,29 @@ export default function WelcomePage() {
           </Link>
           <Link
             href="#pricing"
-            className="text-slate-600 px-6 py-3 rounded-lg text-base font-medium hover:text-slate-800 transition-colors"
+            className="text-slate-300 px-6 py-3 rounded-lg text-base font-medium hover:text-slate-100 transition-colors"
           >
             View Pricing
           </Link>
         </div>
-        <p className="text-xs text-slate-400 mt-4">No credit card required. Full Pro access during trial.</p>
+        <p className="text-xs text-slate-500 mt-4">No credit card required. Full Pro access during trial.</p>
       </section>
 
       {/* Basic Features */}
       <section className="max-w-6xl mx-auto px-6 py-16">
-        <h3 className="text-2xl font-bold text-slate-800 text-center mb-2">Everything you need to stay on top of your taxes</h3>
-        <p className="text-slate-500 text-center mb-12">Included in every plan</p>
+        <h3 className="text-2xl font-bold text-slate-100 text-center mb-2">Everything you need to stay on top of your taxes</h3>
+        <p className="text-slate-400 text-center mb-12">Included in every plan</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {FEATURES.map((f) => (
             <div key={f.title} className="flex gap-4">
-              <div className="flex-shrink-0 w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center">
+              <div className="flex-shrink-0 w-10 h-10 bg-emerald-900/30 rounded-lg flex items-center justify-center">
                 <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={f.icon} />
                 </svg>
               </div>
               <div>
-                <h4 className="font-semibold text-slate-800 mb-1">{f.title}</h4>
-                <p className="text-sm text-slate-500">{f.description}</p>
+                <h4 className="font-semibold text-slate-100 mb-1">{f.title}</h4>
+                <p className="text-sm text-slate-400">{f.description}</p>
               </div>
             </div>
           ))}
@@ -147,20 +147,20 @@ export default function WelcomePage() {
 
       {/* Pricing */}
       <section id="pricing" className="max-w-6xl mx-auto px-6 py-20">
-        <h3 className="text-2xl font-bold text-slate-800 text-center mb-2">Simple, transparent pricing</h3>
-        <p className="text-slate-500 text-center mb-12">Start with a 14-day free trial. No credit card required.</p>
+        <h3 className="text-2xl font-bold text-slate-100 text-center mb-2">Simple, transparent pricing</h3>
+        <p className="text-slate-400 text-center mb-12">Start with a 14-day free trial. No credit card required.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
           {/* Basic */}
-          <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm">
-            <h4 className="text-lg font-semibold text-slate-800 mb-1">Basic</h4>
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 shadow-sm">
+            <h4 className="text-lg font-semibold text-slate-100 mb-1">Basic</h4>
             <div className="flex items-baseline gap-1 mb-4">
-              <span className="text-4xl font-bold text-slate-800">$9.99</span>
-              <span className="text-slate-500">/month</span>
+              <span className="text-4xl font-bold text-slate-100">$9.99</span>
+              <span className="text-slate-400">/month</span>
             </div>
-            <p className="text-sm text-slate-500 mb-6">Everything you need to track income, expenses, and taxes.</p>
+            <p className="text-sm text-slate-400 mb-6">Everything you need to track income, expenses, and taxes.</p>
             <ul className="space-y-3 mb-8">
               {["Weekly income & expense tracking", "Mileage logging", "Tax estimation calculator", "Net worth dashboard", "Recurring items & reminders", "Accountant-ready exports", "Investment & crypto portfolio tracker"].map((f) => (
-                <li key={f} className="flex items-start gap-2 text-sm text-slate-600">
+                <li key={f} className="flex items-start gap-2 text-sm text-slate-300">
                   <svg className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
@@ -170,26 +170,26 @@ export default function WelcomePage() {
             </ul>
             <Link
               href="/signup"
-              className="block text-center bg-slate-800 text-white py-3 rounded-lg text-sm font-medium hover:bg-slate-900 transition-colors"
+              className="block text-center bg-slate-800 text-white py-3 rounded-lg text-sm font-medium hover:bg-slate-950 transition-colors"
             >
               Start Free Trial
             </Link>
           </div>
 
           {/* Pro */}
-          <div className="bg-white border-2 border-emerald-500 rounded-xl p-8 shadow-sm relative">
+          <div className="bg-slate-800 border-2 border-emerald-500 rounded-xl p-8 shadow-sm relative">
             <span className="absolute -top-3 left-6 bg-emerald-500 text-white text-xs font-semibold px-3 py-0.5 rounded-full">
               MOST POPULAR
             </span>
-            <h4 className="text-lg font-semibold text-slate-800 mb-1">Pro</h4>
+            <h4 className="text-lg font-semibold text-slate-100 mb-1">Pro</h4>
             <div className="flex items-baseline gap-1 mb-4">
-              <span className="text-4xl font-bold text-slate-800">$19.99</span>
-              <span className="text-slate-500">/month</span>
+              <span className="text-4xl font-bold text-slate-100">$19.99</span>
+              <span className="text-slate-400">/month</span>
             </div>
-            <p className="text-sm text-slate-500 mb-6">Everything in Basic, plus powerful tools for top producers.</p>
+            <p className="text-sm text-slate-400 mb-6">Everything in Basic, plus powerful tools for top producers.</p>
             <ul className="space-y-3 mb-8">
               {["Everything in Basic", "AI Tax Advisor chatbot", "Real estate portfolio tracker", "Real estate deal tracker", "Priority support"].map((f) => (
-                <li key={f} className="flex items-start gap-2 text-sm text-slate-600">
+                <li key={f} className="flex items-start gap-2 text-sm text-slate-300">
                   <svg className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
@@ -218,7 +218,7 @@ export default function WelcomePage() {
           </p>
           <Link
             href="/signup"
-            className="inline-block bg-white text-emerald-700 px-8 py-3 rounded-lg text-base font-medium hover:bg-emerald-50 transition-colors"
+            className="inline-block bg-slate-800 text-emerald-400 px-8 py-3 rounded-lg text-base font-medium hover:bg-slate-700 transition-colors"
           >
             Start Your Free Trial
           </Link>

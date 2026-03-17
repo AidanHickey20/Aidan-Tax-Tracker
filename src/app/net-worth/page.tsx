@@ -88,7 +88,7 @@ function paymentsSinceRef(refDate: Date, now: Date, paymentDay: number): number 
 function ProgressBar({ pctPaid, color }: { pctPaid: number; color: string }) {
   const clamped = Math.min(Math.max(pctPaid, 0), 100);
   return (
-    <div className="w-full bg-slate-100 rounded-full h-4 mt-2 overflow-hidden">
+    <div className="w-full bg-slate-800 rounded-full h-4 mt-2 overflow-hidden">
       <div
         className={`h-4 rounded-full transition-all duration-500 ${color}`}
         style={{ width: `${clamped}%` }}
@@ -272,18 +272,18 @@ export default function NetWorthPage() {
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/" className="text-slate-400 hover:text-slate-600">
+        <Link href="/" className="text-slate-500 hover:text-slate-300">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </Link>
-        <h2 className="text-2xl font-bold text-slate-800">Estimated Net Worth</h2>
+        <h2 className="text-2xl font-bold text-slate-100">Estimated Net Worth</h2>
       </div>
 
       {!hasAnySetup && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8 text-center">
-          <p className="text-blue-800 font-medium mb-2">Set up your financial profile</p>
-          <p className="text-sm text-blue-600 mb-4">
+        <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-6 mb-8 text-center">
+          <p className="text-blue-400 font-medium mb-2">Set up your financial profile</p>
+          <p className="text-sm text-blue-400 mb-4">
             Head to Settings to enter your starting bank balance, home value, loans, and more.
           </p>
           <Link href="/settings" className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
@@ -293,16 +293,16 @@ export default function NetWorthPage() {
       )}
 
       {/* Net Worth Hero */}
-      <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm mb-8 text-center">
-        <p className="text-sm text-slate-500 uppercase tracking-wide mb-1">Net Worth</p>
+      <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 shadow-sm mb-8 text-center">
+        <p className="text-sm text-slate-400 uppercase tracking-wide mb-1">Net Worth</p>
         <MaskedValue value={formatCurrency(netWorth)} className={`text-4xl font-bold ${netWorth >= 0 ? "text-emerald-600" : "text-red-500"} block`} />
         <div className="flex justify-center gap-8 mt-4 text-sm">
           <div>
-            <span className="text-slate-500">Total Assets: </span>
+            <span className="text-slate-400">Total Assets: </span>
             <MaskedValue value={formatCurrency(totalAssets)} className="font-semibold text-emerald-600" />
           </div>
           <div>
-            <span className="text-slate-500">Total Liabilities: </span>
+            <span className="text-slate-400">Total Liabilities: </span>
             <MaskedValue value={formatCurrency(totalLiabilities)} className="font-semibold text-red-500" />
           </div>
         </div>
@@ -310,20 +310,20 @@ export default function NetWorthPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* ── Assets ── */}
-        <div className="bg-white border border-slate-200 rounded-lg shadow-sm">
-          <div className="px-6 py-4 border-b border-slate-100">
-            <h3 className="font-semibold text-slate-700">Assets</h3>
+        <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-sm">
+          <div className="px-6 py-4 border-b border-slate-700">
+            <h3 className="font-semibold text-slate-200">Assets</h3>
             <MaskedValue value={formatCurrency(totalAssets)} className="text-2xl font-bold text-emerald-600 mt-1 block" />
           </div>
-          <div className="divide-y divide-slate-50">
+          <div className="divide-y divide-slate-700">
             {/* Home */}
             {hasHome && (
               <div className="px-6 py-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-slate-700">Primary Residence (Equity)</span>
-                  <MaskedValue value={formatCurrency(calcs.homeEquity)} className="font-semibold text-slate-800" />
+                  <span className="text-sm font-medium text-slate-200">Primary Residence (Equity)</span>
+                  <MaskedValue value={formatCurrency(calcs.homeEquity)} className="font-semibold text-slate-100" />
                 </div>
-                <div className="mt-2 text-xs text-slate-400 space-y-0.5">
+                <div className="mt-2 text-xs text-slate-500 space-y-0.5">
                   <div className="flex justify-between">
                     <span>Home Value ({((settings?.homeAppreciation ?? 0) * 100).toFixed(2)}%/yr appreciation)</span>
                     <MaskedValue value={formatCurrency(calcs.homeValue)} />
@@ -346,10 +346,10 @@ export default function NetWorthPage() {
             {bankBalances.length > 0 && (
               <div className="px-6 py-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-slate-700">Bank Accounts</span>
-                  <MaskedValue value={formatCurrency(totalBankAccounts)} className="font-semibold text-slate-800" />
+                  <span className="text-sm font-medium text-slate-200">Bank Accounts</span>
+                  <MaskedValue value={formatCurrency(totalBankAccounts)} className="font-semibold text-slate-100" />
                 </div>
-                <div className="mt-2 text-xs text-slate-400 space-y-0.5">
+                <div className="mt-2 text-xs text-slate-500 space-y-0.5">
                   {bankBalances.map((b) => (
                     <div key={b.accountName} className="flex justify-between">
                       <span>{b.accountName}</span>
@@ -363,22 +363,22 @@ export default function NetWorthPage() {
             {/* Investments */}
             <div className="px-6 py-4">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-slate-700">Investment Portfolio</span>
-                <MaskedValue value={formatCurrency(totalInvestments)} className="font-semibold text-slate-800" />
+                <span className="text-sm font-medium text-slate-200">Investment Portfolio</span>
+                <MaskedValue value={formatCurrency(totalInvestments)} className="font-semibold text-slate-100" />
               </div>
-              <div className="mt-3 space-y-2 pl-4 border-l-2 border-slate-100">
+              <div className="mt-3 space-y-2 pl-4 border-l-2 border-slate-700">
                 {investments.map((inv) => (
                   <div key={inv.id} className="flex justify-between items-center text-sm">
-                    <span className="text-slate-500">
+                    <span className="text-slate-400">
                       {inv.name}
                       {inv.type === "CRYPTO" && (
-                        <span className="text-slate-400 ml-1">({CRYPTO_TICKERS[inv.symbol] || inv.symbol.toUpperCase()})</span>
+                        <span className="text-slate-500 ml-1">({CRYPTO_TICKERS[inv.symbol] || inv.symbol.toUpperCase()})</span>
                       )}
                       {inv.type === "STOCK" && (
-                        <span className="text-slate-400 ml-1">({inv.symbol})</span>
+                        <span className="text-slate-500 ml-1">({inv.symbol})</span>
                       )}
                     </span>
-                    <MaskedValue value={formatCurrency(investmentValues[inv.id] ?? 0)} className="text-slate-600 font-medium" />
+                    <MaskedValue value={formatCurrency(investmentValues[inv.id] ?? 0)} className="text-slate-300 font-medium" />
                   </div>
                 ))}
               </div>
@@ -387,27 +387,27 @@ export default function NetWorthPage() {
         </div>
 
         {/* ── Liabilities ── */}
-        <div className="bg-white border border-slate-200 rounded-lg shadow-sm">
-          <div className="px-6 py-4 border-b border-slate-100">
-            <h3 className="font-semibold text-slate-700">Liabilities</h3>
+        <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-sm">
+          <div className="px-6 py-4 border-b border-slate-700">
+            <h3 className="font-semibold text-slate-200">Liabilities</h3>
             <MaskedValue value={formatCurrency(totalLiabilities)} className="text-2xl font-bold text-red-500 mt-1 block" />
           </div>
-          <div className="divide-y divide-slate-50">
+          <div className="divide-y divide-slate-700">
             {/* Student Loans */}
             {hasStudentLoan && (
               <div className="px-6 py-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-slate-700">Student Loans</span>
+                  <span className="text-sm font-medium text-slate-200">Student Loans</span>
                   <MaskedValue value={formatCurrency(calcs.studentLoanBalance)} className="font-semibold text-red-500" />
                 </div>
                 <ProgressBar pctPaid={calcs.studentPaidOff} color="bg-emerald-500" />
-                <div className="flex justify-between mt-2 text-xs text-slate-400">
+                <div className="flex justify-between mt-2 text-xs text-slate-500">
                   <span>{calcs.studentPaidOff.toFixed(1)}% paid off</span>
                   <span>
                     <MaskedValue value={`${formatCurrency(settings!.studentLoanBalance - calcs.studentLoanBalance)} of ${formatCurrency(settings!.studentLoanBalance)}`} />
                   </span>
                 </div>
-                <div className="mt-2 text-xs text-slate-400 space-y-0.5">
+                <div className="mt-2 text-xs text-slate-500 space-y-0.5">
                   <div className="flex justify-between">
                     <span>Monthly Payment ({settings!.studentLoanPaymentDay ?? 1}{ordinalSuffix(settings!.studentLoanPaymentDay ?? 1)} of month)</span>
                     <MaskedValue value={`${formatCurrency(settings!.studentLoanPayment)}/mo`} />
@@ -428,17 +428,17 @@ export default function NetWorthPage() {
             {hasCarLoan && (
               <div className="px-6 py-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-slate-700">Car Loan</span>
+                  <span className="text-sm font-medium text-slate-200">Car Loan</span>
                   <MaskedValue value={formatCurrency(calcs.carLoanBalance)} className="font-semibold text-red-500" />
                 </div>
                 <ProgressBar pctPaid={calcs.carPaidOff} color="bg-emerald-500" />
-                <div className="flex justify-between mt-2 text-xs text-slate-400">
+                <div className="flex justify-between mt-2 text-xs text-slate-500">
                   <span>{calcs.carPaidOff.toFixed(1)}% paid off</span>
                   <span>
                     <MaskedValue value={`${formatCurrency(settings!.carLoanBalance - calcs.carLoanBalance)} of ${formatCurrency(settings!.carLoanBalance)}`} />
                   </span>
                 </div>
-                <div className="mt-2 text-xs text-slate-400 space-y-0.5">
+                <div className="mt-2 text-xs text-slate-500 space-y-0.5">
                   <div className="flex justify-between">
                     <span>Monthly Payment ({settings!.carLoanPaymentDay ?? 16}{ordinalSuffix(settings!.carLoanPaymentDay ?? 16)} of month)</span>
                     <MaskedValue value={`${formatCurrency(settings!.carLoanPayment)}/mo`} />
@@ -456,7 +456,7 @@ export default function NetWorthPage() {
             )}
 
             {!hasStudentLoan && !hasCarLoan && (
-              <div className="px-6 py-4 text-sm text-slate-400 text-center">
+              <div className="px-6 py-4 text-sm text-slate-500 text-center">
                 No liabilities configured. Add them in Settings.
               </div>
             )}

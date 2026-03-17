@@ -38,19 +38,19 @@ function Field({ label, value, onChange, prefix, suffix, step, hint }: {
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-slate-200 mb-1">{label}</label>
       <div className="flex items-center gap-1">
-        {prefix && <span className="text-sm text-slate-500">{prefix}</span>}
+        {prefix && <span className="text-sm text-slate-400">{prefix}</span>}
         <input
           type="number"
           step={step || "0.01"}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+          className="w-full border border-slate-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-900 text-slate-100 placeholder-slate-500"
         />
-        {suffix && <span className="text-sm text-slate-500">{suffix}</span>}
+        {suffix && <span className="text-sm text-slate-400">{suffix}</span>}
       </div>
-      {hint && <p className="text-xs text-slate-400 mt-1">{hint}</p>}
+      {hint && <p className="text-xs text-slate-500 mt-1">{hint}</p>}
     </div>
   );
 }
@@ -89,7 +89,7 @@ export default function SettingsPage() {
   };
 
   if (loading || !settings) {
-    return <div className="text-slate-400 py-8">Loading settings...</div>;
+    return <div className="text-slate-500 py-8">Loading settings...</div>;
   }
 
   const update = (field: keyof Settings, value: string) => {
@@ -110,25 +110,25 @@ export default function SettingsPage() {
   return (
     <div className="max-w-2xl">
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/" className="text-slate-400 hover:text-slate-600">
+        <Link href="/" className="text-slate-500 hover:text-slate-300">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </Link>
-        <h2 className="text-2xl font-bold text-slate-800">Settings</h2>
+        <h2 className="text-2xl font-bold text-slate-100">Settings</h2>
       </div>
 
       <ExpiredBanner compact message="Your free trial has ended. Choose a plan to update settings." />
 
-      <p className="text-sm text-slate-500 mb-8">
+      <p className="text-sm text-slate-400 mb-8">
         Configure your financial starting points. These values are used to calculate your net worth and track progress.
         Leave fields at 0 if they don&apos;t apply to you.
       </p>
 
       <div className="space-y-8">
         {/* Income Goal */}
-        <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
-          <h3 className="font-semibold text-slate-700 mb-4">Income Goal</h3>
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 shadow-sm">
+          <h3 className="font-semibold text-slate-200 mb-4">Income Goal</h3>
           <Field
             label="Annual Income Goal"
             value={settings.incomeGoal}
@@ -140,18 +140,18 @@ export default function SettingsPage() {
         </div>
 
         {/* Reference Date & Bank Balance */}
-        <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
-          <h3 className="font-semibold text-slate-700 mb-4">Bank Account</h3>
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 shadow-sm">
+          <h3 className="font-semibold text-slate-200 mb-4">Bank Account</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Reference Date</label>
+              <label className="block text-sm font-medium text-slate-200 mb-1">Reference Date</label>
               <input
                 type="date"
                 value={settings.refDate}
                 onChange={(e) => update("refDate", e.target.value)}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="w-full border border-slate-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-900 text-slate-100 placeholder-slate-500"
               />
-              <p className="text-xs text-slate-400 mt-1">The date your starting balances are from</p>
+              <p className="text-xs text-slate-500 mt-1">The date your starting balances are from</p>
             </div>
             <Field
               label="Starting Bank Balance"
@@ -167,8 +167,8 @@ export default function SettingsPage() {
         {isProUser ? <RealEstatePortfolio /> : <UpgradePrompt feature="Real Estate Portfolio" />}
 
         {/* Student Loans */}
-        <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
-          <h3 className="font-semibold text-slate-700 mb-4">Student Loans</h3>
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 shadow-sm">
+          <h3 className="font-semibold text-slate-200 mb-4">Student Loans</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Balance" value={settings.studentLoanBalance} onChange={(v) => update("studentLoanBalance", v)} prefix="$" />
             <Field label="Interest Rate" value={settings.studentLoanRate} onChange={(v) => update("studentLoanRate", v)} hint="e.g. 0.075 for 7.5%" step="0.001" />
@@ -178,8 +178,8 @@ export default function SettingsPage() {
         </div>
 
         {/* Car Loan */}
-        <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
-          <h3 className="font-semibold text-slate-700 mb-4">Car Loan</h3>
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 shadow-sm">
+          <h3 className="font-semibold text-slate-200 mb-4">Car Loan</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Balance" value={settings.carLoanBalance} onChange={(v) => update("carLoanBalance", v)} prefix="$" />
             <Field label="Interest Rate" value={settings.carLoanRate} onChange={(v) => update("carLoanRate", v)} hint="e.g. 0.04 for 4%" step="0.001" />
@@ -188,8 +188,8 @@ export default function SettingsPage() {
           </div>
         </div>
         {/* Investment Assumptions */}
-        <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
-          <h3 className="font-semibold text-slate-700 mb-4">Investment Assumptions</h3>
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 shadow-sm">
+          <h3 className="font-semibold text-slate-200 mb-4">Investment Assumptions</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field
               label="Annual Growth Rate"
@@ -209,7 +209,7 @@ export default function SettingsPage() {
           disabled={saving || !canEdit}
           className={`px-6 py-2.5 rounded-lg font-medium transition-colors ${
             !canEdit
-              ? "bg-slate-300 text-white cursor-not-allowed"
+              ? "bg-slate-600 text-white cursor-not-allowed"
               : "bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
           }`}
         >

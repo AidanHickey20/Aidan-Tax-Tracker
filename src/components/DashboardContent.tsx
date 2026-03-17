@@ -120,7 +120,7 @@ export default function DashboardContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-slate-400">Loading dashboard...</div>
+        <div className="text-slate-500">Loading dashboard...</div>
       </div>
     );
   }
@@ -286,12 +286,12 @@ export default function DashboardContent() {
     { label: "Est. Net Worth", value: formatCurrency(estNetWorth), color: estNetWorth >= 0 ? "text-emerald-600" : "text-red-500", href: "/net-worth" },
     { label: "Total Mileage", value: `${totalMileage.toLocaleString()} mi`, color: "text-purple-500", href: null },
     { label: "Est. Tax Liability", value: formatCurrency(estimatedTax), color: "text-red-500", href: null },
-    { label: "Weeks Tracked", value: entries.length.toString(), color: "text-slate-700", href: null },
+    { label: "Weeks Tracked", value: entries.length.toString(), color: "text-slate-200", href: null },
   ];
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-slate-800 mb-6">
+      <h2 className="text-2xl font-bold text-slate-100 mb-6">
         Dashboard — {new Date().getFullYear()}
       </h2>
 
@@ -299,11 +299,11 @@ export default function DashboardContent() {
 
       {/* Reminders */}
       {reminders.length > 0 && (
-        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <h3 className="font-semibold text-amber-800 mb-2">Reminders</h3>
+        <div className="mb-6 bg-amber-900/30 border border-amber-200 rounded-lg p-4">
+          <h3 className="font-semibold text-amber-400 mb-2">Reminders</h3>
           <ul className="space-y-1">
             {reminders.map((r) => (
-              <li key={r.id} className="text-sm text-amber-700 flex items-center gap-2">
+              <li key={r.id} className="text-sm text-amber-400 flex items-center gap-2">
                 <span>&#8226;</span> {r.message}
                 <span className={`text-xs px-1.5 py-0.5 rounded ${
                   r.frequency === "MONTHLY" ? "bg-blue-100 text-blue-600" : "bg-amber-200 text-amber-700"
@@ -323,7 +323,7 @@ export default function DashboardContent() {
           const isCount = card.label === "Weeks Tracked";
           const content = (
             <>
-              <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">
+              <p className="text-xs text-slate-400 uppercase tracking-wide mb-1">
                 {card.label}
               </p>
               <MaskedValue
@@ -338,14 +338,14 @@ export default function DashboardContent() {
             <Link
               key={card.label}
               href={card.href}
-              className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer"
+              className="bg-slate-800 border border-slate-700 rounded-lg p-4 shadow-sm hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer"
             >
               {content}
             </Link>
           ) : (
             <div
               key={card.label}
-              className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm"
+              className="bg-slate-800 border border-slate-700 rounded-lg p-4 shadow-sm"
             >
               {content}
             </div>
@@ -358,8 +358,8 @@ export default function DashboardContent() {
 
       {/* Chart */}
       {chartData.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm mb-8">
-          <h3 className="font-semibold text-slate-700 mb-4">
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 shadow-sm mb-8">
+          <h3 className="font-semibold text-slate-200 mb-4">
             Weekly Income vs Business Expenses
           </h3>
           <IncomeExpenseChart data={chartData} />
@@ -382,11 +382,11 @@ export default function DashboardContent() {
 
       {/* Account Balances Snapshot */}
       {latestBalances.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
-          <h3 className="font-semibold text-slate-700 mb-4">
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 shadow-sm">
+          <h3 className="font-semibold text-slate-200 mb-4">
             Account Balances{" "}
             {latestEntry && (
-              <span className="text-sm font-normal text-slate-400">
+              <span className="text-sm font-normal text-slate-500">
                 (as of {formatWeekLabel(latestEntry.weekStart, latestEntry.weekEnd)})
               </span>
             )}
@@ -409,23 +409,23 @@ export default function DashboardContent() {
             return (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {standalone.map((b) => (
-                  <div key={b.id} className="flex justify-between items-center bg-slate-50 rounded-lg px-4 py-3">
-                    <span className="text-sm text-slate-600">{b.accountName}</span>
-                    <MaskedValue value={formatCurrency(b.balance)} className="font-semibold text-slate-800" />
+                  <div key={b.id} className="flex justify-between items-center bg-slate-900 rounded-lg px-4 py-3">
+                    <span className="text-sm text-slate-300">{b.accountName}</span>
+                    <MaskedValue value={formatCurrency(b.balance)} className="font-semibold text-slate-100" />
                   </div>
                 ))}
                 {Array.from(groups.entries()).map(([groupName, items]) => {
                   const groupTotal = items.reduce((sum, b) => sum + b.balance, 0);
                   return (
-                    <div key={groupName} className="bg-slate-50 rounded-lg px-4 py-3">
+                    <div key={groupName} className="bg-slate-900 rounded-lg px-4 py-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-slate-700">{groupName}</span>
-                        <MaskedValue value={formatCurrency(groupTotal)} className="font-semibold text-slate-800" />
+                        <span className="text-sm font-medium text-slate-200">{groupName}</span>
+                        <MaskedValue value={formatCurrency(groupTotal)} className="font-semibold text-slate-100" />
                       </div>
                       {items.map((b) => (
                         <div key={b.id} className="flex justify-between items-center mt-1 ml-2">
-                          <span className="text-xs text-slate-500">{b.accountName.replace(`${groupName} - `, "")}</span>
-                          <MaskedValue value={formatCurrency(b.balance)} className="text-xs text-slate-600" />
+                          <span className="text-xs text-slate-400">{b.accountName.replace(`${groupName} - `, "")}</span>
+                          <MaskedValue value={formatCurrency(b.balance)} className="text-xs text-slate-300" />
                         </div>
                       ))}
                     </div>
@@ -438,7 +438,7 @@ export default function DashboardContent() {
       )}
 
       {entries.length === 0 && (
-        <div className="text-center py-12 text-slate-400">
+        <div className="text-center py-12 text-slate-500">
           <p className="text-lg mb-2">No entries yet</p>
           <p className="text-sm">
             Head to <span className="font-semibold">Weekly Entry</span> to log your first week.

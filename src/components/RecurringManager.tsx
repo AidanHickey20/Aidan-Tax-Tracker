@@ -36,11 +36,11 @@ function ordinalSuffix(d: number): string {
 }
 
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  INCOME: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
-  BUSINESS_EXPENSE: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200" },
-  PERSONAL_EXPENSE: { bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-200" },
-  OWNER_DRAW: { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
-  INVESTMENT: { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
+  INCOME: { bg: "bg-emerald-900/30", text: "text-emerald-400", border: "border-emerald-700" },
+  BUSINESS_EXPENSE: { bg: "bg-red-900/30", text: "text-red-400", border: "border-red-700" },
+  PERSONAL_EXPENSE: { bg: "bg-orange-900/30", text: "text-orange-400", border: "border-orange-700" },
+  OWNER_DRAW: { bg: "bg-purple-900/30", text: "text-purple-400", border: "border-purple-700" },
+  INVESTMENT: { bg: "bg-blue-900/30", text: "text-blue-400", border: "border-blue-700" },
 };
 
 interface RecurringItem {
@@ -252,8 +252,8 @@ export default function RecurringManager() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Recurring & Reminders</h2>
-          <p className="text-sm text-slate-500 mt-1">
+          <h2 className="text-2xl font-bold text-slate-100">Recurring & Reminders</h2>
+          <p className="text-sm text-slate-400 mt-1">
             Manage your regular income, expenses, and reminders. Active items automatically affect your net worth.
           </p>
         </div>
@@ -262,7 +262,7 @@ export default function RecurringManager() {
       <ExpiredBanner compact message="Your free trial has ended. Choose a plan to manage recurring items and reminders." />
 
       {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600 flex items-center gap-2">
+        <div className="mb-4 bg-red-900/30 border border-red-700 rounded-lg px-4 py-3 text-sm text-red-400 flex items-center gap-2">
           <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -272,39 +272,39 @@ export default function RecurringManager() {
 
       {/* ── Monthly Summary Cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-2 h-2 rounded-full bg-emerald-500" />
-            <p className="text-xs text-slate-500 uppercase tracking-wide">
+            <p className="text-xs text-slate-400 uppercase tracking-wide">
               {new Date().toLocaleString("default", { month: "long" })} Revenue
             </p>
           </div>
           <p className="text-2xl font-bold text-emerald-600">{formatCurrency(actualMonthlyIncome)}</p>
-          <p className="text-xs text-slate-400 mt-1">Est. {formatCurrency(monthlyIncome)}/mo from recurring</p>
+          <p className="text-xs text-slate-500 mt-1">Est. {formatCurrency(monthlyIncome)}/mo from recurring</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-2 h-2 rounded-full bg-red-500" />
-            <p className="text-xs text-slate-500 uppercase tracking-wide">
+            <p className="text-xs text-slate-400 uppercase tracking-wide">
               {new Date().toLocaleString("default", { month: "long" })} Expenses
             </p>
           </div>
           <p className="text-2xl font-bold text-red-500">{formatCurrency(monthlyExpenses)}</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-2 h-2 rounded-full bg-blue-500" />
-            <p className="text-xs text-slate-500 uppercase tracking-wide">
+            <p className="text-xs text-slate-400 uppercase tracking-wide">
               {new Date().toLocaleString("default", { month: "long" })} Investing
             </p>
           </div>
-          <p className="text-2xl font-bold text-blue-600">{formatCurrency(actualMonthlyInvesting)}</p>
-          <p className="text-xs text-slate-400 mt-1">Est. {formatCurrency(monthlyInvestments)}/mo from recurring</p>
+          <p className="text-2xl font-bold text-blue-400">{formatCurrency(actualMonthlyInvesting)}</p>
+          <p className="text-xs text-slate-500 mt-1">Est. {formatCurrency(monthlyInvestments)}/mo from recurring</p>
         </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
             <div className="w-2 h-2 rounded-full bg-slate-500" />
-            <p className="text-xs text-slate-500 uppercase tracking-wide">Net Cash Flow</p>
+            <p className="text-xs text-slate-400 uppercase tracking-wide">Net Cash Flow</p>
           </div>
           {(() => {
             const actualNet = actualMonthlyIncome - monthlyExpenses - actualMonthlyInvesting;
@@ -318,11 +318,11 @@ export default function RecurringManager() {
       </div>
 
       {/* ── Recurring Items Section ── */}
-      <div className="bg-white border border-slate-200 rounded-lg shadow-sm mb-6">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+      <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-sm mb-6">
+        <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
           <div>
-            <h3 className="font-semibold text-slate-800">Recurring Items</h3>
-            <p className="text-xs text-slate-400 mt-0.5">{activeItems.length} active of {items.length} total</p>
+            <h3 className="font-semibold text-slate-100">Recurring Items</h3>
+            <p className="text-xs text-slate-500 mt-0.5">{activeItems.length} active of {items.length} total</p>
           </div>
           {canEdit && (
             <button
@@ -336,35 +336,35 @@ export default function RecurringManager() {
 
         {/* Add Item Form */}
         {showAddItem && (
-          <div className="px-6 py-4 bg-slate-50 border-b border-slate-100">
+          <div className="px-6 py-4 bg-slate-900 border-b border-slate-700">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Description *</label>
+                <label className="block text-xs text-slate-400 mb-1">Description *</label>
                 <input
                   type="text"
                   placeholder="e.g., Monthly Rent"
                   value={newDescription}
                   onChange={(e) => setNewDescription(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  className="w-full border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Amount *</label>
+                <label className="block text-xs text-slate-400 mb-1">Amount *</label>
                 <input
                   type="number"
                   placeholder="0.00"
                   step="0.01"
                   value={newAmount}
                   onChange={(e) => setNewAmount(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  className="w-full border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Category</label>
+                <label className="block text-xs text-slate-400 mb-1">Category</label>
                 <select
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value as Category)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  className="w-full border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 >
                   {categoryOptions.map((c) => (
                     <option key={c.key} value={c.key}>{c.label}</option>
@@ -372,22 +372,22 @@ export default function RecurringManager() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Frequency</label>
+                <label className="block text-xs text-slate-400 mb-1">Frequency</label>
                 <select
                   value={newFrequency}
                   onChange={(e) => { setNewFrequency(e.target.value); setNewScheduledDay(-1); }}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  className="w-full border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 >
                   <option value="WEEKLY">Weekly</option>
                   <option value="MONTHLY">Monthly</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Scheduled Day</label>
+                <label className="block text-xs text-slate-400 mb-1">Scheduled Day</label>
                 <select
                   value={newScheduledDay}
                   onChange={(e) => setNewScheduledDay(parseInt(e.target.value))}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  className="w-full border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 >
                   {newFrequency === "WEEKLY" ? (
                     <>
@@ -419,9 +419,9 @@ export default function RecurringManager() {
         )}
 
         {/* Items List */}
-        <div className="divide-y divide-slate-50">
+        <div className="divide-y divide-slate-700">
           {items.length === 0 ? (
-            <div className="px-6 py-8 text-center text-slate-400">
+            <div className="px-6 py-8 text-center text-slate-500">
               <p className="text-sm">No recurring items yet. Add your first one above.</p>
             </div>
           ) : (
@@ -439,7 +439,7 @@ export default function RecurringManager() {
                           className={`flex items-center gap-3 px-4 py-3 rounded-lg border transition-all ${
                             item.isActive
                               ? `${colors.bg} ${colors.border}`
-                              : "bg-slate-50 border-slate-100 opacity-50"
+                              : "bg-slate-900 border-slate-700 opacity-50"
                           }`}
                         >
                           <button
@@ -447,7 +447,7 @@ export default function RecurringManager() {
                             className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
                               item.isActive
                                 ? "bg-emerald-500 border-emerald-500 text-white"
-                                : "border-slate-300 hover:border-slate-400"
+                                : "border-slate-600 hover:border-slate-400"
                             }`}
                           >
                             {item.isActive && (
@@ -457,14 +457,14 @@ export default function RecurringManager() {
                             )}
                           </button>
                           <div className="flex-1 min-w-0">
-                            <p className={`font-medium text-slate-800 ${!item.isActive && "line-through text-slate-500"}`}>
+                            <p className={`font-medium text-slate-100 ${!item.isActive && "line-through text-slate-400"}`}>
                               {item.description}
                             </p>
                             <div className="flex items-center gap-2 mt-1">
                               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                                 item.frequency === "MONTHLY"
-                                  ? "bg-blue-100 text-blue-700"
-                                  : "bg-emerald-100 text-emerald-700"
+                                  ? "bg-blue-900/30 text-blue-400"
+                                  : "bg-emerald-900/30 text-emerald-400"
                               }`}>
                                 {formatSchedule(item.frequency, item.scheduledDay)}
                               </span>
@@ -475,7 +475,7 @@ export default function RecurringManager() {
                           </span>
                           <button
                             onClick={() => deleteItem(item.id)}
-                            className="w-7 h-7 flex items-center justify-center rounded-md text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors flex-shrink-0"
+                            className="w-7 h-7 flex items-center justify-center rounded-md text-slate-500 hover:bg-red-900/30 hover:text-red-500 transition-colors flex-shrink-0"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -501,7 +501,7 @@ export default function RecurringManager() {
                           className={`flex items-center gap-3 px-4 py-3 rounded-lg border transition-all ${
                             item.isActive
                               ? `${colors.bg} ${colors.border}`
-                              : "bg-slate-50 border-slate-100 opacity-50"
+                              : "bg-slate-900 border-slate-700 opacity-50"
                           }`}
                         >
                           <button
@@ -509,7 +509,7 @@ export default function RecurringManager() {
                             className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
                               item.isActive
                                 ? "bg-red-500 border-red-500 text-white"
-                                : "border-slate-300 hover:border-slate-400"
+                                : "border-slate-600 hover:border-slate-400"
                             }`}
                           >
                             {item.isActive && (
@@ -519,7 +519,7 @@ export default function RecurringManager() {
                             )}
                           </button>
                           <div className="flex-1 min-w-0">
-                            <p className={`font-medium text-slate-800 ${!item.isActive && "line-through text-slate-500"}`}>
+                            <p className={`font-medium text-slate-100 ${!item.isActive && "line-through text-slate-400"}`}>
                               {item.description}
                             </p>
                             <div className="flex items-center gap-2 mt-1">
@@ -528,8 +528,8 @@ export default function RecurringManager() {
                               </span>
                               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                                 item.frequency === "MONTHLY"
-                                  ? "bg-blue-100 text-blue-700"
-                                  : "bg-emerald-100 text-emerald-700"
+                                  ? "bg-blue-900/30 text-blue-400"
+                                  : "bg-emerald-900/30 text-emerald-400"
                               }`}>
                                 {formatSchedule(item.frequency, item.scheduledDay)}
                               </span>
@@ -540,7 +540,7 @@ export default function RecurringManager() {
                           </span>
                           <button
                             onClick={() => deleteItem(item.id)}
-                            className="w-7 h-7 flex items-center justify-center rounded-md text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors flex-shrink-0"
+                            className="w-7 h-7 flex items-center justify-center rounded-md text-slate-500 hover:bg-red-900/30 hover:text-red-500 transition-colors flex-shrink-0"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -556,7 +556,7 @@ export default function RecurringManager() {
               {/* Investment items */}
               {investmentItems.length > 0 && (
                 <div className="px-6 py-3">
-                  <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2">Investments</p>
+                  <p className="text-xs font-semibold text-blue-400 uppercase tracking-wide mb-2">Investments</p>
                   <div className="space-y-2">
                     {investmentItems.map((item) => {
                       const colors = CATEGORY_COLORS.INVESTMENT;
@@ -566,7 +566,7 @@ export default function RecurringManager() {
                           className={`flex items-center gap-3 px-4 py-3 rounded-lg border transition-all ${
                             item.isActive
                               ? `${colors.bg} ${colors.border}`
-                              : "bg-slate-50 border-slate-100 opacity-50"
+                              : "bg-slate-900 border-slate-700 opacity-50"
                           }`}
                         >
                           <button
@@ -574,7 +574,7 @@ export default function RecurringManager() {
                             className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
                               item.isActive
                                 ? "bg-blue-500 border-blue-500 text-white"
-                                : "border-slate-300 hover:border-slate-400"
+                                : "border-slate-600 hover:border-slate-400"
                             }`}
                           >
                             {item.isActive && (
@@ -584,25 +584,25 @@ export default function RecurringManager() {
                             )}
                           </button>
                           <div className="flex-1 min-w-0">
-                            <p className={`font-medium text-slate-800 ${!item.isActive && "line-through text-slate-500"}`}>
+                            <p className={`font-medium text-slate-100 ${!item.isActive && "line-through text-slate-400"}`}>
                               {item.description}
                             </p>
                             <div className="flex items-center gap-2 mt-1">
                               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                                 item.frequency === "MONTHLY"
-                                  ? "bg-blue-100 text-blue-700"
-                                  : "bg-emerald-100 text-emerald-700"
+                                  ? "bg-blue-900/30 text-blue-400"
+                                  : "bg-emerald-900/30 text-emerald-400"
                               }`}>
                                 {formatSchedule(item.frequency, item.scheduledDay)}
                               </span>
                             </div>
                           </div>
-                          <span className="text-lg font-bold text-blue-600 flex-shrink-0">
+                          <span className="text-lg font-bold text-blue-400 flex-shrink-0">
                             {formatCurrency(item.amount)}
                           </span>
                           <button
                             onClick={() => deleteItem(item.id)}
-                            className="w-7 h-7 flex items-center justify-center rounded-md text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors flex-shrink-0"
+                            className="w-7 h-7 flex items-center justify-center rounded-md text-slate-500 hover:bg-red-900/30 hover:text-red-500 transition-colors flex-shrink-0"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -620,11 +620,11 @@ export default function RecurringManager() {
       </div>
 
       {/* ── Reminders Section ── */}
-      <div className="bg-white border border-slate-200 rounded-lg shadow-sm">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+      <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-sm">
+        <div className="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
           <div>
-            <h3 className="font-semibold text-slate-800">Reminders</h3>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <h3 className="font-semibold text-slate-100">Reminders</h3>
+            <p className="text-xs text-slate-500 mt-0.5">
               {reminders.filter((r) => r.isActive).length} active of {reminders.length} total
             </p>
           </div>
@@ -640,36 +640,36 @@ export default function RecurringManager() {
 
         {/* Add Reminder Form */}
         {showAddReminder && (
-          <div className="px-6 py-4 bg-amber-50/50 border-b border-slate-100">
+          <div className="px-6 py-4 bg-amber-900/20 border-b border-slate-700">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <div className="sm:col-span-2">
-                <label className="block text-xs text-slate-500 mb-1">Message *</label>
+                <label className="block text-xs text-slate-400 mb-1">Message *</label>
                 <input
                   type="text"
                   placeholder="e.g., Pay sisters for social media work"
                   value={newReminder}
                   onChange={(e) => setNewReminder(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  className="w-full border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Frequency</label>
+                <label className="block text-xs text-slate-400 mb-1">Frequency</label>
                 <select
                   value={newReminderFrequency}
                   onChange={(e) => { setNewReminderFrequency(e.target.value); setNewReminderScheduledDay(-1); }}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  className="w-full border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                 >
                   <option value="WEEKLY">Weekly</option>
                   <option value="MONTHLY">Monthly</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Scheduled Day</label>
+                <label className="block text-xs text-slate-400 mb-1">Scheduled Day</label>
                 <div className="flex gap-2">
                   <select
                     value={newReminderScheduledDay}
                     onChange={(e) => setNewReminderScheduledDay(parseInt(e.target.value))}
-                    className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    className="flex-1 border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   >
                     {newReminderFrequency === "WEEKLY" ? (
                       <>
@@ -700,9 +700,9 @@ export default function RecurringManager() {
         )}
 
         {/* Reminders List */}
-        <div className="divide-y divide-slate-50">
+        <div className="divide-y divide-slate-700">
           {reminders.length === 0 ? (
-            <div className="px-6 py-8 text-center text-slate-400">
+            <div className="px-6 py-8 text-center text-slate-500">
               <p className="text-sm">No reminders yet. Add your first one above.</p>
             </div>
           ) : (
@@ -718,7 +718,7 @@ export default function RecurringManager() {
                   className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
                     r.isActive
                       ? "bg-amber-500 border-amber-500 text-white"
-                      : "border-slate-300 hover:border-slate-400"
+                      : "border-slate-600 hover:border-slate-400"
                   }`}
                 >
                   {r.isActive && (
@@ -727,26 +727,26 @@ export default function RecurringManager() {
                     </svg>
                   )}
                 </button>
-                <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-8 h-8 rounded-full bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`font-medium text-slate-800 ${!r.isActive && "line-through text-slate-500"}`}>
+                  <p className={`font-medium text-slate-100 ${!r.isActive && "line-through text-slate-400"}`}>
                     {r.message}
                   </p>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                     r.frequency === "MONTHLY"
-                      ? "bg-blue-100 text-blue-700"
-                      : "bg-amber-100 text-amber-700"
+                      ? "bg-blue-900/30 text-blue-400"
+                      : "bg-amber-900/30 text-amber-400"
                   }`}>
                     {formatSchedule(r.frequency, r.scheduledDay)}
                   </span>
                 </div>
                 <button
                   onClick={() => deleteReminder(r.id)}
-                  className="w-7 h-7 flex items-center justify-center rounded-md text-slate-300 hover:bg-red-50 hover:text-red-500 transition-colors flex-shrink-0"
+                  className="w-7 h-7 flex items-center justify-center rounded-md text-slate-500 hover:bg-red-900/30 hover:text-red-500 transition-colors flex-shrink-0"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

@@ -346,16 +346,16 @@ export default function SpreadsheetImport({ onImported }: { onImported: () => vo
   const sheet = sheets[selectedSheet];
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg shadow-sm mb-6">
-      <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+    <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-sm mb-6">
+      <div className="px-5 py-4 border-b border-slate-700 flex items-center justify-between">
         <div>
-          <h3 className="font-semibold text-slate-700">Import from Spreadsheet</h3>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <h3 className="font-semibold text-slate-200">Import from Spreadsheet</h3>
+          <p className="text-xs text-slate-500 mt-0.5">
             Upload a .xlsx, .xls, or .csv file to import weekly entries
           </p>
         </div>
         {step !== "upload" && (
-          <button onClick={reset} className="text-sm text-slate-500 hover:text-slate-700">
+          <button onClick={reset} className="text-sm text-slate-400 hover:text-slate-200">
             Start Over
           </button>
         )}
@@ -366,18 +366,18 @@ export default function SpreadsheetImport({ onImported }: { onImported: () => vo
         {step === "upload" && (
           <div>
             {error && (
-              <div className="mb-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">
+              <div className="mb-4 bg-red-900/30 border border-red-700 text-red-400 text-sm rounded-lg p-3">
                 {error}
               </div>
             )}
-            <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-lg py-10 px-6 cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/30 transition-colors">
-              <svg className="w-10 h-10 text-slate-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-600 rounded-lg py-10 px-6 cursor-pointer hover:border-emerald-400 hover:bg-emerald-900/30 transition-colors">
+              <svg className="w-10 h-10 text-slate-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
-              <span className="text-sm font-medium text-slate-600 mb-1">
+              <span className="text-sm font-medium text-slate-300 mb-1">
                 Click to upload or drag and drop
               </span>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-slate-500">
                 .xlsx, .xls, or .csv
               </span>
               <input
@@ -397,11 +397,11 @@ export default function SpreadsheetImport({ onImported }: { onImported: () => vo
             {/* Sheet selector */}
             {sheets.length > 1 && (
               <div className="mb-4">
-                <label className="text-xs text-slate-500 block mb-1">Select Sheet</label>
+                <label className="text-xs text-slate-400 block mb-1">Select Sheet</label>
                 <select
                   value={selectedSheet}
                   onChange={(e) => handleSheetChange(Number(e.target.value))}
-                  className="border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                  className="border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500"
                 >
                   {sheets.map((s, i) => (
                     <option key={i} value={i}>
@@ -412,7 +412,7 @@ export default function SpreadsheetImport({ onImported }: { onImported: () => vo
               </div>
             )}
 
-            <p className="text-sm text-slate-600 mb-4">
+            <p className="text-sm text-slate-300 mb-4">
               Found <strong>{sheet.rows.length}</strong> rows in &quot;{sheet.name}&quot;.
               Map each column to the right field:
             </p>
@@ -420,15 +420,15 @@ export default function SpreadsheetImport({ onImported }: { onImported: () => vo
             <div className="space-y-2 mb-4 max-h-80 overflow-y-auto">
               {sheet.headers.map((h) => (
                 <div key={h} className="flex items-center gap-3">
-                  <div className="w-48 text-sm font-medium text-slate-700 truncate" title={h}>
+                  <div className="w-48 text-sm font-medium text-slate-200 truncate" title={h}>
                     {h}
                   </div>
-                  <span className="text-slate-300">&#8594;</span>
+                  <span className="text-slate-600">&#8594;</span>
                   <select
                     value={mappings[h] || "ignore"}
                     onChange={(e) => handleMapping(h, e.target.value as FieldMapping)}
                     className={`flex-1 border rounded-lg px-3 py-1.5 text-sm ${
-                      mappings[h] === "ignore" ? "border-slate-200 text-slate-400" : "border-emerald-300 text-slate-700 bg-emerald-50"
+                      mappings[h] === "ignore" ? "border-slate-700 text-slate-500 bg-slate-900" : "border-emerald-700 text-emerald-400 bg-emerald-900/30"
                     }`}
                   >
                     {FIELD_OPTIONS.map((opt) => (
@@ -437,7 +437,7 @@ export default function SpreadsheetImport({ onImported }: { onImported: () => vo
                       </option>
                     ))}
                   </select>
-                  <span className="text-xs text-slate-400 w-24 truncate" title={String(sheet.rows[0]?.[h] ?? "")}>
+                  <span className="text-xs text-slate-500 w-24 truncate" title={String(sheet.rows[0]?.[h] ?? "")}>
                     e.g. {String(sheet.rows[0]?.[h] ?? "—")}
                   </span>
                 </div>
@@ -446,15 +446,15 @@ export default function SpreadsheetImport({ onImported }: { onImported: () => vo
 
             {/* Sample data table */}
             <details className="mb-4">
-              <summary className="text-xs text-slate-500 cursor-pointer hover:text-slate-700">
+              <summary className="text-xs text-slate-400 cursor-pointer hover:text-slate-200">
                 Preview raw data (first 5 rows)
               </summary>
               <div className="mt-2 overflow-x-auto">
-                <table className="text-xs border border-slate-200 w-full">
+                <table className="text-xs border border-slate-700 w-full">
                   <thead>
                     <tr>
                       {sheet.headers.map((h) => (
-                        <th key={h} className="border border-slate-200 px-2 py-1 bg-slate-50 text-left font-medium">
+                        <th key={h} className="border border-slate-700 px-2 py-1 bg-slate-900 text-left font-medium">
                           {h}
                         </th>
                       ))}
@@ -464,7 +464,7 @@ export default function SpreadsheetImport({ onImported }: { onImported: () => vo
                     {sheet.rows.slice(0, 5).map((row, i) => (
                       <tr key={i}>
                         {sheet.headers.map((h) => (
-                          <td key={h} className="border border-slate-200 px-2 py-1 text-slate-600">
+                          <td key={h} className="border border-slate-700 px-2 py-1 text-slate-300">
                             {row[h] != null ? String(row[h]) : ""}
                           </td>
                         ))}
@@ -487,13 +487,13 @@ export default function SpreadsheetImport({ onImported }: { onImported: () => vo
         {/* Step 3: Preview */}
         {step === "preview" && (
           <div>
-            <p className="text-sm text-slate-600 mb-4">
+            <p className="text-sm text-slate-300 mb-4">
               Ready to import <strong>{previewEntries.length}</strong> week(s).
               Review the data below:
             </p>
 
             {previewEntries.length === 0 ? (
-              <div className="text-center py-6 text-slate-400 text-sm">
+              <div className="text-center py-6 text-slate-500 text-sm">
                 No entries could be built from the data. Make sure you mapped a &quot;Week Start Date&quot; column and at least one amount column.
                 <div className="mt-3">
                   <button
@@ -516,9 +516,9 @@ export default function SpreadsheetImport({ onImported }: { onImported: () => vo
                       .reduce((s, li) => s + li.amount, 0);
 
                     return (
-                      <div key={i} className="border border-slate-200 rounded-lg p-3">
+                      <div key={i} className="border border-slate-700 rounded-lg p-3">
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-sm font-medium text-slate-700">
+                          <span className="text-sm font-medium text-slate-200">
                             {entry.weekStart} to {entry.weekEnd}
                           </span>
                           <div className="flex gap-3 text-xs">
@@ -533,28 +533,28 @@ export default function SpreadsheetImport({ onImported }: { onImported: () => vo
                             )}
                           </div>
                         </div>
-                        <div className="text-xs text-slate-500 space-y-0.5">
+                        <div className="text-xs text-slate-400 space-y-0.5">
                           {entry.lineItems.map((li, j) => (
                             <div key={j}>
-                              <span className="text-slate-400">[{li.category.replace(/_/g, " ")}]</span>{" "}
+                              <span className="text-slate-500">[{li.category.replace(/_/g, " ")}]</span>{" "}
                               {li.description}: {formatCurrency(li.amount)}
                             </div>
                           ))}
                           {entry.accountBalances.map((b, j) => (
                             <div key={`b-${j}`}>
-                              <span className="text-slate-400">[ACCOUNT]</span>{" "}
+                              <span className="text-slate-500">[ACCOUNT]</span>{" "}
                               {b.accountName}: {formatCurrency(b.balance)}
                             </div>
                           ))}
                           {entry.investments.map((inv, j) => (
                             <div key={`inv-${j}`}>
-                              <span className="text-slate-400">[INVESTMENT]</span>{" "}
+                              <span className="text-slate-500">[INVESTMENT]</span>{" "}
                               {inv.name}: {formatCurrency(inv.amount)}
                             </div>
                           ))}
                           {entry.notes && (
                             <div>
-                              <span className="text-slate-400">[NOTES]</span> {entry.notes}
+                              <span className="text-slate-500">[NOTES]</span> {entry.notes}
                             </div>
                           )}
                         </div>
@@ -573,7 +573,7 @@ export default function SpreadsheetImport({ onImported }: { onImported: () => vo
                   </button>
                   <button
                     onClick={() => setStep("map")}
-                    className="text-slate-500 hover:text-slate-700 px-4 py-2 text-sm"
+                    className="text-slate-400 hover:text-slate-200 px-4 py-2 text-sm"
                   >
                     Back to Mapping
                   </button>
@@ -589,7 +589,7 @@ export default function SpreadsheetImport({ onImported }: { onImported: () => vo
             <div className="text-emerald-600 text-lg font-semibold mb-2">{importResult}</div>
             <button
               onClick={reset}
-              className="text-sm text-slate-500 hover:text-slate-700"
+              className="text-sm text-slate-400 hover:text-slate-200"
             >
               Import Another File
             </button>

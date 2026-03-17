@@ -4,15 +4,15 @@ export const metadata = { title: "Privacy Policy — Taxora" };
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-slate-50">
-      <nav className="bg-white border-b border-slate-200">
+    <div className="min-h-screen bg-slate-950">
+      <nav className="bg-slate-800 border-b border-slate-700">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/welcome" className="text-xl font-bold text-emerald-600">Taxora</Link>
+          <Link href="/welcome" className="text-xl font-bold text-emerald-400">Taxora</Link>
         </div>
       </nav>
-      <div className="max-w-3xl mx-auto px-6 py-12 prose prose-slate">
+      <div className="max-w-3xl mx-auto px-6 py-12 prose prose-slate prose-invert">
         <h1>Privacy Policy</h1>
-        <p className="text-sm text-slate-500">Last updated: {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</p>
+        <p className="text-sm text-slate-400">Last updated: {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</p>
 
         <h2>1. Information We Collect</h2>
         <p><strong>Account Information:</strong> Name, email address, and password (hashed) when you create an account. If you sign in with Google, we receive your name, email, and profile picture.</p>

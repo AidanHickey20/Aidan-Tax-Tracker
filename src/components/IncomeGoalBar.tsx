@@ -35,24 +35,24 @@ export default function IncomeGoalBar() {
     <div>
       <div className="flex items-center justify-between mb-1.5">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
             {new Date().getFullYear()} Income Goal
           </span>
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-slate-500">
             <MaskedValue value={formatCurrency(income)} className="font-semibold text-emerald-600" />
-            <span className="text-slate-400"> of </span>
-            <MaskedValue value={formatCurrency(incomeGoal)} className="font-semibold text-slate-600" />
+            <span className="text-slate-500"> of </span>
+            <MaskedValue value={formatCurrency(incomeGoal)} className="font-semibold text-slate-300" />
           </span>
         </div>
-        <span className="text-xs text-slate-400">
+        <span className="text-xs text-slate-500">
           <MaskedValue
             value={remaining > 0 ? `${formatCurrency(remaining)} to go` : "Goal reached!"}
-            className={remaining > 0 ? "text-slate-500" : "font-semibold text-emerald-600"}
+            className={remaining > 0 ? "text-slate-400" : "font-semibold text-emerald-600"}
           />
-          <span className="ml-2 font-semibold text-slate-600">{pct.toFixed(1)}%</span>
+          <span className="ml-2 font-semibold text-slate-300">{pct.toFixed(1)}%</span>
         </span>
       </div>
-      <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+      <div className="w-full bg-slate-700 rounded-full h-2.5 overflow-hidden">
         <div
           className="h-2.5 rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-700"
           style={{ width: `${pct}%` }}

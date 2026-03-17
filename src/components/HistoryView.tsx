@@ -63,19 +63,19 @@ export default function HistoryView() {
   }
 
   if (loading) {
-    return <div className="text-slate-400 py-12 text-center">Loading history...</div>;
+    return <div className="text-slate-500 py-12 text-center">Loading history...</div>;
   }
 
   return (
     <div className="max-w-4xl">
-      <h2 className="text-2xl font-bold text-slate-800 mb-6">Past Weeks</h2>
+      <h2 className="text-2xl font-bold text-slate-100 mb-6">Past Weeks</h2>
 
       <ExpiredBanner compact message="Your free trial has ended. Choose a plan to edit or delete entries." />
 
       {canEdit && <SpreadsheetImport onImported={loadEntries} />}
 
       {entries.length === 0 && (
-        <div className="text-center py-12 text-slate-400">
+        <div className="text-center py-12 text-slate-500">
           <p className="text-lg mb-2">No entries yet</p>
           <p className="text-sm">
             Head to <Link href="/entry" className="text-emerald-600 underline">Weekly Entry</Link> to log your first week, or import a spreadsheet above.
@@ -96,14 +96,14 @@ export default function HistoryView() {
           return (
             <div
               key={entry.id}
-              className="bg-white border border-slate-200 rounded-lg shadow-sm"
+              className="bg-slate-800 border border-slate-700 rounded-lg shadow-sm"
             >
               <button
                 onClick={() => setExpanded(isExpanded ? null : entry.id)}
                 className="w-full flex items-center justify-between px-5 py-4 text-left"
               >
                 <div>
-                  <p className="font-semibold text-slate-700">
+                  <p className="font-semibold text-slate-200">
                     {formatWeekLabel(entry.weekStart, entry.weekEnd)}
                   </p>
                   <div className="flex gap-4 mt-1 text-sm">
@@ -121,7 +121,7 @@ export default function HistoryView() {
                   </div>
                 </div>
                 <svg
-                  className={`w-5 h-5 text-slate-400 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                  className={`w-5 h-5 text-slate-500 transition-transform ${isExpanded ? "rotate-180" : ""}`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -131,7 +131,7 @@ export default function HistoryView() {
               </button>
 
               {isExpanded && (
-                <div className="px-5 pb-4 border-t border-slate-100">
+                <div className="px-5 pb-4 border-t border-slate-700">
                   {/* Income */}
                   {entry.lineItems.filter((i) => i.category === "INCOME").length > 0 && (
                     <div className="mt-3">
@@ -140,8 +140,8 @@ export default function HistoryView() {
                         .filter((i) => i.category === "INCOME")
                         .map((i) => (
                           <div key={i.id} className="flex justify-between text-sm py-0.5">
-                            <span className="text-slate-600">{i.description}</span>
-                            <span className="text-slate-800">{formatCurrency(i.amount)}</span>
+                            <span className="text-slate-300">{i.description}</span>
+                            <span className="text-slate-100">{formatCurrency(i.amount)}</span>
                           </div>
                         ))}
                     </div>
@@ -155,8 +155,8 @@ export default function HistoryView() {
                         .filter((i) => i.category === "BUSINESS_EXPENSE")
                         .map((i) => (
                           <div key={i.id} className="flex justify-between text-sm py-0.5">
-                            <span className="text-slate-600">{i.description}</span>
-                            <span className="text-slate-800">{formatCurrency(i.amount)}</span>
+                            <span className="text-slate-300">{i.description}</span>
+                            <span className="text-slate-100">{formatCurrency(i.amount)}</span>
                           </div>
                         ))}
                     </div>
@@ -170,8 +170,8 @@ export default function HistoryView() {
                         .filter((i) => i.category === "PERSONAL_EXPENSE")
                         .map((i) => (
                           <div key={i.id} className="flex justify-between text-sm py-0.5">
-                            <span className="text-slate-600">{i.description}</span>
-                            <span className="text-slate-800">{formatCurrency(i.amount)}</span>
+                            <span className="text-slate-300">{i.description}</span>
+                            <span className="text-slate-100">{formatCurrency(i.amount)}</span>
                           </div>
                         ))}
                     </div>
@@ -185,8 +185,8 @@ export default function HistoryView() {
                         .filter((i) => i.category === "OWNER_DRAW")
                         .map((i) => (
                           <div key={i.id} className="flex justify-between text-sm py-0.5">
-                            <span className="text-slate-600">{i.description}</span>
-                            <span className="text-slate-800">{formatCurrency(i.amount)}</span>
+                            <span className="text-slate-300">{i.description}</span>
+                            <span className="text-slate-100">{formatCurrency(i.amount)}</span>
                           </div>
                         ))}
                     </div>
@@ -198,8 +198,8 @@ export default function HistoryView() {
                       <p className="text-xs font-semibold text-indigo-500 uppercase mb-1">Investments</p>
                       {entry.investments.map((inv) => (
                         <div key={inv.id} className="flex justify-between text-sm py-0.5">
-                          <span className="text-slate-600">{inv.name}</span>
-                          <span className="text-slate-800">{formatCurrency(inv.amount)}</span>
+                          <span className="text-slate-300">{inv.name}</span>
+                          <span className="text-slate-100">{formatCurrency(inv.amount)}</span>
                         </div>
                       ))}
                     </div>
@@ -223,11 +223,11 @@ export default function HistoryView() {
                     }
                     return (
                       <div className="mt-3">
-                        <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Account Balances</p>
+                        <p className="text-xs font-semibold text-slate-400 uppercase mb-1">Account Balances</p>
                         {standalone.map((b) => (
                           <div key={b.id} className="flex justify-between text-sm py-0.5">
-                            <span className="text-slate-600">{b.accountName}</span>
-                            <span className="text-slate-800">{formatCurrency(b.balance)}</span>
+                            <span className="text-slate-300">{b.accountName}</span>
+                            <span className="text-slate-100">{formatCurrency(b.balance)}</span>
                           </div>
                         ))}
                         {Array.from(groups.entries()).map(([groupName, items]) => {
@@ -235,13 +235,13 @@ export default function HistoryView() {
                           return (
                             <div key={groupName}>
                               <div className="flex justify-between text-sm py-0.5 font-medium">
-                                <span className="text-slate-700">{groupName}</span>
-                                <span className="text-slate-800">{formatCurrency(groupTotal)}</span>
+                                <span className="text-slate-200">{groupName}</span>
+                                <span className="text-slate-100">{formatCurrency(groupTotal)}</span>
                               </div>
                               {items.map((b) => (
                                 <div key={b.id} className="flex justify-between text-sm py-0.5 ml-4">
-                                  <span className="text-slate-500">{b.accountName.replace(`${groupName} - `, "")}</span>
-                                  <span className="text-slate-600">{formatCurrency(b.balance)}</span>
+                                  <span className="text-slate-400">{b.accountName.replace(`${groupName} - `, "")}</span>
+                                  <span className="text-slate-300">{formatCurrency(b.balance)}</span>
                                 </div>
                               ))}
                             </div>
@@ -254,8 +254,8 @@ export default function HistoryView() {
                   {/* Notes */}
                   {entry.notes && (
                     <div className="mt-3">
-                      <p className="text-xs font-semibold text-slate-500 uppercase mb-1">Notes</p>
-                      <p className="text-sm text-slate-600">{entry.notes}</p>
+                      <p className="text-xs font-semibold text-slate-400 uppercase mb-1">Notes</p>
+                      <p className="text-sm text-slate-300">{entry.notes}</p>
                     </div>
                   )}
 
@@ -264,13 +264,13 @@ export default function HistoryView() {
                     <div className="mt-4 flex gap-2">
                       <Link
                         href={`/entry?edit=${entry.id}`}
-                        className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg"
+                        className="text-sm bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg"
                       >
                         Edit
                       </Link>
                       <button
                         onClick={() => deleteEntry(entry.id)}
-                        className="text-sm bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg"
+                        className="text-sm bg-red-900/30 hover:bg-red-900/50 text-red-600 px-3 py-1.5 rounded-lg"
                       >
                         Delete
                       </button>

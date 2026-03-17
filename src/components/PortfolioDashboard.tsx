@@ -277,15 +277,15 @@ export default function PortfolioDashboard({ onTotalChange, investmentGrowthRate
   );
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg shadow-sm">
+    <div className="bg-slate-800 border border-slate-700 rounded-lg shadow-sm">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="font-semibold text-slate-700">Investment Portfolio</h3>
+            <h3 className="font-semibold text-slate-200">Investment Portfolio</h3>
           </div>
           {lastUpdated && (
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Last updated: {lastUpdated.toLocaleTimeString()} {pricesLoading && "(refreshing...)"}
             </p>
           )}
@@ -294,7 +294,7 @@ export default function PortfolioDashboard({ onTotalChange, investmentGrowthRate
           <button
             onClick={() => fetchPrices(investments)}
             disabled={pricesLoading}
-            className="text-xs text-slate-500 hover:text-slate-700 border border-slate-200 px-2 py-1 rounded"
+            className="text-xs text-slate-400 hover:text-slate-200 border border-slate-700 px-2 py-1 rounded"
           >
             Refresh
           </button>
@@ -309,14 +309,14 @@ export default function PortfolioDashboard({ onTotalChange, investmentGrowthRate
 
       {/* Add form */}
       {showAdd && (
-        <div className="px-6 py-4 bg-slate-50 border-b border-slate-100">
+        <div className="px-6 py-4 bg-slate-900 border-b border-slate-700">
           <div className="flex gap-2 flex-wrap items-end">
             <div>
-              <label className="block text-xs text-slate-500 mb-1">Type</label>
+              <label className="block text-xs text-slate-400 mb-1">Type</label>
               <select
                 value={newType}
                 onChange={(e) => setNewType(e.target.value as "STOCK" | "CRYPTO" | "MANUAL")}
-                className="border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                className="border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500"
               >
                 <option value="STOCK">Stock</option>
                 <option value="CRYPTO">Crypto</option>
@@ -324,7 +324,7 @@ export default function PortfolioDashboard({ onTotalChange, investmentGrowthRate
               </select>
             </div>
             <div>
-              <label className="block text-xs text-slate-500 mb-1">
+              <label className="block text-xs text-slate-400 mb-1">
                 {newType === "STOCK" ? "Ticker" : newType === "CRYPTO" ? "CoinGecko ID" : "Label"}
               </label>
               <input
@@ -332,58 +332,58 @@ export default function PortfolioDashboard({ onTotalChange, investmentGrowthRate
                 placeholder={newType === "STOCK" ? "e.g. AAPL" : newType === "CRYPTO" ? "e.g. bitcoin" : "e.g. ROTH-IRA"}
                 value={newSymbol}
                 onChange={(e) => setNewSymbol(e.target.value)}
-                className="border border-slate-300 rounded-lg px-3 py-2 text-sm w-36"
+                className="border border-slate-600 rounded-lg px-3 py-2 text-sm w-36 bg-slate-900 text-slate-100 placeholder-slate-500"
               />
             </div>
             <div>
-              <label className="block text-xs text-slate-500 mb-1">Name</label>
+              <label className="block text-xs text-slate-400 mb-1">Name</label>
               <input
                 type="text"
                 placeholder="Display name"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                className="border border-slate-300 rounded-lg px-3 py-2 text-sm w-32"
+                className="border border-slate-600 rounded-lg px-3 py-2 text-sm w-32 bg-slate-900 text-slate-100 placeholder-slate-500"
               />
             </div>
             <div>
-              <label className="block text-xs text-slate-500 mb-1">Shares/Coins</label>
+              <label className="block text-xs text-slate-400 mb-1">Shares/Coins</label>
               <input
                 type="number"
                 placeholder="0"
                 step="any"
                 value={newShares}
                 onChange={(e) => setNewShares(e.target.value)}
-                className="border border-slate-300 rounded-lg px-3 py-2 text-sm w-24"
+                className="border border-slate-600 rounded-lg px-3 py-2 text-sm w-24 bg-slate-900 text-slate-100 placeholder-slate-500"
               />
             </div>
             <div>
-              <label className="block text-xs text-slate-500 mb-1">Avg Cost</label>
+              <label className="block text-xs text-slate-400 mb-1">Avg Cost</label>
               <input
                 type="number"
                 placeholder="0"
                 step="0.01"
                 value={newAvgCost}
                 onChange={(e) => setNewAvgCost(e.target.value)}
-                className="border border-slate-300 rounded-lg px-3 py-2 text-sm w-24"
+                className="border border-slate-600 rounded-lg px-3 py-2 text-sm w-24 bg-slate-900 text-slate-100 placeholder-slate-500"
               />
             </div>
             <div>
-              <label className="block text-xs text-slate-500 mb-1">Weekly $</label>
+              <label className="block text-xs text-slate-400 mb-1">Weekly $</label>
               <input
                 type="number"
                 placeholder="0"
                 step="0.01"
                 value={newRecurringAmount}
                 onChange={(e) => setNewRecurringAmount(e.target.value)}
-                className="border border-slate-300 rounded-lg px-3 py-2 text-sm w-24"
+                className="border border-slate-600 rounded-lg px-3 py-2 text-sm w-24 bg-slate-900 text-slate-100 placeholder-slate-500"
               />
             </div>
             <div>
-              <label className="block text-xs text-slate-500 mb-1">Buy Day</label>
+              <label className="block text-xs text-slate-400 mb-1">Buy Day</label>
               <select
                 value={newRecurringDay}
                 onChange={(e) => setNewRecurringDay(e.target.value)}
-                className="border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                className="border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500"
               >
                 <option value="-1">None</option>
                 {DAYS.map((d, i) => (
@@ -399,13 +399,13 @@ export default function PortfolioDashboard({ onTotalChange, investmentGrowthRate
             </button>
             <button
               onClick={() => setShowAdd(false)}
-              className="text-slate-400 hover:text-slate-600 px-2 text-sm"
+              className="text-slate-500 hover:text-slate-300 px-2 text-sm"
             >
               Cancel
             </button>
           </div>
           {newType === "CRYPTO" && (
-            <p className="text-xs text-slate-400 mt-2">
+            <p className="text-xs text-slate-500 mt-2">
               For crypto, use the CoinGecko ID (e.g. &quot;bitcoin&quot;, &quot;ethereum&quot;, &quot;solana&quot;, &quot;dogecoin&quot;)
             </p>
           )}
@@ -414,22 +414,22 @@ export default function PortfolioDashboard({ onTotalChange, investmentGrowthRate
 
       {/* Summary bar */}
       {rows.length > 0 && (
-        <div className="flex flex-wrap gap-x-6 gap-y-1 px-6 py-3 bg-slate-50 border-b border-slate-100 text-sm">
+        <div className="flex flex-wrap gap-x-6 gap-y-1 px-6 py-3 bg-slate-900 border-b border-slate-700 text-sm">
           <div>
-            <span className="text-slate-500">Total Value: </span>
+            <span className="text-slate-400">Total Value: </span>
             <MaskedValue value={formatCurrency(totalMarketValue)} className="font-semibold text-emerald-600" />
           </div>
           <div>
-            <span className="text-slate-500">Total Gain: </span>
+            <span className="text-slate-400">Total Gain: </span>
             <MaskedValue value={`${totalGain >= 0 ? "+" : ""}${formatCurrency(totalGain)}`} className={`font-semibold ${totalGain >= 0 ? "text-emerald-600" : "text-red-500"}`} />
           </div>
           <div>
-            <span className="text-slate-500">Day Change: </span>
+            <span className="text-slate-400">Day Change: </span>
             <MaskedValue value={`${totalDayChange >= 0 ? "+" : ""}${formatCurrency(totalDayChange)}`} className={`font-semibold ${totalDayChange >= 0 ? "text-emerald-600" : "text-red-500"}`} />
           </div>
           {totalWeeklyRecurring > 0 && (
             <div>
-              <span className="text-slate-500">Weekly Auto-Invest: </span>
+              <span className="text-slate-400">Weekly Auto-Invest: </span>
               <MaskedValue value={formatCurrency(totalWeeklyRecurring)} className="font-semibold text-indigo-600" />
             </div>
           )}
@@ -441,7 +441,7 @@ export default function PortfolioDashboard({ onTotalChange, investmentGrowthRate
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-100 text-left text-xs text-slate-500 uppercase">
+              <tr className="border-b border-slate-700 text-left text-xs text-slate-400 uppercase">
                 <th className="px-6 py-3">Name</th>
                 <th className="px-3 py-3">Price</th>
                 <th className="px-3 py-3">Day Change</th>
@@ -459,11 +459,11 @@ export default function PortfolioDashboard({ onTotalChange, investmentGrowthRate
                 const gainIsUp = row.totalGain >= 0;
 
                 return (
-                  <tr key={row.id} className="border-b border-slate-50 hover:bg-slate-50">
+                  <tr key={row.id} className="border-b border-slate-700 hover:bg-slate-700">
                     <td className="px-6 py-3">
                       <Link href={`/investment/${row.id}`} className="hover:underline">
-                        <div className="font-medium text-slate-800">{row.name}</div>
-                        <div className="text-xs text-slate-400">
+                        <div className="font-medium text-slate-100">{row.name}</div>
+                        <div className="text-xs text-slate-500">
                           {row.type === "CRYPTO"
                             ? `${CRYPTO_TICKERS[row.symbol] || row.symbol.toUpperCase()} · Crypto`
                             : row.type === "MANUAL"
@@ -472,7 +472,7 @@ export default function PortfolioDashboard({ onTotalChange, investmentGrowthRate
                         </div>
                       </Link>
                     </td>
-                    <td className="px-3 py-3 font-medium text-slate-800">
+                    <td className="px-3 py-3 font-medium text-slate-100">
                       {row.type === "MANUAL" ? "—" : row.price > 0 ? <MaskedValue value={formatCurrency(row.price)} /> : "—"}
                     </td>
                     <td className="px-3 py-3">
@@ -490,7 +490,7 @@ export default function PortfolioDashboard({ onTotalChange, investmentGrowthRate
                         </Link>
                       )}
                     </td>
-                    <td className="px-3 py-3 text-slate-600">
+                    <td className="px-3 py-3 text-slate-300">
                       {row.type === "MANUAL" ? "—" : row.shares > 0 ? <MaskedValue value={row.shares.toLocaleString(undefined, { maximumFractionDigits: 6 })} isCurrency={false} /> : "—"}
                     </td>
                     <td className="px-3 py-3 font-medium text-emerald-600">
@@ -515,14 +515,14 @@ export default function PortfolioDashboard({ onTotalChange, investmentGrowthRate
                           <div className="text-indigo-400">{DAYS[row.recurringDay].slice(0, 3)}</div>
                         </div>
                       ) : (
-                        <span className="text-slate-300">—</span>
+                        <span className="text-slate-600">—</span>
                       )}
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex gap-2">
                         <button
                           onClick={() => startEdit(row)}
-                          className="text-slate-400 hover:text-slate-600 text-xs"
+                          className="text-slate-500 hover:text-slate-300 text-xs"
                         >
                           Edit
                         </button>
@@ -549,49 +549,49 @@ export default function PortfolioDashboard({ onTotalChange, investmentGrowthRate
       {/* Edit modal */}
       {editId && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
-            <h3 className="font-semibold text-slate-800 text-lg mb-4">
+          <div className="bg-slate-800 rounded-xl shadow-xl p-6 w-full max-w-md">
+            <h3 className="font-semibold text-slate-100 text-lg mb-4">
               Edit {investments.find((i) => i.id === editId)?.name}
             </h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Shares / Coins Owned</label>
+                <label className="block text-xs text-slate-400 mb-1">Shares / Coins Owned</label>
                 <input
                   type="number"
                   step="any"
                   value={editShares}
                   onChange={(e) => setEditShares(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Average Cost Per Share/Coin</label>
+                <label className="block text-xs text-slate-400 mb-1">Average Cost Per Share/Coin</label>
                 <input
                   type="number"
                   step="0.01"
                   value={editAvgCost}
                   onChange={(e) => setEditAvgCost(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500"
                 />
               </div>
-              <hr className="border-slate-100" />
-              <p className="text-xs text-slate-500 font-semibold uppercase">Weekly Auto-Invest</p>
+              <hr className="border-slate-700" />
+              <p className="text-xs text-slate-400 font-semibold uppercase">Weekly Auto-Invest</p>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Amount Per Week ($)</label>
+                <label className="block text-xs text-slate-400 mb-1">Amount Per Week ($)</label>
                 <input
                   type="number"
                   step="0.01"
                   value={editRecurringAmount}
                   onChange={(e) => setEditRecurringAmount(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-500 mb-1">Day of Week (when it leaves your account)</label>
+                <label className="block text-xs text-slate-400 mb-1">Day of Week (when it leaves your account)</label>
                 <select
                   value={editRecurringDay}
                   onChange={(e) => setEditRecurringDay(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500"
                 >
                   <option value="-1">No recurring investment</option>
                   {DAYS.map((d, i) => (
@@ -609,7 +609,7 @@ export default function PortfolioDashboard({ onTotalChange, investmentGrowthRate
               </button>
               <button
                 onClick={() => setEditId(null)}
-                className="flex-1 bg-slate-100 text-slate-600 py-2 rounded-lg text-sm hover:bg-slate-200"
+                className="flex-1 bg-slate-800 text-slate-300 py-2 rounded-lg text-sm hover:bg-slate-700"
               >
                 Cancel
               </button>

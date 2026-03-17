@@ -8,7 +8,7 @@ export default function PrivacyToggle() {
   return (
     <button
       onClick={toggle}
-      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all border border-slate-200 hover:border-slate-300 hover:shadow-sm bg-white text-slate-500 hover:text-slate-700"
+      className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all border border-slate-700 hover:border-slate-600 hover:shadow-sm bg-slate-800 text-slate-400 hover:text-slate-200"
       title={hidden ? "Show values" : "Hide values"}
     >
       {hidden ? (

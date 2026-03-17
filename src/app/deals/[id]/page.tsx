@@ -34,15 +34,15 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
-  ACQUISITION: "bg-blue-100 text-blue-700",
-  DEMO: "bg-orange-100 text-orange-700",
-  MATERIALS: "bg-amber-100 text-amber-700",
-  LABOR: "bg-purple-100 text-purple-700",
-  PERMITS: "bg-slate-200 text-slate-700",
-  UTILITIES: "bg-cyan-100 text-cyan-700",
-  INSURANCE: "bg-rose-100 text-rose-700",
-  CLOSING: "bg-emerald-100 text-emerald-700",
-  OTHER: "bg-gray-100 text-gray-700",
+  ACQUISITION: "bg-blue-900/30 text-blue-400",
+  DEMO: "bg-orange-900/30 text-orange-400",
+  MATERIALS: "bg-amber-900/30 text-amber-400",
+  LABOR: "bg-purple-900/30 text-purple-400",
+  PERMITS: "bg-slate-700 text-slate-200",
+  UTILITIES: "bg-cyan-900/30 text-cyan-400",
+  INSURANCE: "bg-rose-900/30 text-rose-400",
+  CLOSING: "bg-emerald-900/30 text-emerald-400",
+  OTHER: "bg-gray-900/30 text-gray-400",
 };
 
 interface DealStep {
@@ -198,19 +198,19 @@ export default function DealDetailPage() {
     <div>
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/deals" className="text-slate-400 hover:text-slate-600">
+        <Link href="/deals" className="text-slate-500 hover:text-slate-300">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </Link>
         <div className="flex-1">
-          <h2 className="text-2xl font-bold text-slate-800">
+          <h2 className="text-2xl font-bold text-slate-100">
             {deal.nickname || deal.address}
           </h2>
-          {deal.nickname && <p className="text-sm text-slate-500">{deal.address}</p>}
+          {deal.nickname && <p className="text-sm text-slate-400">{deal.address}</p>}
         </div>
         <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-          deal.status === "CLOSED" ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"
+          deal.status === "CLOSED" ? "bg-emerald-900/30 text-emerald-400" : "bg-blue-900/30 text-blue-400"
         }`}>
           {STEP_LABELS[deal.status] || deal.status}
         </span>
@@ -218,20 +218,20 @@ export default function DealDetailPage() {
 
       {/* Financial Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
-          <p className="text-xs text-slate-500 uppercase mb-1">Purchase Price</p>
-          <MaskedValue value={formatCurrency(deal.purchasePrice)} className="text-xl font-bold text-slate-800 block" />
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 shadow-sm">
+          <p className="text-xs text-slate-400 uppercase mb-1">Purchase Price</p>
+          <MaskedValue value={formatCurrency(deal.purchasePrice)} className="text-xl font-bold text-slate-100 block" />
         </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
-          <p className="text-xs text-slate-500 uppercase mb-1">Rehab Spent</p>
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 shadow-sm">
+          <p className="text-xs text-slate-400 uppercase mb-1">Rehab Spent</p>
           <MaskedValue value={formatCurrency(totalSpent)} className="text-xl font-bold text-red-500 block" />
         </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
-          <p className="text-xs text-slate-500 uppercase mb-1">All-In Cost</p>
-          <MaskedValue value={formatCurrency(totalAllIn)} className="text-xl font-bold text-slate-800 block" />
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 shadow-sm">
+          <p className="text-xs text-slate-400 uppercase mb-1">All-In Cost</p>
+          <MaskedValue value={formatCurrency(totalAllIn)} className="text-xl font-bold text-slate-100 block" />
         </div>
-        <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm">
-          <p className="text-xs text-slate-500 uppercase mb-1">
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 shadow-sm">
+          <p className="text-xs text-slate-400 uppercase mb-1">
             {deal.arv > 0 ? "Projected Profit" : "ARV"}
           </p>
           {deal.arv > 0 ? (
@@ -240,15 +240,15 @@ export default function DealDetailPage() {
               className={`text-xl font-bold block ${projectedProfit >= 0 ? "text-emerald-600" : "text-red-500"}`}
             />
           ) : (
-            <span className="text-xl font-bold text-slate-300 block">Not set</span>
+            <span className="text-xl font-bold text-slate-500 block">Not set</span>
           )}
         </div>
       </div>
 
       {/* Progress Steps */}
-      <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm mb-6">
-        <h3 className="font-semibold text-slate-700 mb-3">Progress</h3>
-        <div className="w-full bg-slate-100 rounded-full h-3 mb-4 overflow-hidden">
+      <div className="bg-slate-800 border border-slate-700 rounded-lg p-5 shadow-sm mb-6">
+        <h3 className="font-semibold text-slate-200 mb-3">Progress</h3>
+        <div className="w-full bg-slate-800 rounded-full h-3 mb-4 overflow-hidden">
           <div
             className="h-3 rounded-full bg-emerald-500 transition-all duration-500"
             style={{ width: `${progressPct}%` }}
@@ -261,20 +261,20 @@ export default function DealDetailPage() {
               onClick={() => toggleStep(step)}
               className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border text-center transition-all ${
                 step.completed
-                  ? "bg-emerald-50 border-emerald-300"
-                  : "bg-white border-slate-200 hover:border-emerald-200"
+                  ? "bg-emerald-900/30 border-emerald-600"
+                  : "bg-slate-800 border-slate-700 hover:border-emerald-700"
               }`}
             >
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                step.completed ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-400"
+                step.completed ? "bg-emerald-500 text-white" : "bg-slate-800 text-slate-500"
               }`}>
                 {step.completed ? "✓" : step.sortOrder + 1}
               </div>
-              <span className={`text-xs font-medium ${step.completed ? "text-emerald-700" : "text-slate-500"}`}>
+              <span className={`text-xs font-medium ${step.completed ? "text-emerald-400" : "text-slate-400"}`}>
                 {STEP_LABELS[step.name] || step.name}
               </span>
               {step.completedAt && (
-                <span className="text-[10px] text-slate-400">
+                <span className="text-[10px] text-slate-500">
                   {new Date(step.completedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                 </span>
               )}
@@ -284,15 +284,15 @@ export default function DealDetailPage() {
       </div>
 
       {/* Add Expense */}
-      <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm mb-6">
-        <h3 className="font-semibold text-slate-700 mb-3">Add Expense</h3>
+      <div className="bg-slate-800 border border-slate-700 rounded-lg p-5 shadow-sm mb-6">
+        <h3 className="font-semibold text-slate-200 mb-3">Add Expense</h3>
         <div className="flex gap-2 flex-wrap">
           <input
             type="text"
             placeholder="What was this for?"
             value={expDesc}
             onChange={(e) => setExpDesc(e.target.value)}
-            className="flex-1 min-w-[180px] border border-slate-300 rounded px-3 py-2 text-sm"
+            className="flex-1 min-w-[180px] border border-slate-600 rounded px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500"
           />
           <input
             type="number"
@@ -300,12 +300,12 @@ export default function DealDetailPage() {
             step="0.01"
             value={expAmount}
             onChange={(e) => setExpAmount(e.target.value)}
-            className="w-28 border border-slate-300 rounded px-3 py-2 text-sm"
+            className="w-28 border border-slate-600 rounded px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500"
           />
           <select
             value={expCategory}
             onChange={(e) => setExpCategory(e.target.value)}
-            className="border border-slate-300 rounded px-3 py-2 text-sm"
+            className="border border-slate-600 rounded px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500"
           >
             {EXPENSE_CATEGORIES.map((c) => (
               <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
@@ -322,10 +322,10 @@ export default function DealDetailPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Spending by Category */}
-        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-          <h3 className="font-semibold text-slate-700 mb-3">Spending by Category</h3>
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-5 shadow-sm">
+          <h3 className="font-semibold text-slate-200 mb-3">Spending by Category</h3>
           {Object.keys(expensesByCategory).length === 0 ? (
-            <p className="text-sm text-slate-400">No expenses yet.</p>
+            <p className="text-sm text-slate-500">No expenses yet.</p>
           ) : (
             <div className="space-y-2.5">
               {Object.entries(expensesByCategory)
@@ -338,16 +338,16 @@ export default function DealDetailPage() {
                         <span className={`text-xs px-2 py-0.5 rounded ${CATEGORY_COLORS[cat]}`}>
                           {CATEGORY_LABELS[cat] || cat}
                         </span>
-                        <MaskedValue value={formatCurrency(data.total)} className="text-sm font-semibold text-slate-700" />
+                        <MaskedValue value={formatCurrency(data.total)} className="text-sm font-semibold text-slate-200" />
                       </div>
-                      <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                        <div className="h-1.5 rounded-full bg-slate-400" style={{ width: `${barPct}%` }} />
+                      <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                        <div className="h-1.5 rounded-full bg-slate-500" style={{ width: `${barPct}%` }} />
                       </div>
                     </div>
                   );
                 })}
-              <div className="border-t border-slate-100 pt-2 flex justify-between">
-                <span className="text-sm font-semibold text-slate-700">Total Rehab</span>
+              <div className="border-t border-slate-700 pt-2 flex justify-between">
+                <span className="text-sm font-semibold text-slate-200">Total Rehab</span>
                 <MaskedValue value={formatCurrency(totalSpent)} className="text-sm font-bold text-red-500" />
               </div>
             </div>
@@ -355,26 +355,26 @@ export default function DealDetailPage() {
         </div>
 
         {/* All Expenses List */}
-        <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
-          <h3 className="font-semibold text-slate-700 mb-3">All Expenses</h3>
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-5 shadow-sm">
+          <h3 className="font-semibold text-slate-200 mb-3">All Expenses</h3>
           {deal.expenses.length === 0 ? (
-            <p className="text-sm text-slate-400">No expenses yet.</p>
+            <p className="text-sm text-slate-500">No expenses yet.</p>
           ) : (
             <div className="space-y-1 max-h-96 overflow-y-auto">
               {[...deal.expenses]
                 .sort((a, b) => new Date(b.paidAt).getTime() - new Date(a.paidAt).getTime())
                 .map((exp) => (
-                  <div key={exp.id} className="flex items-center gap-2 py-2 px-2 rounded hover:bg-slate-50 text-sm border-b border-slate-50">
+                  <div key={exp.id} className="flex items-center gap-2 py-2 px-2 rounded hover:bg-slate-700 text-sm border-b border-slate-700">
                     <div className="flex-1 min-w-0">
-                      <span className="text-slate-700">{exp.description}</span>
-                      <span className="text-xs text-slate-400 ml-2">
+                      <span className="text-slate-200">{exp.description}</span>
+                      <span className="text-xs text-slate-500 ml-2">
                         {new Date(exp.paidAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                       </span>
                     </div>
                     <span className={`text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap ${CATEGORY_COLORS[exp.category]}`}>
                       {CATEGORY_LABELS[exp.category] || exp.category}
                     </span>
-                    <MaskedValue value={formatCurrency(exp.amount)} className="font-semibold text-slate-700 whitespace-nowrap" />
+                    <MaskedValue value={formatCurrency(exp.amount)} className="font-semibold text-slate-200 whitespace-nowrap" />
                     <button
                       onClick={() => deleteExpense(exp.id)}
                       className="text-red-300 hover:text-red-500 text-lg leading-none flex-shrink-0"
@@ -389,9 +389,9 @@ export default function DealDetailPage() {
       </div>
 
       {/* Deal Info / Notes */}
-      <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
+      <div className="bg-slate-800 border border-slate-700 rounded-lg p-5 shadow-sm">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-slate-700">Deal Info & Notes</h3>
+          <h3 className="font-semibold text-slate-200">Deal Info & Notes</h3>
           {!showEdit ? (
             <button
               onClick={() => setShowEdit(true)}
@@ -409,7 +409,7 @@ export default function DealDetailPage() {
               </button>
               <button
                 onClick={() => setShowEdit(false)}
-                className="text-sm text-slate-500 hover:text-slate-700"
+                className="text-sm text-slate-400 hover:text-slate-200"
               >
                 Cancel
               </button>
@@ -419,50 +419,50 @@ export default function DealDetailPage() {
         {showEdit ? (
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-slate-500 mb-1">Purchase Price</label>
+              <label className="block text-xs text-slate-400 mb-1">Purchase Price</label>
               <input
                 type="number"
                 value={editPurchase}
                 onChange={(e) => setEditPurchase(e.target.value)}
-                className="w-full border border-slate-300 rounded px-3 py-2 text-sm"
+                className="w-full border border-slate-600 rounded px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500"
               />
             </div>
             <div>
-              <label className="block text-xs text-slate-500 mb-1">ARV</label>
+              <label className="block text-xs text-slate-400 mb-1">ARV</label>
               <input
                 type="number"
                 value={editArv}
                 onChange={(e) => setEditArv(e.target.value)}
-                className="w-full border border-slate-300 rounded px-3 py-2 text-sm"
+                className="w-full border border-slate-600 rounded px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500"
               />
             </div>
             <div className="col-span-2">
-              <label className="block text-xs text-slate-500 mb-1">Notes</label>
+              <label className="block text-xs text-slate-400 mb-1">Notes</label>
               <textarea
                 value={editNotes}
                 onChange={(e) => setEditNotes(e.target.value)}
                 rows={3}
-                className="w-full border border-slate-300 rounded px-3 py-2 text-sm resize-none"
+                className="w-full border border-slate-600 rounded px-3 py-2 text-sm resize-none bg-slate-900 text-slate-100 placeholder-slate-500"
                 placeholder="Notes about this deal..."
               />
             </div>
           </div>
         ) : (
-          <div className="text-sm text-slate-600 space-y-1">
+          <div className="text-sm text-slate-300 space-y-1">
             <p>
-              <span className="text-slate-400">Started:</span>{" "}
+              <span className="text-slate-500">Started:</span>{" "}
               {new Date(deal.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
             </p>
             {deal.closedAt && (
               <p>
-                <span className="text-slate-400">Closed:</span>{" "}
+                <span className="text-slate-500">Closed:</span>{" "}
                 {new Date(deal.closedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
               </p>
             )}
             {deal.notes ? (
-              <p className="mt-2 text-slate-600 whitespace-pre-wrap">{deal.notes}</p>
+              <p className="mt-2 text-slate-300 whitespace-pre-wrap">{deal.notes}</p>
             ) : (
-              <p className="text-slate-400 italic">No notes yet. Click Edit to add some.</p>
+              <p className="text-slate-500 italic">No notes yet. Click Edit to add some.</p>
             )}
           </div>
         )}

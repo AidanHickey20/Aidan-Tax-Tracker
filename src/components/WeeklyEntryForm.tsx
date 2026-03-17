@@ -278,15 +278,15 @@ export default function WeeklyEntryForm() {
   }
 
   const categoryGroups: { category: Category; label: string; color: string }[] = [
-    { category: "INCOME", label: "Income", color: "border-emerald-300 bg-emerald-50" },
-    { category: "BUSINESS_EXPENSE", label: "Business Expenses", color: "border-red-300 bg-red-50" },
-    { category: "PERSONAL_EXPENSE", label: "Personal Expenses", color: "border-orange-300 bg-orange-50" },
-    { category: "OWNER_DRAW", label: "Owner Draws / Transfers", color: "border-blue-300 bg-blue-50" },
+    { category: "INCOME", label: "Income", color: "border-emerald-300 bg-emerald-900/30" },
+    { category: "BUSINESS_EXPENSE", label: "Business Expenses", color: "border-red-300 bg-red-900/30" },
+    { category: "PERSONAL_EXPENSE", label: "Personal Expenses", color: "border-orange-300 bg-orange-900/30" },
+    { category: "OWNER_DRAW", label: "Owner Draws / Transfers", color: "border-blue-300 bg-blue-900/30" },
   ];
 
   return (
     <form onSubmit={handleSubmit} className="max-w-4xl">
-      <h2 className="text-2xl font-bold text-slate-800 mb-6">
+      <h2 className="text-2xl font-bold text-slate-100 mb-6">
         {editId ? "Edit Weekly Entry" : "New Weekly Entry"}
       </h2>
 
@@ -294,14 +294,14 @@ export default function WeeklyEntryForm() {
 
       {/* Reminders */}
       {reminders.length > 0 && (
-        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <h3 className="font-semibold text-amber-800 text-sm mb-2">Don&apos;t forget:</h3>
+        <div className="mb-6 bg-amber-900/30 border border-amber-700 rounded-lg p-4">
+          <h3 className="font-semibold text-amber-400 text-sm mb-2">Don&apos;t forget:</h3>
           <ul className="space-y-1">
             {reminders.map((r) => (
-              <li key={r.id} className="text-sm text-amber-700 flex items-center gap-2">
+              <li key={r.id} className="text-sm text-amber-400 flex items-center gap-2">
                 <span>&#8226;</span> {r.message}
                 <span className={`text-xs px-1.5 py-0.5 rounded ${
-                  r.frequency === "MONTHLY" ? "bg-blue-100 text-blue-600" : "bg-amber-200 text-amber-700"
+                  r.frequency === "MONTHLY" ? "bg-blue-900/30 text-blue-400" : "bg-amber-700 text-amber-400"
                 }`}>
                   {r.frequency === "MONTHLY" ? "Monthly" : "Weekly"}
                 </span>
@@ -312,26 +312,26 @@ export default function WeeklyEntryForm() {
       )}
 
       {/* Week Date Range */}
-      <div className="bg-white border border-slate-200 rounded-lg p-4 mb-4 shadow-sm">
-        <h3 className="font-semibold text-slate-700 mb-3">Week Period</h3>
+      <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 mb-4 shadow-sm">
+        <h3 className="font-semibold text-slate-200 mb-3">Week Period</h3>
         <div className="flex gap-4">
           <div className="flex-1">
-            <label className="block text-xs text-slate-500 mb-1">Start Date</label>
+            <label className="block text-xs text-slate-400 mb-1">Start Date</label>
             <input
               type="date"
               value={weekStart}
               onChange={(e) => setWeekStart(e.target.value)}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+              className="w-full border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500"
               required
             />
           </div>
           <div className="flex-1">
-            <label className="block text-xs text-slate-500 mb-1">End Date</label>
+            <label className="block text-xs text-slate-400 mb-1">End Date</label>
             <input
               type="date"
               value={weekEnd}
               onChange={(e) => setWeekEnd(e.target.value)}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+              className="w-full border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500"
               required
             />
           </div>
@@ -345,9 +345,9 @@ export default function WeeklyEntryForm() {
         return (
           <div key={category} className={`border rounded-lg p-4 mb-4 shadow-sm ${color}`}>
             <div className="flex justify-between items-center mb-3">
-              <h3 className="font-semibold text-slate-700">{label}</h3>
+              <h3 className="font-semibold text-slate-200">{label}</h3>
               {total > 0 && (
-                <span className="text-sm font-medium text-slate-600">
+                <span className="text-sm font-medium text-slate-300">
                   Total: {formatCurrency(total)}
                 </span>
               )}
@@ -359,7 +359,7 @@ export default function WeeklyEntryForm() {
                   placeholder="Description"
                   value={item.description}
                   onChange={(e) => updateLineItem(item.tempId, "description", e.target.value)}
-                  className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"
+                  className="flex-1 border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500"
                 />
                 <input
                   type="number"
@@ -367,7 +367,7 @@ export default function WeeklyEntryForm() {
                   step="0.01"
                   value={item.amount}
                   onChange={(e) => updateLineItem(item.tempId, "amount", e.target.value)}
-                  className="w-32 border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"
+                  className="w-32 border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500"
                 />
                 <button
                   type="button"
@@ -381,7 +381,7 @@ export default function WeeklyEntryForm() {
             <button
               type="button"
               onClick={() => addLineItem(category)}
-              className="text-sm text-slate-500 hover:text-slate-700 mt-1"
+              className="text-sm text-slate-400 hover:text-slate-200 mt-1"
             >
               + Add {label.replace(/s$/, "")}
             </button>
@@ -390,20 +390,20 @@ export default function WeeklyEntryForm() {
       })}
 
       {/* Account Balances */}
-      <div className="bg-white border border-slate-200 rounded-lg p-4 mb-4 shadow-sm">
-        <h3 className="font-semibold text-slate-700 mb-3">Account Balances</h3>
+      <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 mb-4 shadow-sm">
+        <h3 className="font-semibold text-slate-200 mb-3">Account Balances</h3>
 
         {/* Standalone accounts (no group) */}
         {userAccounts.filter((a) => !a.group).map((account) => (
           <div key={account.id} className="flex items-center gap-2 mb-2">
-            <label className="flex-1 text-sm text-slate-600">{account.name}</label>
+            <label className="flex-1 text-sm text-slate-300">{account.name}</label>
             <input
               type="number"
               placeholder="0.00"
               step="0.01"
               value={balances[account.name] || ""}
               onChange={(e) => updateBalance(account.name, e.target.value)}
-              className="w-40 border border-slate-300 rounded-lg px-3 py-2 text-sm text-right"
+              className="w-40 border border-slate-600 rounded-lg px-3 py-2 text-sm text-right bg-slate-900 text-slate-100 placeholder-slate-500"
             />
           </div>
         ))}
@@ -417,10 +417,10 @@ export default function WeeklyEntryForm() {
             groups.set(a.group!, list);
           });
           return Array.from(groups.entries()).map(([groupName, accounts]) => (
-            <div key={groupName} className="mt-4 border-t border-slate-100 pt-3">
+            <div key={groupName} className="mt-4 border-t border-slate-700 pt-3">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-semibold text-slate-700">{groupName}</span>
-                <span className="text-sm font-medium text-slate-500">
+                <span className="text-sm font-semibold text-slate-200">{groupName}</span>
+                <span className="text-sm font-medium text-slate-400">
                   Total: {formatCurrency(
                     accounts.reduce((sum, a) => sum + (parseFloat(balances[a.name] || "0") || 0), 0)
                   )}
@@ -432,14 +432,14 @@ export default function WeeklyEntryForm() {
                   : account.name;
                 return (
                   <div key={account.id} className="flex items-center gap-2 mb-2 ml-4">
-                    <label className="flex-1 text-sm text-slate-500">{displayLabel}</label>
+                    <label className="flex-1 text-sm text-slate-400">{displayLabel}</label>
                     <input
                       type="number"
                       placeholder="0.00"
                       step="0.01"
                       value={balances[account.name] || ""}
                       onChange={(e) => updateBalance(account.name, e.target.value)}
-                      className="w-40 border border-slate-300 rounded-lg px-3 py-2 text-sm text-right"
+                      className="w-40 border border-slate-600 rounded-lg px-3 py-2 text-sm text-right bg-slate-900 text-slate-100 placeholder-slate-500"
                     />
                   </div>
                 );
@@ -450,11 +450,11 @@ export default function WeeklyEntryForm() {
       </div>
 
       {/* Investments */}
-      <div className="bg-white border border-indigo-200 rounded-lg p-4 mb-4 shadow-sm bg-indigo-50">
+      <div className="bg-indigo-900/30 border border-indigo-200 rounded-lg p-4 mb-4 shadow-sm">
         <div className="flex justify-between items-center mb-3">
-          <h3 className="font-semibold text-slate-700">Investments</h3>
+          <h3 className="font-semibold text-slate-200">Investments</h3>
           {investments.length > 0 && (
-            <span className="text-sm font-medium text-slate-600">
+            <span className="text-sm font-medium text-slate-300">
               Total: {formatCurrency(investments.reduce((sum, inv) => sum + (parseFloat(inv.amount) || 0), 0))}
             </span>
           )}
@@ -462,14 +462,14 @@ export default function WeeklyEntryForm() {
         {/* Recurring investments - fixed labels, editable amounts */}
         {investments.filter((inv) => inv.isRecurring).map((inv) => (
           <div key={inv.tempId} className="flex items-center gap-2 mb-2">
-            <label className="flex-1 text-sm text-slate-600">{inv.name}</label>
+            <label className="flex-1 text-sm text-slate-300">{inv.name}</label>
             <input
               type="number"
               placeholder="0.00"
               step="0.01"
               value={inv.amount}
               onChange={(e) => updateInvestment(inv.tempId, "amount", e.target.value)}
-              className="w-40 border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white text-right"
+              className="w-40 border border-slate-600 rounded-lg px-3 py-2 text-sm text-right bg-slate-900 text-slate-100 placeholder-slate-500"
             />
           </div>
         ))}
@@ -481,7 +481,7 @@ export default function WeeklyEntryForm() {
               placeholder="Investment Name"
               value={inv.name}
               onChange={(e) => updateInvestment(inv.tempId, "name", e.target.value)}
-              className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"
+              className="flex-1 border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500"
             />
             <input
               type="number"
@@ -489,7 +489,7 @@ export default function WeeklyEntryForm() {
               step="0.01"
               value={inv.amount}
               onChange={(e) => updateInvestment(inv.tempId, "amount", e.target.value)}
-              className="w-40 border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white text-right"
+              className="w-40 border border-slate-600 rounded-lg px-3 py-2 text-sm text-right bg-slate-900 text-slate-100 placeholder-slate-500"
             />
             <button
               type="button"
@@ -503,34 +503,34 @@ export default function WeeklyEntryForm() {
         <button
           type="button"
           onClick={addInvestment}
-          className="text-sm text-slate-500 hover:text-slate-700 mt-1"
+          className="text-sm text-slate-400 hover:text-slate-200 mt-1"
         >
           + Add Investment
         </button>
       </div>
 
       {/* Mileage */}
-      <div className="bg-white border border-purple-200 rounded-lg p-4 mb-4 shadow-sm bg-purple-50">
-        <h3 className="font-semibold text-slate-700 mb-3">Mileage</h3>
+      <div className="bg-purple-900/30 border border-purple-200 rounded-lg p-4 mb-4 shadow-sm">
+        <h3 className="font-semibold text-slate-200 mb-3">Mileage</h3>
         <input
           type="number"
           placeholder="Miles driven this week"
           step="0.1"
           value={mileage}
           onChange={(e) => setMileage(e.target.value)}
-          className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white"
+          className="w-full border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500"
         />
       </div>
 
       {/* Notes */}
-      <div className="bg-white border border-slate-200 rounded-lg p-4 mb-6 shadow-sm">
-        <h3 className="font-semibold text-slate-700 mb-3">Notes</h3>
+      <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 mb-6 shadow-sm">
+        <h3 className="font-semibold text-slate-200 mb-3">Notes</h3>
         <textarea
           placeholder="Any notes for this week..."
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={3}
-          className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm resize-none"
+          className="w-full border border-slate-600 rounded-lg px-3 py-2 text-sm resize-none bg-slate-900 text-slate-100 placeholder-slate-500"
         />
       </div>
 
@@ -540,11 +540,11 @@ export default function WeeklyEntryForm() {
         disabled={saving || saved || !canEdit}
         className={`w-full py-3 rounded-lg font-semibold text-white transition-colors ${
           !canEdit
-            ? "bg-slate-300 cursor-not-allowed"
+            ? "bg-slate-600 cursor-not-allowed"
             : saved
             ? "bg-emerald-500"
             : saving
-            ? "bg-slate-400 cursor-not-allowed"
+            ? "bg-slate-500 cursor-not-allowed"
             : "bg-emerald-600 hover:bg-emerald-700"
         }`}
       >

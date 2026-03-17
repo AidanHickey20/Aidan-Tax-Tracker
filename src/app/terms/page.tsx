@@ -4,15 +4,15 @@ export const metadata = { title: "Terms of Service — Taxora" };
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-slate-50">
-      <nav className="bg-white border-b border-slate-200">
+    <div className="min-h-screen bg-slate-950">
+      <nav className="bg-slate-800 border-b border-slate-700">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/welcome" className="text-xl font-bold text-emerald-600">Taxora</Link>
+          <Link href="/welcome" className="text-xl font-bold text-emerald-400">Taxora</Link>
         </div>
       </nav>
-      <div className="max-w-3xl mx-auto px-6 py-12 prose prose-slate">
+      <div className="max-w-3xl mx-auto px-6 py-12 prose prose-slate prose-invert">
         <h1>Terms of Service</h1>
-        <p className="text-sm text-slate-500">Last updated: {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</p>
+        <p className="text-sm text-slate-400">Last updated: {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</p>
 
         <h2>1. Acceptance of Terms</h2>
         <p>By accessing or using Taxora (&quot;the Service&quot;), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service.</p>
