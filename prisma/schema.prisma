@@ -234,6 +234,7 @@ model Deal {
   assignmentFee     Float         @default(0) // Wholesale assignment fee
   underContractDate DateTime?     // Date went under contract (realtor)
   targetCloseDate   DateTime?     // Target closing date
+  closedProfit      Float         @default(0) // Profit recorded at close
   status            String        @default("ACQUISITION") // current phase
   notes             String        @default("")
   closedAt          DateTime?

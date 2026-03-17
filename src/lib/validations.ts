@@ -168,6 +168,7 @@ export const updateDealStepSchema = z.object({
   id: z.string().min(1),
   completed: z.boolean(),
   notes: z.string().max(5000).optional(),
+  profit: z.number().optional(),
 });
 
 // ── Recurring Items ──

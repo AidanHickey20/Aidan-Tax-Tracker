@@ -78,6 +78,7 @@ interface Deal {
   purchasePrice: number;
   arv: number;
   assignmentFee: number;
+  closedProfit: number;
   underContractDate: string | null;
   targetCloseDate: string | null;
   status: string;
@@ -98,6 +99,7 @@ export default function DealTracker() {
   const [showNew, setShowNew] = useState<DealType | null>(null);
   const [error, setError] = useState("");
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [showClosed, setShowClosed] = useState(false);
 
   // Fix & Flip form
   const [ffAddress, setFfAddress] = useState("");
@@ -273,16 +275,22 @@ export default function DealTracker() {
     }
   }
 
-  // Sort deals: open deals first (by target close date or created date), then closed
-  const sortedDeals = [...deals].sort((a, b) => {
-    const aIsClosed = a.status === "CLOSED";
-    const bIsClosed = b.status === "CLOSED";
-    if (aIsClosed !== bIsClosed) return aIsClosed ? 1 : -1;
+  // Split and sort deals
+  const openDeals = deals
+    .filter((d) => d.status !== "CLOSED")
+    .sort((a, b) => {
+      const aDate = a.targetCloseDate || a.createdAt;
+      const bDate = b.targetCloseDate || b.createdAt;
+      return new Date(aDate).getTime() - new Date(bDate).getTime();
+    });
 
-    const aDate = a.targetCloseDate || a.closedAt || a.createdAt;
-    const bDate = b.targetCloseDate || b.closedAt || b.createdAt;
-    return new Date(aDate).getTime() - new Date(bDate).getTime();
-  });
+  const closedDeals = deals
+    .filter((d) => d.status === "CLOSED")
+    .sort((a, b) => {
+      const aDate = a.closedAt || a.createdAt;
+      const bDate = b.closedAt || b.createdAt;
+      return new Date(bDate).getTime() - new Date(aDate).getTime(); // newest first
+    });
 
   if (loading) {
     return <div className="text-slate-500 py-8">Loading deals...</div>;
@@ -614,8 +622,8 @@ export default function DealTracker() {
         </div>
       )}
 
-      {/* Deal List */}
-      {sortedDeals.length === 0 ? (
+      {/* Active Deals */}
+      {openDeals.length === 0 && closedDeals.length === 0 ? (
         <div className="text-center py-16 text-slate-500">
           <svg className="w-12 h-12 mx-auto mb-3 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -624,150 +632,201 @@ export default function DealTracker() {
           <p className="text-sm">Click a button above to start tracking your first deal.</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {sortedDeals.map((deal) => {
-            const isWholesale = deal.dealType === "WHOLESALE";
-            const isRealtor = deal.dealType === "REALTOR";
-            const totalSpent = deal.expenses.reduce((s, e) => s + e.amount, 0);
-            const allIn = deal.purchasePrice + totalSpent;
-            const completedSteps = deal.steps.filter((s) => s.completed).length;
-            const totalSteps = deal.steps.length || 6;
-            const pct = (completedSteps / totalSteps) * 100;
-            const currentStep = deal.steps.find((s) => !s.completed) || deal.steps[deal.steps.length - 1];
-            const barColor = isRealtor ? "bg-cyan-500" : isWholesale ? "bg-purple-500" : "bg-emerald-500";
+        <>
+          {openDeals.length === 0 && (
+            <p className="text-slate-500 text-sm py-4">No active deals. All deals are closed.</p>
+          )}
+          <div className="space-y-3">
+            {openDeals.map((deal) => renderDealCard(deal))}
+          </div>
 
-            return (
-              <Link
-                key={deal.id}
-                href={`/deals/${deal.id}`}
-                className="block bg-slate-800 border border-slate-700 rounded-lg shadow-sm hover:border-emerald-300 hover:shadow-md transition-all"
+          {/* Past Deals (Closed) */}
+          {closedDeals.length > 0 && (
+            <div className="mt-8">
+              <button
+                onClick={() => setShowClosed(!showClosed)}
+                className="flex items-center gap-2 text-slate-400 hover:text-slate-200 transition-colors mb-3"
               >
-                <div className="p-5">
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="text-lg font-bold text-slate-100">
-                        {deal.nickname || deal.address}
-                      </h3>
-                      {deal.nickname && (
-                        <p className="text-sm text-slate-400">{deal.address}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${DEAL_TYPE_COLORS[deal.dealType] || DEAL_TYPE_COLORS.FIX_AND_FLIP}`}>
-                        {DEAL_TYPE_LABELS[deal.dealType] || "Fix & Flip"}
-                      </span>
-                      <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                        deal.status === "CLOSED"
-                          ? "bg-emerald-900/30 text-emerald-400"
-                          : "bg-blue-900/30 text-blue-400"
-                      }`}>
-                        {getStepLabel(deal.status)}
-                      </span>
-                      <button
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteDeal(deal.id); }}
-                        disabled={deleting === deal.id}
-                        className="w-7 h-7 flex items-center justify-center rounded-md bg-red-900/30 text-red-400 hover:bg-red-900/50 hover:text-red-300 transition-colors"
-                        title="Delete deal"
-                      >
-                        {deleting === deal.id ? (
-                          <span className="text-xs">...</span>
-                        ) : (
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        )}
-                      </button>
-                    </div>
-                  </div>
+                <svg
+                  className={`w-4 h-4 transition-transform ${showClosed ? "rotate-90" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+                <span className="text-sm font-semibold">Past Deals ({closedDeals.length})</span>
+                {closedDeals.length > 0 && (
+                  <span className="text-xs text-emerald-400 ml-1">
+                    Total profit: {formatCurrency(closedDeals.reduce((s, d) => s + (d.closedProfit || 0), 0))}
+                  </span>
+                )}
+              </button>
 
-                  {/* Progress bar */}
-                  <div className="w-full bg-slate-700 rounded-full h-2 mb-3 overflow-hidden">
-                    <div
-                      className={`h-2 rounded-full transition-all duration-500 ${barColor}`}
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-xs text-slate-500 mb-4">
-                    <span>{completedSteps} of {totalSteps} steps complete</span>
-                    <span>Next: {currentStep ? getStepLabel(currentStep.name) : "—"}</span>
-                  </div>
-
-                  {/* Stats row */}
-                  {isRealtor ? (
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <p className="text-[10px] text-slate-500 uppercase">Under Contract</p>
-                        <span className="text-sm font-bold text-slate-100">
-                          {deal.underContractDate
-                            ? new Date(deal.underContractDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
-                            : "—"}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-slate-500 uppercase">Closing Date</p>
-                        <span className="text-sm font-bold text-slate-100">
-                          {deal.targetCloseDate
-                            ? new Date(deal.targetCloseDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
-                            : "—"}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-slate-500 uppercase">Contingencies</p>
-                        <span className="text-sm font-bold text-slate-100">
-                          {deal.steps.filter((s) => s.name.startsWith("CONTINGENCY:") && s.completed).length}
-                          /{deal.steps.filter((s) => s.name.startsWith("CONTINGENCY:")).length} cleared
-                        </span>
-                      </div>
-                    </div>
-                  ) : isWholesale ? (
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <p className="text-[10px] text-slate-500 uppercase">Purchase</p>
-                        <MaskedValue value={formatCurrency(deal.purchasePrice)} className="text-sm font-bold text-slate-100" />
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-slate-500 uppercase">Assignment Fee</p>
-                        <MaskedValue value={formatCurrency(deal.assignmentFee)} className="text-sm font-bold text-emerald-400" />
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-slate-500 uppercase">Closing Date</p>
-                        <span className="text-sm font-bold text-slate-100">
-                          {deal.targetCloseDate
-                            ? new Date(deal.targetCloseDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                            : "—"}
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-4 gap-4">
-                      <div>
-                        <p className="text-[10px] text-slate-500 uppercase">Purchase</p>
-                        <MaskedValue value={formatCurrency(deal.purchasePrice)} className="text-sm font-bold text-slate-100" />
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-slate-500 uppercase">Rehab Spent</p>
-                        <MaskedValue value={formatCurrency(totalSpent)} className="text-sm font-bold text-red-500" />
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-slate-500 uppercase">All-In</p>
-                        <MaskedValue value={formatCurrency(allIn)} className="text-sm font-bold text-slate-100" />
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-slate-500 uppercase">Closing Date</p>
-                        <span className="text-sm font-bold text-slate-100">
-                          {deal.targetCloseDate
-                            ? new Date(deal.targetCloseDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                            : "—"}
-                        </span>
-                      </div>
-                    </div>
-                  )}
+              {showClosed && (
+                <div className="space-y-3">
+                  {closedDeals.map((deal) => renderDealCard(deal))}
                 </div>
-              </Link>
-            );
-          })}
-        </div>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
+
+  function renderDealCard(deal: Deal) {
+    const isWholesale = deal.dealType === "WHOLESALE";
+    const isRealtor = deal.dealType === "REALTOR";
+    const isClosed = deal.status === "CLOSED";
+    const totalSpent = deal.expenses.reduce((s, e) => s + e.amount, 0);
+    const allIn = deal.purchasePrice + totalSpent;
+    const completedSteps = deal.steps.filter((s) => s.completed).length;
+    const totalSteps = deal.steps.length || 6;
+    const pct = (completedSteps / totalSteps) * 100;
+    const currentStep = deal.steps.find((s) => !s.completed) || deal.steps[deal.steps.length - 1];
+    const barColor = isRealtor ? "bg-cyan-500" : isWholesale ? "bg-purple-500" : "bg-emerald-500";
+
+    return (
+      <Link
+        key={deal.id}
+        href={`/deals/${deal.id}`}
+        className={`block bg-slate-800 border rounded-lg shadow-sm hover:shadow-md transition-all ${
+          isClosed ? "border-slate-700/50 opacity-80 hover:opacity-100 hover:border-slate-600" : "border-slate-700 hover:border-emerald-300"
+        }`}
+      >
+        <div className="p-5">
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <h3 className="text-lg font-bold text-slate-100">
+                {deal.nickname || deal.address}
+              </h3>
+              {deal.nickname && (
+                <p className="text-sm text-slate-400">{deal.address}</p>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${DEAL_TYPE_COLORS[deal.dealType] || DEAL_TYPE_COLORS.FIX_AND_FLIP}`}>
+                {DEAL_TYPE_LABELS[deal.dealType] || "Fix & Flip"}
+              </span>
+              <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+                isClosed
+                  ? "bg-emerald-900/30 text-emerald-400"
+                  : "bg-blue-900/30 text-blue-400"
+              }`}>
+                {getStepLabel(deal.status)}
+              </span>
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteDeal(deal.id); }}
+                disabled={deleting === deal.id}
+                className="w-7 h-7 flex items-center justify-center rounded-md bg-red-900/30 text-red-400 hover:bg-red-900/50 hover:text-red-300 transition-colors"
+                title="Delete deal"
+              >
+                {deleting === deal.id ? (
+                  <span className="text-xs">...</span>
+                ) : (
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          <div className="w-full bg-slate-700 rounded-full h-2 mb-3 overflow-hidden">
+            <div
+              className={`h-2 rounded-full transition-all duration-500 ${barColor}`}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+          {!isClosed && (
+            <div className="flex justify-between text-xs text-slate-500 mb-4">
+              <span>{completedSteps} of {totalSteps} steps complete</span>
+              <span>Next: {currentStep ? getStepLabel(currentStep.name) : "—"}</span>
+            </div>
+          )}
+          {isClosed && deal.closedAt && (
+            <div className="flex justify-between text-xs text-slate-500 mb-4">
+              <span>Closed {new Date(deal.closedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+              {deal.closedProfit > 0 && (
+                <span className="text-emerald-400 font-semibold">Profit: {formatCurrency(deal.closedProfit)}</span>
+              )}
+            </div>
+          )}
+
+          {/* Stats row */}
+          {isRealtor ? (
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase">Under Contract</p>
+                <span className="text-sm font-bold text-slate-100">
+                  {deal.underContractDate
+                    ? new Date(deal.underContractDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                    : "—"}
+                </span>
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase">Closing Date</p>
+                <span className="text-sm font-bold text-slate-100">
+                  {deal.targetCloseDate
+                    ? new Date(deal.targetCloseDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                    : "—"}
+                </span>
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase">Contingencies</p>
+                <span className="text-sm font-bold text-slate-100">
+                  {deal.steps.filter((s) => s.name.startsWith("CONTINGENCY:") && s.completed).length}
+                  /{deal.steps.filter((s) => s.name.startsWith("CONTINGENCY:")).length} cleared
+                </span>
+              </div>
+            </div>
+          ) : isWholesale ? (
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase">Purchase</p>
+                <MaskedValue value={formatCurrency(deal.purchasePrice)} className="text-sm font-bold text-slate-100" />
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase">Assignment Fee</p>
+                <MaskedValue value={formatCurrency(deal.assignmentFee)} className="text-sm font-bold text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase">Closing Date</p>
+                <span className="text-sm font-bold text-slate-100">
+                  {deal.targetCloseDate
+                    ? new Date(deal.targetCloseDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                    : "—"}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-4 gap-4">
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase">Purchase</p>
+                <MaskedValue value={formatCurrency(deal.purchasePrice)} className="text-sm font-bold text-slate-100" />
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase">Rehab Spent</p>
+                <MaskedValue value={formatCurrency(totalSpent)} className="text-sm font-bold text-red-500" />
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase">All-In</p>
+                <MaskedValue value={formatCurrency(allIn)} className="text-sm font-bold text-slate-100" />
+              </div>
+              <div>
+                <p className="text-[10px] text-slate-500 uppercase">Closing Date</p>
+                <span className="text-sm font-bold text-slate-100">
+                  {deal.targetCloseDate
+                    ? new Date(deal.targetCloseDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                    : "—"}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      </Link>
+    );
+  }
 }

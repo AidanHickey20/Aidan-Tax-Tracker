@@ -110,6 +110,7 @@ interface Deal {
   purchasePrice: number;
   arv: number;
   assignmentFee: number;
+  closedProfit: number;
   underContractDate: string | null;
   targetCloseDate: string | null;
   status: string;
@@ -142,6 +143,12 @@ export default function DealDetailPage() {
   const [editNotes, setEditNotes] = useState("");
   const [showEdit, setShowEdit] = useState(false);
 
+  // Close deal dialog
+  const [showCloseDialog, setShowCloseDialog] = useState(false);
+  const [closeStepId, setCloseStepId] = useState<string | null>(null);
+  const [closeProfit, setCloseProfit] = useState("");
+  const [closing, setClosing] = useState(false);
+
   const fetchDeal = useCallback(async () => {
     const res = await fetch("/api/deals");
     if (!res.ok) return;
@@ -164,11 +171,38 @@ export default function DealDetailPage() {
   }, [fetchDeal]);
 
   async function toggleStep(step: DealStep) {
+    // Intercept closing: show profit dialog instead of toggling directly
+    if (step.name === "CLOSED" && !step.completed) {
+      setCloseStepId(step.id);
+      setCloseProfit("");
+      setShowCloseDialog(true);
+      return;
+    }
+
     await fetch("/api/deals/steps", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: step.id, completed: !step.completed }),
     });
+    fetchDeal();
+  }
+
+  async function confirmCloseDeal() {
+    if (!closeStepId) return;
+    setClosing(true);
+    await fetch("/api/deals/steps", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: closeStepId,
+        completed: true,
+        profit: parseFloat(closeProfit) || 0,
+      }),
+    });
+    setShowCloseDialog(false);
+    setCloseStepId(null);
+    setCloseProfit("");
+    setClosing(false);
     fetchDeal();
   }
 
@@ -737,6 +771,12 @@ export default function DealDetailPage() {
                 {new Date(deal.closedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
               </p>
             )}
+            {deal.closedProfit > 0 && (
+              <p>
+                <span className="text-slate-500">Profit:</span>{" "}
+                <MaskedValue value={formatCurrency(deal.closedProfit)} className="text-emerald-400 font-semibold" />
+              </p>
+            )}
             {deal.notes ? (
               <p className="mt-2 text-slate-300 whitespace-pre-wrap">{deal.notes}</p>
             ) : (
@@ -745,6 +785,45 @@ export default function DealDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Close Deal Dialog */}
+      {showCloseDialog && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 w-full max-w-md shadow-2xl">
+            <h3 className="text-lg font-bold text-slate-100 mb-2">Close Deal</h3>
+            <p className="text-sm text-slate-400 mb-4">
+              Enter your profit from this deal. This will be recorded as income in your weekly entry.
+            </p>
+            <div className="mb-4">
+              <label className="block text-xs text-slate-400 mb-1">Profit</label>
+              <input
+                type="number"
+                step="0.01"
+                placeholder="0.00"
+                value={closeProfit}
+                onChange={(e) => setCloseProfit(e.target.value)}
+                autoFocus
+                className="w-full border border-slate-600 rounded px-3 py-2.5 text-lg bg-slate-900 text-slate-100 placeholder-slate-500"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={confirmCloseDeal}
+                disabled={closing}
+                className="flex-1 bg-emerald-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {closing ? "Closing..." : "Close Deal"}
+              </button>
+              <button
+                onClick={() => { setShowCloseDialog(false); setCloseStepId(null); }}
+                className="px-4 py-2.5 rounded-lg text-sm text-slate-400 hover:text-slate-200"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

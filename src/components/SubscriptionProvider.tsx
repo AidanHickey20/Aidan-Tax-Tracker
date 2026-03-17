@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 
 interface SubscriptionState {
@@ -36,9 +36,7 @@ export default function SubscriptionProvider({ children }: { children: React.Rea
     loading: true,
   });
 
-  useEffect(() => {
-    if (status !== "authenticated") return;
-
+  const fetchSubscription = useCallback(() => {
     fetch("/api/subscription")
       .then((r) => r.json())
       .then((data) => {
@@ -54,7 +52,18 @@ export default function SubscriptionProvider({ children }: { children: React.Rea
       .catch(() => {
         setState((s) => ({ ...s, loading: false }));
       });
-  }, [status]);
+  }, []);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+
+    // Fetch immediately
+    fetchSubscription();
+
+    // Re-fetch every hour so daysLeft stays current and trial expiration is caught
+    const interval = setInterval(fetchSubscription, 60 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [status, fetchSubscription]);
 
   return (
     <SubscriptionContext.Provider value={state}>

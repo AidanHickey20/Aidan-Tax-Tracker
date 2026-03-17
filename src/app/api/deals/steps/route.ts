@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/get-user";
 import { validate, updateDealStepSchema } from "@/lib/validations";
 import { isProUser } from "@/lib/subscription";
+import { getCurrentWeekRange } from "@/lib/utils";
 
 export async function PUT(request: NextRequest) {
   const userId = await requireUserId();
@@ -34,13 +35,53 @@ export async function PUT(request: NextRequest) {
     });
     const lastCompleted = [...allSteps].reverse().find((s) => s.completed);
     if (lastCompleted) {
+      const isClosed = lastCompleted.name === "CLOSED";
+      const profit = parsed.data.profit ?? 0;
+
       await prisma.deal.update({
         where: { id: step.dealId },
         data: {
           status: lastCompleted.name,
-          closedAt: lastCompleted.name === "CLOSED" ? new Date() : null,
+          closedAt: isClosed ? new Date() : null,
+          ...(isClosed && profit > 0 ? { closedProfit: profit } : {}),
         },
       });
+
+      // When closing a deal with profit, add it as INCOME to the current week's entry
+      if (isClosed && profit > 0) {
+        const deal = stepCheck.deal;
+        const dealLabel = deal.nickname || deal.address;
+        const { start, end } = getCurrentWeekRange();
+
+        // Find or create the current week's entry
+        let entry = await prisma.weeklyEntry.findFirst({
+          where: {
+            userId,
+            weekStart: start,
+            weekEnd: end,
+          },
+        });
+
+        if (!entry) {
+          entry = await prisma.weeklyEntry.create({
+            data: {
+              userId,
+              weekStart: start,
+              weekEnd: end,
+            },
+          });
+        }
+
+        // Add the profit as an INCOME line item
+        await prisma.lineItem.create({
+          data: {
+            weeklyEntryId: entry.id,
+            description: `Deal closed: ${dealLabel}`,
+            amount: profit,
+            category: "INCOME",
+          },
+        });
+      }
     }
   }
 
