@@ -29,15 +29,13 @@ interface Settings {
 
 function Field({ label, value, onChange, prefix, suffix, step, hint }: {
   label: string;
-  value: number | string;
+  value: string;
   onChange: (v: string) => void;
   prefix?: string;
   suffix?: string;
   step?: string;
   hint?: string;
 }) {
-  // Show empty string instead of 0
-  const displayValue = value === 0 || value === "0" ? "" : value;
   return (
     <div>
       <label className="block text-sm font-medium text-slate-200 mb-1">{label}</label>
@@ -46,7 +44,7 @@ function Field({ label, value, onChange, prefix, suffix, step, hint }: {
         <input
           type="number"
           step={step || "0.01"}
-          value={displayValue}
+          value={value}
           onChange={(e) => onChange(e.target.value)}
           className="w-full border border-slate-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-900 text-slate-100 placeholder-slate-500"
         />
@@ -57,9 +55,22 @@ function Field({ label, value, onChange, prefix, suffix, step, hint }: {
   );
 }
 
+/** Convert a number from the API to a form string (0 → empty) */
+function numToForm(val: number): string {
+  return val ? val.toString() : "";
+}
+
+const NUM_FIELDS: (keyof Settings)[] = [
+  "incomeGoal", "bankBalance", "homeValue", "homeAppreciation",
+  "mortgageBalance", "mortgageRate", "mortgagePayment",
+  "studentLoanBalance", "studentLoanRate", "studentLoanPayment", "studentLoanPaymentDay",
+  "carLoanBalance", "carLoanRate", "carLoanPayment", "carLoanPaymentDay",
+  "investmentGrowthRate",
+];
+
 export default function SettingsPage() {
   const { canEdit, isProUser } = useSubscription();
-  const [settings, setSettings] = useState<Settings | null>(null);
+  const [fields, setFields] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -68,45 +79,40 @@ export default function SettingsPage() {
     fetch("/api/settings")
       .then((r) => r.json())
       .then((data) => {
-        setSettings({
-          ...data,
-          refDate: data.refDate ? new Date(data.refDate).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
-        });
+        const f: Record<string, string> = {};
+        for (const key of NUM_FIELDS) {
+          f[key] = numToForm(data[key] ?? 0);
+        }
+        f.refDate = data.refDate ? new Date(data.refDate).toISOString().split("T")[0] : new Date().toISOString().split("T")[0];
+        setFields(f);
         setLoading(false);
       });
   }, []);
 
   const save = async () => {
-    if (!settings) return;
     setSaving(true);
     setSaved(false);
+    // Convert string fields to numbers for the API
+    const payload: Record<string, unknown> = { refDate: fields.refDate };
+    for (const key of NUM_FIELDS) {
+      payload[key] = fields[key] === "" ? 0 : parseFloat(fields[key]) || 0;
+    }
     await fetch("/api/settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(settings),
+      body: JSON.stringify(payload),
     });
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
 
-  if (loading || !settings) {
+  if (loading) {
     return <div className="text-slate-500 py-8">Loading settings...</div>;
   }
 
-  const update = (field: keyof Settings, value: string) => {
-    const numFields = [
-      "incomeGoal", "bankBalance", "homeValue", "homeAppreciation",
-      "mortgageBalance", "mortgageRate", "mortgagePayment",
-      "studentLoanBalance", "studentLoanRate", "studentLoanPayment", "studentLoanPaymentDay",
-      "carLoanBalance", "carLoanRate", "carLoanPayment", "carLoanPaymentDay",
-      "investmentGrowthRate",
-    ];
-    if (numFields.includes(field)) {
-      setSettings({ ...settings, [field]: value === "" ? 0 : parseFloat(value) || 0 });
-    } else {
-      setSettings({ ...settings, [field]: value });
-    }
+  const update = (field: string, value: string) => {
+    setFields((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -133,7 +139,7 @@ export default function SettingsPage() {
           <h3 className="font-semibold text-slate-200 mb-4">Income Goal</h3>
           <Field
             label="Annual Income Goal"
-            value={settings.incomeGoal}
+            value={fields.incomeGoal}
             onChange={(v) => update("incomeGoal", v)}
             prefix="$"
             step="1000"
@@ -149,7 +155,7 @@ export default function SettingsPage() {
               <label className="block text-sm font-medium text-slate-200 mb-1">Reference Date</label>
               <input
                 type="date"
-                value={settings.refDate}
+                value={fields.refDate}
                 onChange={(e) => update("refDate", e.target.value)}
                 className="w-full border border-slate-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-900 text-slate-100 placeholder-slate-500"
               />
@@ -157,7 +163,7 @@ export default function SettingsPage() {
             </div>
             <Field
               label="Starting Bank Balance"
-              value={settings.bankBalance}
+              value={fields.bankBalance}
               onChange={(v) => update("bankBalance", v)}
               prefix="$"
               hint="Your bank balance as of the reference date"
@@ -172,10 +178,10 @@ export default function SettingsPage() {
         <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 shadow-sm">
           <h3 className="font-semibold text-slate-200 mb-4">Student Loans</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Balance" value={settings.studentLoanBalance} onChange={(v) => update("studentLoanBalance", v)} prefix="$" />
-            <Field label="Interest Rate" value={settings.studentLoanRate} onChange={(v) => update("studentLoanRate", v)} hint="e.g. 0.075 for 7.5%" step="0.001" />
-            <Field label="Monthly Payment" value={settings.studentLoanPayment} onChange={(v) => update("studentLoanPayment", v)} prefix="$" suffix="/mo" />
-            <Field label="Payment Day of Month" value={settings.studentLoanPaymentDay} onChange={(v) => update("studentLoanPaymentDay", v)} hint="1-31" step="1" />
+            <Field label="Balance" value={fields.studentLoanBalance} onChange={(v) => update("studentLoanBalance", v)} prefix="$" />
+            <Field label="Interest Rate" value={fields.studentLoanRate} onChange={(v) => update("studentLoanRate", v)} hint="e.g. 0.075 for 7.5%" step="0.001" />
+            <Field label="Monthly Payment" value={fields.studentLoanPayment} onChange={(v) => update("studentLoanPayment", v)} prefix="$" suffix="/mo" />
+            <Field label="Payment Day of Month" value={fields.studentLoanPaymentDay} onChange={(v) => update("studentLoanPaymentDay", v)} hint="1-31" step="1" />
           </div>
         </div>
 
@@ -183,10 +189,10 @@ export default function SettingsPage() {
         <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 shadow-sm">
           <h3 className="font-semibold text-slate-200 mb-4">Car Loan</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Balance" value={settings.carLoanBalance} onChange={(v) => update("carLoanBalance", v)} prefix="$" />
-            <Field label="Interest Rate" value={settings.carLoanRate} onChange={(v) => update("carLoanRate", v)} hint="e.g. 0.04 for 4%" step="0.001" />
-            <Field label="Monthly Payment" value={settings.carLoanPayment} onChange={(v) => update("carLoanPayment", v)} prefix="$" suffix="/mo" />
-            <Field label="Payment Day of Month" value={settings.carLoanPaymentDay} onChange={(v) => update("carLoanPaymentDay", v)} hint="1-31" step="1" />
+            <Field label="Balance" value={fields.carLoanBalance} onChange={(v) => update("carLoanBalance", v)} prefix="$" />
+            <Field label="Interest Rate" value={fields.carLoanRate} onChange={(v) => update("carLoanRate", v)} hint="e.g. 0.04 for 4%" step="0.001" />
+            <Field label="Monthly Payment" value={fields.carLoanPayment} onChange={(v) => update("carLoanPayment", v)} prefix="$" suffix="/mo" />
+            <Field label="Payment Day of Month" value={fields.carLoanPaymentDay} onChange={(v) => update("carLoanPaymentDay", v)} hint="1-31" step="1" />
           </div>
         </div>
         {/* Investment Assumptions */}
@@ -195,7 +201,7 @@ export default function SettingsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field
               label="Annual Growth Rate"
-              value={settings.investmentGrowthRate}
+              value={fields.investmentGrowthRate}
               onChange={(v) => update("investmentGrowthRate", v)}
               hint="Used for manual investment projections (e.g. 0.07 for 7%)"
               step="0.01"
