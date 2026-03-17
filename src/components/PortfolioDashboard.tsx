@@ -283,6 +283,7 @@ export default function PortfolioDashboard({ onTotalChange, investmentGrowthRate
         <div>
           <div className="flex items-center gap-2">
             <h3 className="font-semibold text-slate-200">Investment Portfolio</h3>
+            <span className="text-[10px] font-semibold bg-emerald-900/30 text-emerald-400 px-1.5 py-0.5 rounded">PRO</span>
           </div>
           {lastUpdated && (
             <p className="text-xs text-slate-500 mt-0.5">
