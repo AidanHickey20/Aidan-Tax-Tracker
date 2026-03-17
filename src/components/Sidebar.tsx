@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useSubscription } from "./SubscriptionProvider";
+import Logo from "./Logo";
 
 const PRO_ROUTES = new Set(["/", "/deals"]);
 
@@ -32,7 +33,7 @@ export default function Sidebar() {
   const nav = (
     <>
       <div className="mb-8">
-        <h1 className="text-xl font-bold text-emerald-400">Taxora</h1>
+        <Logo size="md" />
         <p className="text-xs text-slate-400 mt-1">Personal Finance & Accounting</p>
       </div>
       <nav className="flex-1 space-y-1">

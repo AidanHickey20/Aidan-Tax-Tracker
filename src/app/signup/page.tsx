@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import Logo from "@/components/Logo";
 
 export default function SignupPage() {
   const [name, setName] = useState("");
@@ -61,9 +62,9 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950">
       <div className="bg-slate-800 border border-slate-700 rounded-xl shadow-lg p-8 max-w-sm w-full">
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-emerald-400">Taxora</h1>
-          <p className="text-sm text-slate-400 mt-1">Create your account</p>
+        <div className="mb-6 flex flex-col items-center">
+          <Logo size="lg" />
+          <p className="text-sm text-slate-400 mt-2">Create your account</p>
         </div>
 
         {error && (

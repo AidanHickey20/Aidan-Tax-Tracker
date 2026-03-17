@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Logo from "@/components/Logo";
 
 export const metadata = { title: "Terms of Service — Taxora" };
 
@@ -7,7 +8,7 @@ export default function TermsPage() {
     <div className="min-h-screen bg-slate-950">
       <nav className="bg-slate-800 border-b border-slate-700">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/welcome" className="text-xl font-bold text-emerald-400">Taxora</Link>
+          <Link href="/welcome"><Logo size="md" /></Link>
         </div>
       </nav>
       <div className="max-w-3xl mx-auto px-6 py-12 prose prose-slate prose-invert">

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import WelcomeLoginForm from "@/components/WelcomeLoginForm";
+import Logo from "@/components/Logo";
 
 export const metadata: Metadata = {
   title: "Taxora — Financial Tool for Real Estate Professionals",
@@ -60,7 +61,7 @@ export default function WelcomePage() {
       {/* Nav */}
       <nav className="bg-slate-800 border-b border-slate-700">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-emerald-600">Taxora</h1>
+          <Logo size="md" />
           <div className="flex items-center gap-4">
             <Link href="#login" className="text-sm text-slate-300 hover:text-slate-100">
               Log in
