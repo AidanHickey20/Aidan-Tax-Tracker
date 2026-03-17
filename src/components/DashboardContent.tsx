@@ -13,6 +13,7 @@ import PortfolioDashboard from "./PortfolioDashboard";
 import { MaskedValue } from "./PrivacyProvider";
 import TaxAdvisor from "./TaxAdvisor";
 import UpgradePrompt from "./UpgradePrompt";
+import ExpiredBanner from "./ExpiredBanner";
 import { useSubscription } from "./SubscriptionProvider";
 
 interface LineItem {
@@ -291,6 +292,8 @@ export default function DashboardContent() {
       <h2 className="text-2xl font-bold text-slate-800 mb-6">
         Dashboard — {new Date().getFullYear()}
       </h2>
+
+      <ExpiredBanner />
 
       {/* Reminders */}
       {reminders.length > 0 && (

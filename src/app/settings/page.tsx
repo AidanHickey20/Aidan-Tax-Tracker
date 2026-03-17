@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSubscription } from "@/components/SubscriptionProvider";
+import ExpiredBanner from "@/components/ExpiredBanner";
 
 interface Settings {
   incomeGoal: number;
@@ -52,6 +54,7 @@ function Field({ label, value, onChange, prefix, suffix, step, hint }: {
 }
 
 export default function SettingsPage() {
+  const { canEdit } = useSubscription();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -112,6 +115,8 @@ export default function SettingsPage() {
         </Link>
         <h2 className="text-2xl font-bold text-slate-800">Settings</h2>
       </div>
+
+      <ExpiredBanner compact message="Your free trial has ended. Choose a plan to update settings." />
 
       <p className="text-sm text-slate-500 mb-8">
         Configure your financial starting points. These values are used to calculate your net worth and track progress.
@@ -208,10 +213,14 @@ export default function SettingsPage() {
       <div className="mt-8 flex items-center gap-4">
         <button
           onClick={save}
-          disabled={saving}
-          className="bg-emerald-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+          disabled={saving || !canEdit}
+          className={`px-6 py-2.5 rounded-lg font-medium transition-colors ${
+            !canEdit
+              ? "bg-slate-300 text-white cursor-not-allowed"
+              : "bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
+          }`}
         >
-          {saving ? "Saving..." : "Save Settings"}
+          {!canEdit ? "Choose a plan to save" : saving ? "Saving..." : "Save Settings"}
         </button>
         {saved && (
           <span className="text-sm text-emerald-600 font-medium">Settings saved!</span>

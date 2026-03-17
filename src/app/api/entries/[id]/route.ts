@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/get-user";
 import { validate, updateEntrySchema } from "@/lib/validations";
+import { canUserEdit } from "@/lib/subscription";
+
+const EXPIRED_MSG = { error: "Your trial has ended. Choose a plan to continue editing." };
 
 export async function GET(
   _request: NextRequest,
@@ -26,6 +29,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const userId = await requireUserId();
+  if (!(await canUserEdit(userId))) return NextResponse.json(EXPIRED_MSG, { status: 403 });
   const { id } = await params;
   const body = await request.json();
   const parsed = validate(updateEntrySchema, body);
@@ -84,6 +88,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const userId = await requireUserId();
+  if (!(await canUserEdit(userId))) return NextResponse.json(EXPIRED_MSG, { status: 403 });
   const { id } = await params;
 
   const existing = await prisma.weeklyEntry.findFirst({ where: { id, userId } });

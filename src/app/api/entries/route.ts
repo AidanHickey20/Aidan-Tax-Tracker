@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentYearRange } from "@/lib/utils";
 import { requireUserId } from "@/lib/get-user";
 import { validate, createEntrySchema } from "@/lib/validations";
+import { canUserEdit } from "@/lib/subscription";
+
+const EXPIRED_MSG = { error: "Your trial has ended. Choose a plan to continue editing." };
 
 export async function GET(request: NextRequest) {
   const userId = await requireUserId();
@@ -42,6 +45,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const userId = await requireUserId();
+  if (!(await canUserEdit(userId))) return NextResponse.json(EXPIRED_MSG, { status: 403 });
   const body = await request.json();
   const parsed = validate(createEntrySchema, body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });

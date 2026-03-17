@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/get-user";
 import { validate, importEntriesSchema } from "@/lib/validations";
+import { canUserEdit } from "@/lib/subscription";
+
+const EXPIRED_MSG = { error: "Your trial has ended. Choose a plan to continue editing." };
 
 interface ImportLineItem {
   description: string;
@@ -31,6 +34,7 @@ interface ImportEntry {
 
 export async function POST(request: NextRequest) {
   const userId = await requireUserId();
+  if (!(await canUserEdit(userId))) return NextResponse.json(EXPIRED_MSG, { status: 403 });
   const body = await request.json();
   const parsed = validate(importEntriesSchema, body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });

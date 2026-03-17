@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { CATEGORIES, type Category, formatCurrency } from "@/lib/utils";
+import { useSubscription } from "./SubscriptionProvider";
+import ExpiredBanner from "./ExpiredBanner";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -66,6 +68,7 @@ interface WeeklyEntry {
 }
 
 export default function RecurringManager() {
+  const { canEdit } = useSubscription();
   const [items, setItems] = useState<RecurringItem[]>([]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [actualMonthlyIncome, setActualMonthlyIncome] = useState(0);
@@ -116,6 +119,7 @@ export default function RecurringManager() {
   }, []);
 
   async function addItem() {
+    if (!canEdit) return;
     if (!newDescription || !newAmount) {
       setError("Description and amount are required.");
       return;
@@ -146,6 +150,7 @@ export default function RecurringManager() {
   }
 
   async function toggleItem(item: RecurringItem) {
+    if (!canEdit) return;
     try {
       const res = await fetch("/api/recurring", {
         method: "PUT",
@@ -159,6 +164,7 @@ export default function RecurringManager() {
   }
 
   async function deleteItem(id: string) {
+    if (!canEdit) return;
     try {
       await fetch("/api/recurring", {
         method: "DELETE",
@@ -170,6 +176,7 @@ export default function RecurringManager() {
   }
 
   async function addReminder() {
+    if (!canEdit) return;
     if (!newReminder) {
       setError("Reminder message is required.");
       return;
@@ -197,6 +204,7 @@ export default function RecurringManager() {
   }
 
   async function toggleReminder(reminder: Reminder) {
+    if (!canEdit) return;
     try {
       const res = await fetch("/api/reminders", {
         method: "PUT",
@@ -210,6 +218,7 @@ export default function RecurringManager() {
   }
 
   async function deleteReminder(id: string) {
+    if (!canEdit) return;
     try {
       await fetch("/api/reminders", {
         method: "DELETE",
@@ -249,6 +258,8 @@ export default function RecurringManager() {
           </p>
         </div>
       </div>
+
+      <ExpiredBanner compact message="Your free trial has ended. Choose a plan to manage recurring items and reminders." />
 
       {error && (
         <div className="mb-4 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600 flex items-center gap-2">
@@ -313,12 +324,14 @@ export default function RecurringManager() {
             <h3 className="font-semibold text-slate-800">Recurring Items</h3>
             <p className="text-xs text-slate-400 mt-0.5">{activeItems.length} active of {items.length} total</p>
           </div>
-          <button
-            onClick={() => setShowAddItem(!showAddItem)}
-            className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
-          >
-            {showAddItem ? "Cancel" : "+ Add Item"}
-          </button>
+          {canEdit && (
+            <button
+              onClick={() => setShowAddItem(!showAddItem)}
+              className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
+            >
+              {showAddItem ? "Cancel" : "+ Add Item"}
+            </button>
+          )}
         </div>
 
         {/* Add Item Form */}
@@ -615,12 +628,14 @@ export default function RecurringManager() {
               {reminders.filter((r) => r.isActive).length} active of {reminders.length} total
             </p>
           </div>
-          <button
-            onClick={() => setShowAddReminder(!showAddReminder)}
-            className="bg-amber-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-amber-600 transition-colors"
-          >
-            {showAddReminder ? "Cancel" : "+ Add Reminder"}
-          </button>
+          {canEdit && (
+            <button
+              onClick={() => setShowAddReminder(!showAddReminder)}
+              className="bg-amber-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-amber-600 transition-colors"
+            >
+              {showAddReminder ? "Cancel" : "+ Add Reminder"}
+            </button>
+          )}
         </div>
 
         {/* Add Reminder Form */}

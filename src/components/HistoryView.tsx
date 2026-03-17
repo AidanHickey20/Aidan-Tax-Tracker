@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatWeekLabel, formatCurrency } from "@/lib/utils";
 import SpreadsheetImport from "./SpreadsheetImport";
+import { useSubscription } from "./SubscriptionProvider";
+import ExpiredBanner from "./ExpiredBanner";
 
 interface LineItem {
   id: string;
@@ -36,6 +38,7 @@ interface WeeklyEntry {
 }
 
 export default function HistoryView() {
+  const { canEdit } = useSubscription();
   const [entries, setEntries] = useState<WeeklyEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -67,7 +70,9 @@ export default function HistoryView() {
     <div className="max-w-4xl">
       <h2 className="text-2xl font-bold text-slate-800 mb-6">Past Weeks</h2>
 
-      <SpreadsheetImport onImported={loadEntries} />
+      <ExpiredBanner compact message="Your free trial has ended. Choose a plan to edit or delete entries." />
+
+      {canEdit && <SpreadsheetImport onImported={loadEntries} />}
 
       {entries.length === 0 && (
         <div className="text-center py-12 text-slate-400">
@@ -255,20 +260,22 @@ export default function HistoryView() {
                   )}
 
                   {/* Actions */}
-                  <div className="mt-4 flex gap-2">
-                    <Link
-                      href={`/entry?edit=${entry.id}`}
-                      className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg"
-                    >
-                      Edit
-                    </Link>
-                    <button
-                      onClick={() => deleteEntry(entry.id)}
-                      className="text-sm bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg"
-                    >
-                      Delete
-                    </button>
-                  </div>
+                  {canEdit && (
+                    <div className="mt-4 flex gap-2">
+                      <Link
+                        href={`/entry?edit=${entry.id}`}
+                        className="text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg"
+                      >
+                        Edit
+                      </Link>
+                      <button
+                        onClick={() => deleteEntry(entry.id)}
+                        className="text-sm bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getCurrentWeekRange, formatCurrency, type Category } from "@/lib/utils";
 import { format } from "date-fns";
+import { useSubscription } from "./SubscriptionProvider";
+import ExpiredBanner from "./ExpiredBanner";
 
 interface LineItemInput {
   tempId: string;
@@ -55,6 +57,7 @@ export default function WeeklyEntryForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get("edit");
+  const { canEdit } = useSubscription();
 
   const { start, end } = getCurrentWeekRange();
   const [weekStart, setWeekStart] = useState(format(start, "yyyy-MM-dd"));
@@ -286,6 +289,8 @@ export default function WeeklyEntryForm() {
       <h2 className="text-2xl font-bold text-slate-800 mb-6">
         {editId ? "Edit Weekly Entry" : "New Weekly Entry"}
       </h2>
+
+      <ExpiredBanner compact message="Your free trial has ended. Choose a plan to add or edit entries." />
 
       {/* Reminders */}
       {reminders.length > 0 && (
@@ -532,16 +537,18 @@ export default function WeeklyEntryForm() {
       {/* Submit */}
       <button
         type="submit"
-        disabled={saving || saved}
+        disabled={saving || saved || !canEdit}
         className={`w-full py-3 rounded-lg font-semibold text-white transition-colors ${
-          saved
+          !canEdit
+            ? "bg-slate-300 cursor-not-allowed"
+            : saved
             ? "bg-emerald-500"
             : saving
             ? "bg-slate-400 cursor-not-allowed"
             : "bg-emerald-600 hover:bg-emerald-700"
         }`}
       >
-        {saved ? "Saved! Redirecting..." : saving ? "Saving..." : editId ? "Update Entry" : "Save Weekly Entry"}
+        {!canEdit ? "Choose a plan to save entries" : saved ? "Saved! Redirecting..." : saving ? "Saving..." : editId ? "Update Entry" : "Save Weekly Entry"}
       </button>
     </form>
   );

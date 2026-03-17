@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 interface SubscriptionState {
   plan: "TRIAL" | "BASIC" | "PRO" | "EXPIRED";
   isProUser: boolean;
+  canEdit: boolean;
   trialEndsAt: string | null;
   daysLeft: number | null;
   loading: boolean;
@@ -14,6 +15,7 @@ interface SubscriptionState {
 const SubscriptionContext = createContext<SubscriptionState>({
   plan: "TRIAL",
   isProUser: true,
+  canEdit: true,
   trialEndsAt: null,
   daysLeft: null,
   loading: true,
@@ -28,6 +30,7 @@ export default function SubscriptionProvider({ children }: { children: React.Rea
   const [state, setState] = useState<SubscriptionState>({
     plan: "TRIAL",
     isProUser: true,
+    canEdit: true,
     trialEndsAt: null,
     daysLeft: null,
     loading: true,
@@ -41,11 +44,12 @@ export default function SubscriptionProvider({ children }: { children: React.Rea
       .then((data) => {
         const plan = data.plan as SubscriptionState["plan"];
         const isProUser = plan === "PRO" || plan === "TRIAL";
+        const canEdit = plan !== "EXPIRED";
         let daysLeft: number | null = null;
         if (data.trialEndsAt) {
           daysLeft = Math.max(0, Math.ceil((new Date(data.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
         }
-        setState({ plan, isProUser, trialEndsAt: data.trialEndsAt, daysLeft, loading: false });
+        setState({ plan, isProUser, canEdit, trialEndsAt: data.trialEndsAt, daysLeft, loading: false });
       })
       .catch(() => {
         setState((s) => ({ ...s, loading: false }));

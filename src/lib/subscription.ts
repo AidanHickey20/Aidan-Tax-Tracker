@@ -30,3 +30,8 @@ export async function isProUser(userId: string): Promise<boolean> {
   const plan = await getUserPlan(userId);
   return plan === "PRO" || plan === "TRIAL";
 }
+
+export async function canUserEdit(userId: string): Promise<boolean> {
+  const plan = await getUserPlan(userId);
+  return plan !== "EXPIRED";
+}
