@@ -59,6 +59,13 @@ model UserSettings {
   studentLoanPaymentDay Int   @default(1)
   carLoanPaymentDay     Int   @default(16)
   investmentGrowthRate  Float @default(0.07)
+
+  // Tax configuration
+  filingStatus     String @default("SINGLE") // SINGLE, MARRIED_JOINT, MARRIED_SEPARATE, HEAD_OF_HOUSEHOLD
+  state            String @default("OH")
+  stateTaxRate     Float  @default(0.035)
+  municipalTaxRate Float  @default(0.02)
+  mileageRate      Float  @default(0.70)
 }
 
 model UserAccount {

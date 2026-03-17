@@ -64,6 +64,11 @@ export const updateSettingsSchema = z.object({
   carLoanPaymentDay: z.number().int().min(1).max(31).optional().default(16),
   investmentGrowthRate: z.number().min(0).max(1).optional().default(0.07),
   refDate: z.string().optional(),
+  filingStatus: z.enum(["SINGLE", "MARRIED_JOINT", "MARRIED_SEPARATE", "HEAD_OF_HOUSEHOLD"]).optional().default("SINGLE"),
+  state: z.string().min(2).max(2).optional().default("OH"),
+  stateTaxRate: z.number().min(0).max(1).optional().default(0.035),
+  municipalTaxRate: z.number().min(0).max(1).optional().default(0.02),
+  mileageRate: z.number().min(0).optional().default(0.70),
 });
 
 // ── Portfolio ──

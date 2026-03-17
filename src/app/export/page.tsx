@@ -19,16 +19,19 @@ interface WeeklyEntry {
 
 export default function ExportPage() {
   const [entries, setEntries] = useState<WeeklyEntry[]>([]);
+  const [mileageRate, setMileageRate] = useState(0.70);
   const [loading, setLoading] = useState(true);
   const [year] = useState(new Date().getFullYear());
 
   useEffect(() => {
-    fetch("/api/entries?yearOnly=true")
-      .then((r) => r.json())
-      .then((data) => {
-        setEntries(data);
-        setLoading(false);
-      });
+    Promise.all([
+      fetch("/api/entries?yearOnly=true").then((r) => r.json()),
+      fetch("/api/settings").then((r) => r.json()),
+    ]).then(([entriesData, settingsData]) => {
+      setEntries(entriesData);
+      if (settingsData.mileageRate) setMileageRate(settingsData.mileageRate);
+      setLoading(false);
+    });
   }, []);
 
   if (loading) {
@@ -51,7 +54,7 @@ export default function ExportPage() {
     .reduce((sum, i) => sum + i.amount, 0);
   const netProfit = ytdIncome - ytdBusinessExpenses;
   const totalMileage = entries.reduce((sum, e) => sum + e.mileage, 0);
-  const mileageDeduction = totalMileage * 0.70; // 2026 IRS rate ~$0.70/mi
+  const mileageDeduction = totalMileage * mileageRate;
 
   // Group income by description
   const incomeBySource: Record<string, number> = {};
@@ -152,7 +155,7 @@ export default function ExportPage() {
               <span className="text-sm font-semibold text-slate-100 print:text-slate-800">{totalMileage.toLocaleString()} miles</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm text-slate-300 print:text-slate-600">Mileage Deduction (est. $0.70/mi)</span>
+              <span className="text-sm text-slate-300 print:text-slate-600">Mileage Deduction (${mileageRate.toFixed(2)}/mi)</span>
               <span className="text-sm font-semibold text-slate-100 print:text-slate-800">{formatCurrency(mileageDeduction)}</span>
             </div>
           </div>

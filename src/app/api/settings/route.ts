@@ -48,6 +48,11 @@ export async function PUT(request: NextRequest) {
       studentLoanPaymentDay: parsed.data.studentLoanPaymentDay ?? 1,
       carLoanPaymentDay: parsed.data.carLoanPaymentDay ?? 16,
       investmentGrowthRate: parsed.data.investmentGrowthRate ?? 0.07,
+      filingStatus: parsed.data.filingStatus ?? "SINGLE",
+      state: parsed.data.state ?? "OH",
+      stateTaxRate: parsed.data.stateTaxRate ?? 0.035,
+      municipalTaxRate: parsed.data.municipalTaxRate ?? 0.02,
+      mileageRate: parsed.data.mileageRate ?? 0.70,
     },
     create: {
       userId,
@@ -68,6 +73,11 @@ export async function PUT(request: NextRequest) {
       studentLoanPaymentDay: parsed.data.studentLoanPaymentDay ?? 1,
       carLoanPaymentDay: parsed.data.carLoanPaymentDay ?? 16,
       investmentGrowthRate: parsed.data.investmentGrowthRate ?? 0.07,
+      filingStatus: parsed.data.filingStatus ?? "SINGLE",
+      state: parsed.data.state ?? "OH",
+      stateTaxRate: parsed.data.stateTaxRate ?? 0.035,
+      municipalTaxRate: parsed.data.municipalTaxRate ?? 0.02,
+      mileageRate: parsed.data.mileageRate ?? 0.70,
     },
   });
 

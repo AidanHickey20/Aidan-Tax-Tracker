@@ -5,8 +5,8 @@ import Link from "next/link";
 import { formatCurrency, formatWeekLabel } from "@/lib/utils";
 import {
   SE_TAX_BASE_RATE, SS_RATE, MEDICARE_RATE, SS_WAGE_BASE,
-  STANDARD_DEDUCTION, QBI_DEDUCTION_RATE, FEDERAL_BRACKETS,
-  STATE_TAX_RATE, MUNICIPAL_TAX_RATE,
+  QBI_DEDUCTION_RATE,
+  STANDARD_DEDUCTIONS, FEDERAL_BRACKETS_BY_STATUS,
 } from "@/lib/tax-constants";
 import IncomeExpenseChart from "./IncomeExpenseChart";
 import PortfolioDashboard from "./PortfolioDashboard";
@@ -87,6 +87,9 @@ interface Settings {
   carLoanPayment: number;
   refDate: string;
   investmentGrowthRate: number;
+  filingStatus: string;
+  stateTaxRate: number;
+  municipalTaxRate: number;
 }
 
 export default function DashboardContent() {
@@ -249,19 +252,26 @@ export default function DashboardContent() {
   function estimateTax(netSEIncome: number): number {
     if (netSEIncome <= 0) return 0;
 
+    const filingStatus = settings?.filingStatus || "SINGLE";
+    const userStateTaxRate = settings?.stateTaxRate ?? 0.035;
+    const userMunicipalTaxRate = settings?.municipalTaxRate ?? 0.02;
+
     const seBase = netSEIncome * SE_TAX_BASE_RATE;
     const ssTax = Math.min(seBase, SS_WAGE_BASE) * SS_RATE;
     const medicareTax = seBase * MEDICARE_RATE;
     const seTax = ssTax + medicareTax;
 
+    const standardDeduction = STANDARD_DEDUCTIONS[filingStatus] ?? STANDARD_DEDUCTIONS.SINGLE;
+    const brackets = FEDERAL_BRACKETS_BY_STATUS[filingStatus] ?? FEDERAL_BRACKETS_BY_STATUS.SINGLE;
+
     const agi = netSEIncome - seTax / 2;
     const qbiDeduction = netSEIncome * QBI_DEDUCTION_RATE;
-    const taxableIncome = Math.max(agi - STANDARD_DEDUCTION - qbiDeduction, 0);
+    const taxableIncome = Math.max(agi - standardDeduction - qbiDeduction, 0);
 
     let fedTax = 0;
     let remaining = taxableIncome;
     let prevLimit = 0;
-    for (const b of FEDERAL_BRACKETS) {
+    for (const b of brackets) {
       const span = b.limit - prevLimit;
       const taxable = Math.min(remaining, span);
       fedTax += taxable * b.rate;
@@ -270,8 +280,8 @@ export default function DashboardContent() {
       if (remaining <= 0) break;
     }
 
-    const stateTax = taxableIncome * STATE_TAX_RATE;
-    const municipalTax = netSEIncome * MUNICIPAL_TAX_RATE;
+    const stateTax = taxableIncome * userStateTaxRate;
+    const municipalTax = netSEIncome * userMunicipalTaxRate;
 
     return seTax + fedTax + stateTax + municipalTax;
   }
