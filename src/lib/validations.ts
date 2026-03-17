@@ -196,6 +196,21 @@ export const updateReminderSchema = z.object({
   isActive: z.boolean(),
 });
 
+// ── Net Worth Items ──
+
+export const createNetWorthItemSchema = z.object({
+  name: z.string().min(1).max(200),
+  value: z.number().min(0),
+  type: z.enum(["ASSET", "LIABILITY"]),
+});
+
+export const updateNetWorthItemSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1).max(200),
+  value: z.number().min(0),
+  type: z.enum(["ASSET", "LIABILITY"]),
+});
+
 // ── Tax Advisor ──
 
 export const taxAdvisorSchema = z.object({

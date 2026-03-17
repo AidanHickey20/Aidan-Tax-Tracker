@@ -5,6 +5,7 @@ import { formatCurrency } from "@/lib/utils";
 import { CRYPTO_TICKERS, DEFAULT_INVESTMENT_GROWTH_RATE } from "@/lib/constants";
 import Link from "next/link";
 import { MaskedValue } from "@/components/PrivacyProvider";
+import { useSubscription } from "@/components/SubscriptionProvider";
 
 interface TrackedInvestment {
   id: string;
@@ -39,6 +40,13 @@ interface Settings {
   carLoanPaymentDay: number;
   refDate: string;
   investmentGrowthRate: number;
+}
+
+interface NetWorthItem {
+  id: string;
+  name: string;
+  value: number;
+  type: "ASSET" | "LIABILITY";
 }
 
 function ordinalSuffix(n: number): string {
@@ -107,12 +115,80 @@ interface WeeklyEntry {
   accountBalances: AccountBalance[];
 }
 
+function AddItemForm({ type, onAdd }: { type: "ASSET" | "LIABILITY"; onAdd: (name: string, value: number) => void }) {
+  const [name, setName] = useState("");
+  const [value, setValue] = useState("");
+  const [open, setOpen] = useState(false);
+
+  const handleSubmit = () => {
+    if (!name.trim() || !value) return;
+    onAdd(name.trim(), parseFloat(value) || 0);
+    setName("");
+    setValue("");
+    setOpen(false);
+  };
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="text-sm text-emerald-400 hover:text-emerald-300 px-6 py-3"
+      >
+        + Add {type === "ASSET" ? "Asset" : "Liability"}
+      </button>
+    );
+  }
+
+  return (
+    <div className="px-6 py-3 flex items-end gap-2 flex-wrap">
+      <div>
+        <label className="block text-xs text-slate-400 mb-1">Name</label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={type === "ASSET" ? "e.g. Savings Account" : "e.g. Credit Card"}
+          className="bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 w-48"
+        />
+      </div>
+      <div>
+        <label className="block text-xs text-slate-400 mb-1">Value ($)</label>
+        <input
+          type="number"
+          step="0.01"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder="0"
+          className="bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 w-32"
+        />
+      </div>
+      <button
+        onClick={handleSubmit}
+        className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-emerald-700"
+      >
+        Add
+      </button>
+      <button
+        onClick={() => { setOpen(false); setName(""); setValue(""); }}
+        className="text-slate-500 hover:text-slate-300 text-sm px-2 py-2"
+      >
+        Cancel
+      </button>
+    </div>
+  );
+}
+
 export default function NetWorthPage() {
+  const { canEdit } = useSubscription();
   const [investments, setInvestments] = useState<TrackedInvestment[]>([]);
   const [investmentValues, setInvestmentValues] = useState<Record<string, number>>({});
   const [latestBalances, setLatestBalances] = useState<AccountBalance[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [cashAccountNames, setCashAccountNames] = useState<Set<string>>(new Set());
+  const [customItems, setCustomItems] = useState<NetWorthItem[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editValue, setEditValue] = useState("");
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
@@ -121,17 +197,20 @@ export default function NetWorthPage() {
     let s: Settings | null = null;
 
     let accounts: { name: string; category: string }[] = [];
+    let nwItems: NetWorthItem[] = [];
     try {
-      const [invRes, entriesRes, settingsRes, accountsRes] = await Promise.all([
+      const [invRes, entriesRes, settingsRes, accountsRes, nwRes] = await Promise.all([
         fetch("/api/portfolio"),
         fetch("/api/entries?yearOnly=true"),
         fetch("/api/settings"),
         fetch("/api/accounts"),
+        fetch("/api/net-worth-items"),
       ]);
       if (invRes.ok) invs = await invRes.json();
       if (entriesRes.ok) entries = await entriesRes.json();
       if (settingsRes.ok) s = await settingsRes.json();
       if (accountsRes.ok) accounts = await accountsRes.json();
+      if (nwRes.ok) nwItems = await nwRes.json();
     } catch {
       // DB may be unreachable — use defaults
     }
@@ -139,6 +218,7 @@ export default function NetWorthPage() {
     setInvestments(invs);
     setSettings(s);
     setCashAccountNames(new Set(accounts.filter((a) => a.category === "CASH").map((a) => a.name)));
+    setCustomItems(nwItems);
 
     // Get the latest entry's account balances
     const latestEntry = entries[0];
@@ -187,6 +267,51 @@ export default function NetWorthPage() {
     return () => clearInterval(interval);
   }, [fetchData]);
 
+  const addItem = async (name: string, value: number, type: "ASSET" | "LIABILITY") => {
+    const res = await fetch("/api/net-worth-items", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, value, type }),
+    });
+    if (res.ok) {
+      const item = await res.json();
+      setCustomItems((prev) => [...prev, item]);
+    }
+  };
+
+  const deleteItem = async (id: string) => {
+    const res = await fetch("/api/net-worth-items", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (res.ok) {
+      setCustomItems((prev) => prev.filter((i) => i.id !== id));
+    }
+  };
+
+  const startEdit = (item: NetWorthItem) => {
+    setEditingId(item.id);
+    setEditName(item.name);
+    setEditValue(item.value.toString());
+  };
+
+  const saveEdit = async () => {
+    if (!editingId) return;
+    const item = customItems.find((i) => i.id === editingId);
+    if (!item) return;
+    const res = await fetch("/api/net-worth-items", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: editingId, name: editName, value: parseFloat(editValue) || 0, type: item.type }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      setCustomItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+      setEditingId(null);
+    }
+  };
+
   // ── Dynamic calculations based on current date and user settings ──
   const calcs = useMemo(() => {
     if (!settings) {
@@ -201,19 +326,16 @@ export default function NetWorthPage() {
     const refDate = new Date(settings.refDate);
     const months = monthsElapsed(refDate, now);
 
-    // Home value with monthly appreciation
     const monthlyAppreciation = (settings.homeAppreciation || 0) / 12;
     const homeValue = settings.homeValue > 0
       ? settings.homeValue * Math.pow(1 + monthlyAppreciation, months)
       : 0;
 
-    // Mortgage balance after amortization
     const mortgageBalance = settings.mortgageBalance > 0
       ? amortize(settings.mortgageBalance, settings.mortgageRate, settings.mortgagePayment, months)
       : 0;
     const homeEquity = homeValue - mortgageBalance;
 
-    // Student loan balance — flat reduction on payment day each month
     const studentPaymentsMade = settings.studentLoanBalance > 0
       ? paymentsSinceRef(refDate, now, settings.studentLoanPaymentDay ?? 1)
       : 0;
@@ -226,7 +348,6 @@ export default function NetWorthPage() {
       : 0;
     const studentPayoffDate = new Date(now.getFullYear(), now.getMonth() + studentMonthsLeft, 1);
 
-    // Car loan balance — flat reduction on payment day each month
     const carPaymentsMade = settings.carLoanBalance > 0
       ? paymentsSinceRef(refDate, now, settings.carLoanPaymentDay ?? 16)
       : 0;
@@ -250,14 +371,17 @@ export default function NetWorthPage() {
     return <div className="text-slate-400 py-8">Loading net worth...</div>;
   }
 
-  // Only count cash accounts — not investment/crypto/retirement accounts
   const bankBalances = latestBalances.filter(
     (b) => cashAccountNames.size === 0 || cashAccountNames.has(b.accountName)
   );
   const totalBankAccounts = bankBalances.reduce((sum, b) => sum + b.balance, 0);
   const totalInvestments = Object.values(investmentValues).reduce((s, v) => s + v, 0);
-  const totalAssets = calcs.homeEquity + totalBankAccounts + totalInvestments;
-  const totalLiabilities = calcs.studentLoanBalance + calcs.carLoanBalance;
+  const customAssets = customItems.filter((i) => i.type === "ASSET");
+  const customLiabilities = customItems.filter((i) => i.type === "LIABILITY");
+  const totalCustomAssets = customAssets.reduce((s, i) => s + i.value, 0);
+  const totalCustomLiabilities = customLiabilities.reduce((s, i) => s + i.value, 0);
+  const totalAssets = calcs.homeEquity + totalBankAccounts + totalInvestments + totalCustomAssets;
+  const totalLiabilities = calcs.studentLoanBalance + calcs.carLoanBalance + totalCustomLiabilities;
   const netWorth = totalAssets - totalLiabilities;
 
   function formatDate(d: Date) {
@@ -267,7 +391,63 @@ export default function NetWorthPage() {
   const hasHome = (settings?.homeValue ?? 0) > 0;
   const hasStudentLoan = (settings?.studentLoanBalance ?? 0) > 0;
   const hasCarLoan = (settings?.carLoanBalance ?? 0) > 0;
-  const hasAnySetup = hasHome || hasStudentLoan || hasCarLoan || latestBalances.length > 0;
+  const hasAnySetup = hasHome || hasStudentLoan || hasCarLoan || latestBalances.length > 0 || customItems.length > 0;
+
+  const renderCustomItem = (item: NetWorthItem) => {
+    if (editingId === item.id) {
+      return (
+        <div key={item.id} className="px-6 py-3 flex items-end gap-2 flex-wrap">
+          <div>
+            <label className="block text-xs text-slate-400 mb-1">Name</label>
+            <input
+              type="text"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              className="bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 w-48"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-slate-400 mb-1">Value ($)</label>
+            <input
+              type="number"
+              step="0.01"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              className="bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 w-32"
+            />
+          </div>
+          <button onClick={saveEdit} className="bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-emerald-700">
+            Save
+          </button>
+          <button onClick={() => setEditingId(null)} className="text-slate-500 hover:text-slate-300 text-sm px-2 py-2">
+            Cancel
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div key={item.id} className="px-6 py-4 flex justify-between items-center">
+        <span className="text-sm font-medium text-slate-200">{item.name}</span>
+        <div className="flex items-center gap-3">
+          <MaskedValue
+            value={formatCurrency(item.value)}
+            className={`font-semibold ${item.type === "ASSET" ? "text-slate-100" : "text-red-500"}`}
+          />
+          {canEdit && (
+            <div className="flex gap-1">
+              <button onClick={() => startEdit(item)} className="text-slate-500 hover:text-slate-300 text-xs">
+                Edit
+              </button>
+              <button onClick={() => deleteItem(item.id)} className="text-red-400 hover:text-red-300 text-xs">
+                Delete
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div>
@@ -383,6 +563,14 @@ export default function NetWorthPage() {
                 ))}
               </div>
             </div>
+
+            {/* Custom Assets */}
+            {customAssets.map(renderCustomItem)}
+
+            {/* Add Asset */}
+            {canEdit && (
+              <AddItemForm type="ASSET" onAdd={(name, value) => addItem(name, value, "ASSET")} />
+            )}
           </div>
         </div>
 
@@ -455,9 +643,17 @@ export default function NetWorthPage() {
               </div>
             )}
 
-            {!hasStudentLoan && !hasCarLoan && (
+            {/* Custom Liabilities */}
+            {customLiabilities.map(renderCustomItem)}
+
+            {/* Add Liability */}
+            {canEdit && (
+              <AddItemForm type="LIABILITY" onAdd={(name, value) => addItem(name, value, "LIABILITY")} />
+            )}
+
+            {!hasStudentLoan && !hasCarLoan && customLiabilities.length === 0 && (
               <div className="px-6 py-4 text-sm text-slate-500 text-center">
-                No liabilities configured. Add them in Settings.
+                No liabilities configured. Add them above or in Settings.
               </div>
             )}
           </div>
