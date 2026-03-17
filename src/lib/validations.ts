@@ -93,6 +93,35 @@ export const deleteByIdSchema = z.object({
   id: z.string().min(1),
 });
 
+// ── Properties ──
+
+export const createPropertySchema = z.object({
+  address: z.string().min(1).max(500),
+  nickname: z.string().max(200).optional().default(""),
+  purchasePrice: z.number().min(0).optional().default(0),
+  currentValue: z.number().min(0).optional().default(0),
+  appreciationRate: z.number().min(0).max(1).optional().default(0.03),
+  mortgageBalance: z.number().min(0).optional().default(0),
+  mortgageRate: z.number().min(0).max(1).optional().default(0),
+  mortgagePayment: z.number().min(0).optional().default(0),
+  mortgageTerm: z.number().int().min(0).optional().default(360),
+  startDate: z.string().optional(),
+});
+
+export const updatePropertySchema = z.object({
+  id: z.string().min(1),
+  address: z.string().min(1).max(500),
+  nickname: z.string().max(200),
+  purchasePrice: z.number().min(0),
+  currentValue: z.number().min(0),
+  appreciationRate: z.number().min(0).max(1),
+  mortgageBalance: z.number().min(0),
+  mortgageRate: z.number().min(0).max(1),
+  mortgagePayment: z.number().min(0),
+  mortgageTerm: z.number().int().min(0),
+  startDate: z.string().optional(),
+});
+
 // ── Deals ──
 
 export const createDealSchema = z.object({

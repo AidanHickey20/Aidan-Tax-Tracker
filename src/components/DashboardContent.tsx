@@ -10,6 +10,7 @@ import {
 } from "@/lib/tax-constants";
 import IncomeExpenseChart from "./IncomeExpenseChart";
 import PortfolioDashboard from "./PortfolioDashboard";
+import RealEstatePortfolio from "./RealEstatePortfolio";
 import { MaskedValue } from "./PrivacyProvider";
 import TaxAdvisor from "./TaxAdvisor";
 import UpgradePrompt from "./UpgradePrompt";
@@ -94,6 +95,7 @@ export default function DashboardContent() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
   const [portfolioTotal, setPortfolioTotal] = useState<number>(0);
+  const [realEstateEquity, setRealEstateEquity] = useState<number>(0);
   const [recurringItems, setRecurringItems] = useState<RecurringItem[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [userAccounts, setUserAccounts] = useState<UserAccount[]>([]);
@@ -241,7 +243,7 @@ export default function DashboardContent() {
   const totalBankAccounts = latestBalances
     .filter((b) => cashAccountNames.size === 0 || cashAccountNames.has(b.accountName))
     .reduce((sum, b) => sum + b.balance, 0);
-  const estNetWorth = homeEquity + totalBankAccounts + livePortfolio - studentBal - carBal;
+  const estNetWorth = homeEquity + totalBankAccounts + livePortfolio + realEstateEquity - studentBal - carBal;
 
   // ── Estimated tax liability for self-employed ──
   function estimateTax(netSEIncome: number): number {
@@ -370,6 +372,15 @@ export default function DashboardContent() {
           <PortfolioDashboard onTotalChange={setPortfolioTotal} investmentGrowthRate={settings?.investmentGrowthRate} />
         ) : (
           <UpgradePrompt feature="Investment Tracker" />
+        )}
+      </div>
+
+      {/* Real Estate Portfolio */}
+      <div className="mb-8">
+        {isProUser ? (
+          <RealEstatePortfolio onEquityChange={setRealEstateEquity} />
+        ) : (
+          <UpgradePrompt feature="Real Estate Portfolio" />
         )}
       </div>
 

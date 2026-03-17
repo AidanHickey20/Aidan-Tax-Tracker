@@ -27,6 +27,7 @@ model User {
   recurringItems     RecurringItem[]
   trackedInvestments      TrackedInvestment[]
   investmentTransactions  InvestmentTransaction[]
+  properties         Property[]
   deals              Deal[]
   reminders          Reminder[]
   settings           UserSettings?
@@ -201,6 +202,25 @@ model InvestmentTransaction {
 
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Property {
+  id                String   @id @default(uuid())
+  address           String
+  nickname          String   @default("")
+  purchasePrice     Float    @default(0)
+  currentValue      Float    @default(0) // Market value at time of entry
+  appreciationRate  Float    @default(0.03) // Annual appreciation (e.g. 0.03 = 3%)
+  mortgageBalance   Float    @default(0)
+  mortgageRate      Float    @default(0) // Annual interest rate
+  mortgagePayment   Float    @default(0) // Monthly payment
+  mortgageTerm      Int      @default(360) // Total months (e.g. 360 = 30yr)
+  startDate         DateTime @default(now()) // When tracking begins
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Deal {
