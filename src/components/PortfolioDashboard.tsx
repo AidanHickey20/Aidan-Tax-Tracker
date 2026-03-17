@@ -281,7 +281,10 @@ export default function PortfolioDashboard({ onTotalChange, investmentGrowthRate
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
         <div>
-          <h3 className="font-semibold text-slate-700">Investment Portfolio</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-slate-700">Investment Portfolio</h3>
+            <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">PRO</span>
+          </div>
           {lastUpdated && (
             <p className="text-xs text-slate-400 mt-0.5">
               Last updated: {lastUpdated.toLocaleTimeString()} {pricesLoading && "(refreshing...)"}
