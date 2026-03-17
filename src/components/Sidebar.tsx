@@ -24,7 +24,7 @@ export default function Sidebar() {
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
 
-  if (pathname === "/login" || pathname === "/signup" || pathname === "/welcome" || pathname === "/forgot-password" || pathname === "/reset-password") return null;
+  if (pathname === "/login" || pathname === "/signup" || pathname === "/welcome" || pathname === "/forgot-password" || pathname === "/reset-password" || pathname === "/terms" || pathname === "/privacy") return null;
 
   const nav = (
     <>
