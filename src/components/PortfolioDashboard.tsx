@@ -214,9 +214,9 @@ export default function PortfolioDashboard({ onTotalChange, investmentGrowthRate
 
   function startEdit(inv: TrackedInvestment) {
     setEditId(inv.id);
-    setEditShares(inv.shares.toString());
-    setEditAvgCost(inv.avgCost.toString());
-    setEditRecurringAmount(inv.recurringAmount.toString());
+    setEditShares(inv.shares ? inv.shares.toString() : "");
+    setEditAvgCost(inv.avgCost ? inv.avgCost.toString() : "");
+    setEditRecurringAmount(inv.recurringAmount ? inv.recurringAmount.toString() : "");
     setEditRecurringDay(inv.recurringDay.toString());
   }
 

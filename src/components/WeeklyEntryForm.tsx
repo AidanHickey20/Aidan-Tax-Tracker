@@ -152,7 +152,7 @@ export default function WeeklyEntryForm() {
       ]).then(([entry, portfolioItems]) => {
           setWeekStart(format(new Date(entry.weekStart), "yyyy-MM-dd"));
           setWeekEnd(format(new Date(entry.weekEnd), "yyyy-MM-dd"));
-          setMileage(entry.mileage.toString());
+          setMileage(entry.mileage ? entry.mileage.toString() : "");
           setNotes(entry.notes);
           setLineItems(
             entry.lineItems.map((i: { description: string; amount: number; category: string }) => ({
@@ -164,7 +164,7 @@ export default function WeeklyEntryForm() {
           );
           const balanceMap: Record<string, string> = {};
           entry.accountBalances.forEach((b: { accountName: string; balance: number }) => {
-            balanceMap[b.accountName] = b.balance.toString();
+            balanceMap[b.accountName] = b.balance ? b.balance.toString() : "";
           });
           setBalances(balanceMap);
 

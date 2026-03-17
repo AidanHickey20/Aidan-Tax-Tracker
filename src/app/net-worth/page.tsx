@@ -293,7 +293,7 @@ export default function NetWorthPage() {
   const startEdit = (item: NetWorthItem) => {
     setEditingId(item.id);
     setEditName(item.name);
-    setEditValue(item.value.toString());
+    setEditValue(item.value ? item.value.toString() : "");
   };
 
   const saveEdit = async () => {

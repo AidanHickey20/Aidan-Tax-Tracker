@@ -156,9 +156,9 @@ export default function DealDetailPage() {
     const found = deals.find((d) => d.id === dealId);
     if (found) {
       setDeal(found);
-      setEditPurchase(found.purchasePrice.toString());
-      setEditArv(found.arv.toString());
-      setEditAssignmentFee(found.assignmentFee.toString());
+      setEditPurchase(found.purchasePrice ? found.purchasePrice.toString() : "");
+      setEditArv(found.arv ? found.arv.toString() : "");
+      setEditAssignmentFee(found.assignmentFee ? found.assignmentFee.toString() : "");
       setEditUnderContractDate(found.underContractDate ? found.underContractDate.split("T")[0] : "");
       setEditTargetCloseDate(found.targetCloseDate ? found.targetCloseDate.split("T")[0] : "");
       setEditNotes(found.notes);

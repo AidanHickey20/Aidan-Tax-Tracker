@@ -36,6 +36,8 @@ function Field({ label, value, onChange, prefix, suffix, step, hint }: {
   step?: string;
   hint?: string;
 }) {
+  // Show empty string instead of 0
+  const displayValue = value === 0 || value === "0" ? "" : value;
   return (
     <div>
       <label className="block text-sm font-medium text-slate-200 mb-1">{label}</label>
@@ -44,7 +46,7 @@ function Field({ label, value, onChange, prefix, suffix, step, hint }: {
         <input
           type="number"
           step={step || "0.01"}
-          value={value}
+          value={displayValue}
           onChange={(e) => onChange(e.target.value)}
           className="w-full border border-slate-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-900 text-slate-100 placeholder-slate-500"
         />
@@ -101,7 +103,7 @@ export default function SettingsPage() {
       "investmentGrowthRate",
     ];
     if (numFields.includes(field)) {
-      setSettings({ ...settings, [field]: parseFloat(value) || 0 });
+      setSettings({ ...settings, [field]: value === "" ? 0 : parseFloat(value) || 0 });
     } else {
       setSettings({ ...settings, [field]: value });
     }
