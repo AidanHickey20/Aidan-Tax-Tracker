@@ -31,15 +31,16 @@ export async function POST(request: NextRequest) {
       if (!userId || !plan) break;
 
       if (billing === "annual") {
-        // One-time annual payment — active through Dec 31
-        const yearEnd = new Date(new Date().getFullYear(), 11, 31, 23, 59, 59);
+        // One-time annual payment — active for 12 months from now
+        const oneYearFromNow = new Date();
+        oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
         await prisma.subscription.update({
           where: { userId },
           data: {
             stripeCustomerId: session.customer as string,
             plan,
             status: "ACTIVE",
-            currentPeriodEnd: yearEnd,
+            currentPeriodEnd: oneYearFromNow,
           },
         });
       } else {

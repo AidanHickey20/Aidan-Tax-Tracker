@@ -305,20 +305,20 @@ export default function BillingPage() {
             </button>
             <div className="mt-3 border border-emerald-700/40 bg-emerald-900/10 rounded-lg p-3">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">Pay through year-end</span>
+                <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">Annual Plan</span>
                 <span className="text-xs bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded">15% off</span>
               </div>
               <div className="flex items-baseline gap-1.5 mb-2">
                 <span className="text-sm text-slate-500 line-through">${annual.fullBasic.toFixed(2)}</span>
                 <span className="text-xl font-bold text-slate-100">${annual.basicAnnual.toFixed(2)}</span>
-                <span className="text-xs text-slate-400">one-time</span>
+                <span className="text-xs text-slate-400">/year</span>
               </div>
               <button
                 onClick={() => handleCheckout("BASIC", "annual")}
                 disabled={checkoutLoading !== null}
                 className="w-full bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50"
               >
-                {checkoutLoading === "BASIC_ANNUAL" ? "Redirecting..." : "Pay Once Through Dec 31"}
+                {checkoutLoading === "BASIC_ANNUAL" ? "Redirecting..." : "Choose Annual — Save 15%"}
               </button>
             </div>
           </div>
@@ -353,20 +353,20 @@ export default function BillingPage() {
             </button>
             <div className="mt-3 border border-emerald-700/40 bg-emerald-900/10 rounded-lg p-3">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">Pay through year-end</span>
+                <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">Annual Plan</span>
                 <span className="text-xs bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded">15% off</span>
               </div>
               <div className="flex items-baseline gap-1.5 mb-2">
                 <span className="text-sm text-slate-500 line-through">${annual.fullPro.toFixed(2)}</span>
                 <span className="text-xl font-bold text-slate-100">${annual.proAnnual.toFixed(2)}</span>
-                <span className="text-xs text-slate-400">one-time</span>
+                <span className="text-xs text-slate-400">/year</span>
               </div>
               <button
                 onClick={() => handleCheckout("PRO", "annual")}
                 disabled={checkoutLoading !== null}
                 className="w-full bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50"
               >
-                {checkoutLoading === "PRO_ANNUAL" ? "Redirecting..." : "Pay Once Through Dec 31"}
+                {checkoutLoading === "PRO_ANNUAL" ? "Redirecting..." : "Choose Annual — Save 15%"}
               </button>
             </div>
           </div>

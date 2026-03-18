@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
   const origin = request.headers.get("origin") || process.env.NEXTAUTH_URL || "";
 
   if (billing === "annual") {
-    // One-time payment for the rest of the year at 85% prorated rate
+    // One-time payment for 12 months at 15% off
     const { basicAnnual, proAnnual } = getAnnualPricing();
     const amount = plan === "PRO" ? proAnnual : basicAnnual;
     const amountCents = Math.round(amount * 100);
@@ -53,8 +53,8 @@ export async function POST(request: NextRequest) {
         price_data: {
           currency: "usd",
           product_data: {
-            name: `Taxora ${plan === "PRO" ? "Pro" : "Basic"} — Through Year-End`,
-            description: `One-time payment for ${plan === "PRO" ? "Pro" : "Basic"} access through December 31, ${new Date().getFullYear()}`,
+            name: `Taxora ${plan === "PRO" ? "Pro" : "Basic"} — Annual Plan`,
+            description: `12 months of ${plan === "PRO" ? "Pro" : "Basic"} access (15% off)`,
           },
           unit_amount: amountCents,
         },

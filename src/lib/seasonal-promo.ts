@@ -29,23 +29,16 @@ export function getSeasonalPromo(): SeasonalPromo {
   return MONTHLY_PROMOS[month];
 }
 
-// Prorated annual pricing — 85% of remaining months at monthly rate.
-// Returns { basicAnnual, proAnnual, monthsLeft, fullBasic, fullPro, yearEnd }
+// Annual pricing — 12 months at 85% of monthly rate (15% off for paying upfront).
 export function getAnnualPricing() {
-  const now = new Date();
-  const yearEnd = new Date(now.getFullYear(), 11, 31); // Dec 31
-  const msLeft = yearEnd.getTime() - now.getTime();
-  const daysLeft = Math.max(msLeft / (1000 * 60 * 60 * 24), 0);
-  const monthsLeft = Math.round((daysLeft / 30.44) * 10) / 10; // 1 decimal
-
   const BASIC_MONTHLY = 9.99;
   const PRO_MONTHLY = 19.99;
   const DISCOUNT = 0.85;
 
-  const fullBasic = Math.round(BASIC_MONTHLY * monthsLeft * 100) / 100;
-  const fullPro = Math.round(PRO_MONTHLY * monthsLeft * 100) / 100;
+  const fullBasic = Math.round(BASIC_MONTHLY * 12 * 100) / 100;
+  const fullPro = Math.round(PRO_MONTHLY * 12 * 100) / 100;
   const basicAnnual = Math.round(fullBasic * DISCOUNT * 100) / 100;
   const proAnnual = Math.round(fullPro * DISCOUNT * 100) / 100;
 
-  return { basicAnnual, proAnnual, monthsLeft, fullBasic, fullPro, yearEnd };
+  return { basicAnnual, proAnnual, fullBasic, fullPro };
 }

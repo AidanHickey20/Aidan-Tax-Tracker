@@ -198,13 +198,13 @@ export default function WelcomePage() {
             </Link>
             <div className="mt-4 border border-emerald-700/40 bg-emerald-900/10 rounded-lg p-3 text-center">
               <div className="flex items-center justify-center gap-2 mb-1">
-                <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">Pay through year-end</span>
+                <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">Annual Plan</span>
                 <span className="text-xs bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded">15% off</span>
               </div>
               <div className="flex items-baseline justify-center gap-1.5">
                 <span className="text-sm text-slate-500 line-through">${annual.fullBasic.toFixed(2)}</span>
                 <span className="text-xl font-bold text-slate-100">${annual.basicAnnual.toFixed(2)}</span>
-                <span className="text-xs text-slate-400">one-time</span>
+                <span className="text-xs text-slate-400">/year</span>
               </div>
             </div>
           </div>
@@ -239,13 +239,13 @@ export default function WelcomePage() {
             </Link>
             <div className="mt-4 border border-emerald-700/40 bg-emerald-900/10 rounded-lg p-3 text-center">
               <div className="flex items-center justify-center gap-2 mb-1">
-                <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">Pay through year-end</span>
+                <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">Annual Plan</span>
                 <span className="text-xs bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded">15% off</span>
               </div>
               <div className="flex items-baseline justify-center gap-1.5">
                 <span className="text-sm text-slate-500 line-through">${annual.fullPro.toFixed(2)}</span>
                 <span className="text-xl font-bold text-slate-100">${annual.proAnnual.toFixed(2)}</span>
-                <span className="text-xs text-slate-400">one-time</span>
+                <span className="text-xs text-slate-400">/year</span>
               </div>
             </div>
           </div>
