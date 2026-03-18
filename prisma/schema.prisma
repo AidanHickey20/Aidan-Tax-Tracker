@@ -73,6 +73,9 @@ model UserSettings {
 
   // Custom expense/income description templates per category
   savedDescriptions Json? // { "INCOME": ["Commission", ...], "BUSINESS_EXPENSE": ["Marketing", ...], ... }
+
+  // Onboarding
+  hasSeenTutorial Boolean @default(false)
 }
 
 model UserAccount {

@@ -1,0 +1,180 @@
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
+import { useSession } from "next-auth/react";
+
+const TOUR_STEPS = [
+  {
+    title: "Welcome to Taxora!",
+    description: "Let's take a quick tour of your new financial dashboard. This will only take a minute.",
+    target: null, // intro step, no highlight
+  },
+  {
+    title: "Dashboard",
+    description: "Your financial command center. See your income, expenses, tax estimates, and net profit all in one place.",
+    target: "/",
+  },
+  {
+    title: "Weekly Entry",
+    description: "Log your income and expenses each week. This is where all your financial data starts.",
+    target: "/entry",
+  },
+  {
+    title: "Past Weeks",
+    description: "Review and edit previous weekly entries. Great for catching anything you missed.",
+    target: "/history",
+  },
+  {
+    title: "Recurring & Reminders",
+    description: "Set up recurring income, expenses, and investments that repeat weekly or monthly. Add reminders so you never miss a payment.",
+    target: "/recurring",
+  },
+  {
+    title: "Net Worth",
+    description: "Track your total net worth across all accounts — cash, investments, crypto, and debts.",
+    target: "/net-worth",
+  },
+  {
+    title: "Deal Tracker",
+    description: "Manage your real estate deals from contract to close. Track fix & flips, wholesale deals, and realtor transactions.",
+    target: "/deals",
+  },
+  {
+    title: "Accountant Export",
+    description: "Generate clean, organized reports ready to hand off to your CPA at tax time.",
+    target: "/export",
+  },
+  {
+    title: "Settings",
+    description: "Customize your tax rates, filing status, accounts, and more to match your situation.",
+    target: "/settings",
+  },
+  {
+    title: "You're all set!",
+    description: "Start by heading to Weekly Entry to log your first week. You can always revisit Getting Started from the sidebar.",
+    target: null, // outro step
+  },
+];
+
+export default function OnboardingTour() {
+  const { status } = useSession();
+  const [step, setStep] = useState(0);
+  const [show, setShow] = useState(false);
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    if (status !== "authenticated" || checked) return;
+    setChecked(true);
+    fetch("/api/tutorial")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.hasSeenTutorial) setShow(true);
+      })
+      .catch(() => {});
+  }, [status, checked]);
+
+  const dismiss = useCallback(() => {
+    setShow(false);
+    fetch("/api/tutorial", { method: "POST" }).catch(() => {});
+  }, []);
+
+  if (!show) return null;
+
+  const current = TOUR_STEPS[step];
+  const isFirst = step === 0;
+  const isLast = step === TOUR_STEPS.length - 1;
+  const progress = ((step + 1) / TOUR_STEPS.length) * 100;
+
+  return (
+    <div className="fixed inset-0 z-[100]">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+
+      {/* Card */}
+      <div className="absolute inset-0 flex items-center justify-center p-4">
+        <div className="bg-slate-800 border border-slate-600 rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
+          {/* Progress bar */}
+          <div className="h-1 bg-slate-700">
+            <div
+              className="h-full bg-emerald-500 transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+          <div className="p-6">
+            {/* Step counter */}
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs text-slate-400 font-medium">
+                {step + 1} of {TOUR_STEPS.length}
+              </span>
+              <button
+                onClick={dismiss}
+                className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                Skip tour
+              </button>
+            </div>
+
+            {/* Icon for current step */}
+            {current.target && (
+              <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center mb-4">
+                <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            )}
+
+            {/* Welcome/outro icon */}
+            {!current.target && (
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 ${
+                isFirst ? "bg-emerald-500/20" : "bg-emerald-500/20"
+              }`}>
+                {isFirst ? (
+                  <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  </svg>
+                ) : (
+                  <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </div>
+            )}
+
+            <h3 className="text-lg font-semibold text-slate-100 mb-2">{current.title}</h3>
+            <p className="text-sm text-slate-400 leading-relaxed mb-6">{current.description}</p>
+
+            {/* Navigation */}
+            <div className="flex items-center justify-between">
+              {!isFirst ? (
+                <button
+                  onClick={() => setStep(step - 1)}
+                  className="text-sm text-slate-400 hover:text-slate-200 transition-colors"
+                >
+                  Back
+                </button>
+              ) : (
+                <div />
+              )}
+              {isLast ? (
+                <button
+                  onClick={dismiss}
+                  className="bg-emerald-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
+                >
+                  Get Started
+                </button>
+              ) : (
+                <button
+                  onClick={() => setStep(step + 1)}
+                  className="bg-emerald-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
+                >
+                  {isFirst ? "Start Tour" : "Next"}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

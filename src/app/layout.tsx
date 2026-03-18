@@ -7,6 +7,7 @@ import TopBar from "@/components/TopBar";
 import SessionProvider from "@/components/SessionProvider";
 import SubscriptionProvider from "@/components/SubscriptionProvider";
 import TrialBanner from "@/components/TrialBanner";
+import OnboardingTour from "@/components/OnboardingTour";
 
 const geist = Geist({
   variable: "--font-geist",
@@ -29,6 +30,7 @@ export default function RootLayout({
         <SessionProvider>
           <SubscriptionProvider>
           <PrivacyProvider>
+            <OnboardingTour />
             <div className="flex min-h-screen">
               <Sidebar />
               <div className="flex-1 flex flex-col overflow-auto">
