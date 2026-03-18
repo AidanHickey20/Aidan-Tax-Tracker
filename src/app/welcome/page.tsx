@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import WelcomeLoginForm from "@/components/WelcomeLoginForm";
 import Logo from "@/components/Logo";
-import { getSeasonalPromo } from "@/lib/seasonal-promo";
+import { getSeasonalPromo, getAnnualPricing } from "@/lib/seasonal-promo";
 
 export const metadata: Metadata = {
   title: "Taxora — Financial Tool for Real Estate Professionals",
@@ -58,6 +58,7 @@ const PRO_FEATURES = [
 
 export default function WelcomePage() {
   const promo = getSeasonalPromo();
+  const annual = getAnnualPricing();
   return (
     <div className="min-h-screen bg-slate-950">
       {/* Nav */}
@@ -191,10 +192,21 @@ export default function WelcomePage() {
             </ul>
             <Link
               href="/signup"
-              className="block text-center bg-slate-800 text-white py-3 rounded-lg text-sm font-medium hover:bg-slate-950 transition-colors"
+              className="block text-center bg-slate-700 text-white py-3 rounded-lg text-sm font-medium hover:bg-slate-600 transition-colors"
             >
               Start Free Trial
             </Link>
+            <div className="mt-4 border border-emerald-700/40 bg-emerald-900/10 rounded-lg p-3 text-center">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">Pay through year-end</span>
+                <span className="text-xs bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded">15% off</span>
+              </div>
+              <div className="flex items-baseline justify-center gap-1.5">
+                <span className="text-sm text-slate-500 line-through">${annual.fullBasic.toFixed(2)}</span>
+                <span className="text-xl font-bold text-slate-100">${annual.basicAnnual.toFixed(2)}</span>
+                <span className="text-xs text-slate-400">one-time</span>
+              </div>
+            </div>
           </div>
 
           {/* Pro */}
@@ -225,6 +237,17 @@ export default function WelcomePage() {
             >
               Start Free Trial
             </Link>
+            <div className="mt-4 border border-emerald-700/40 bg-emerald-900/10 rounded-lg p-3 text-center">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">Pay through year-end</span>
+                <span className="text-xs bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded">15% off</span>
+              </div>
+              <div className="flex items-baseline justify-center gap-1.5">
+                <span className="text-sm text-slate-500 line-through">${annual.fullPro.toFixed(2)}</span>
+                <span className="text-xl font-bold text-slate-100">${annual.proAnnual.toFixed(2)}</span>
+                <span className="text-xs text-slate-400">one-time</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSubscription } from "@/components/SubscriptionProvider";
-import { getSeasonalPromo } from "@/lib/seasonal-promo";
+import { getSeasonalPromo, getAnnualPricing } from "@/lib/seasonal-promo";
 
 const BASIC_FEATURES = [
   "Weekly income & expense tracking",
@@ -44,13 +44,13 @@ export default function BillingPage() {
   const [promoError, setPromoError] = useState("");
   const [promoSuccess, setPromoSuccess] = useState("");
 
-  async function handleCheckout(selectedPlan: "BASIC" | "PRO") {
-    setCheckoutLoading(selectedPlan);
+  async function handleCheckout(selectedPlan: "BASIC" | "PRO", billing: "monthly" | "annual" = "monthly") {
+    setCheckoutLoading(billing === "annual" ? `${selectedPlan}_ANNUAL` : selectedPlan);
     try {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: selectedPlan }),
+        body: JSON.stringify({ plan: selectedPlan, billing }),
       });
       const data = await res.json();
       if (data.url) {
@@ -123,6 +123,7 @@ export default function BillingPage() {
   const showPlanCards = plan === "TRIAL" || plan === "EXPIRED";
   const isActivePaid = plan === "BASIC" || plan === "PRO";
   const promo = getSeasonalPromo();
+  const annual = getAnnualPricing();
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -298,10 +299,28 @@ export default function BillingPage() {
             <button
               onClick={() => handleCheckout("BASIC")}
               disabled={checkoutLoading !== null}
-              className="w-full bg-slate-800 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-slate-900 transition-colors disabled:opacity-50"
+              className="w-full bg-slate-700 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-slate-600 transition-colors disabled:opacity-50"
             >
-              {checkoutLoading === "BASIC" ? "Redirecting..." : "Choose Basic"}
+              {checkoutLoading === "BASIC" ? "Redirecting..." : "Choose Basic — $9.99/mo"}
             </button>
+            <div className="mt-3 border border-emerald-700/40 bg-emerald-900/10 rounded-lg p-3">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">Pay through year-end</span>
+                <span className="text-xs bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded">15% off</span>
+              </div>
+              <div className="flex items-baseline gap-1.5 mb-2">
+                <span className="text-sm text-slate-500 line-through">${annual.fullBasic.toFixed(2)}</span>
+                <span className="text-xl font-bold text-slate-100">${annual.basicAnnual.toFixed(2)}</span>
+                <span className="text-xs text-slate-400">one-time</span>
+              </div>
+              <button
+                onClick={() => handleCheckout("BASIC", "annual")}
+                disabled={checkoutLoading !== null}
+                className="w-full bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50"
+              >
+                {checkoutLoading === "BASIC_ANNUAL" ? "Redirecting..." : "Pay Once Through Dec 31"}
+              </button>
+            </div>
           </div>
 
           {/* Pro */}
@@ -330,8 +349,26 @@ export default function BillingPage() {
               disabled={checkoutLoading !== null}
               className="w-full bg-emerald-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50"
             >
-              {checkoutLoading === "PRO" ? "Redirecting..." : "Choose Pro"}
+              {checkoutLoading === "PRO" ? "Redirecting..." : "Choose Pro — $19.99/mo"}
             </button>
+            <div className="mt-3 border border-emerald-700/40 bg-emerald-900/10 rounded-lg p-3">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">Pay through year-end</span>
+                <span className="text-xs bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded">15% off</span>
+              </div>
+              <div className="flex items-baseline gap-1.5 mb-2">
+                <span className="text-sm text-slate-500 line-through">${annual.fullPro.toFixed(2)}</span>
+                <span className="text-xl font-bold text-slate-100">${annual.proAnnual.toFixed(2)}</span>
+                <span className="text-xs text-slate-400">one-time</span>
+              </div>
+              <button
+                onClick={() => handleCheckout("PRO", "annual")}
+                disabled={checkoutLoading !== null}
+                className="w-full bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50"
+              >
+                {checkoutLoading === "PRO_ANNUAL" ? "Redirecting..." : "Pay Once Through Dec 31"}
+              </button>
+            </div>
           </div>
         </div>
       )}

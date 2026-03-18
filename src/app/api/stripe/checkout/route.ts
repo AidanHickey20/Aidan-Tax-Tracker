@@ -2,18 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/get-user";
 import { getStripe } from "@/lib/stripe";
+import { getAnnualPricing } from "@/lib/seasonal-promo";
 
 export async function POST(request: NextRequest) {
   const userId = await requireUserId();
-  const { plan } = await request.json();
+  const { plan, billing } = await request.json();
 
   if (plan !== "BASIC" && plan !== "PRO") {
     return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
   }
-
-  const priceId = plan === "PRO"
-    ? process.env.STRIPE_PRO_PRICE_ID!
-    : process.env.STRIPE_BASIC_PRICE_ID!;
 
   const stripe = getStripe();
 
@@ -42,6 +39,39 @@ export async function POST(request: NextRequest) {
   }
 
   const origin = request.headers.get("origin") || process.env.NEXTAUTH_URL || "";
+
+  if (billing === "annual") {
+    // One-time payment for the rest of the year at 85% prorated rate
+    const { basicAnnual, proAnnual } = getAnnualPricing();
+    const amount = plan === "PRO" ? proAnnual : basicAnnual;
+    const amountCents = Math.round(amount * 100);
+
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      mode: "payment",
+      line_items: [{
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: `Taxora ${plan === "PRO" ? "Pro" : "Basic"} — Through Year-End`,
+            description: `One-time payment for ${plan === "PRO" ? "Pro" : "Basic"} access through December 31, ${new Date().getFullYear()}`,
+          },
+          unit_amount: amountCents,
+        },
+        quantity: 1,
+      }],
+      success_url: `${origin}/billing?success=true`,
+      cancel_url: `${origin}/billing?canceled=true`,
+      metadata: { userId, plan, billing: "annual" },
+    });
+
+    return NextResponse.json({ url: session.url });
+  }
+
+  // Monthly subscription
+  const priceId = plan === "PRO"
+    ? process.env.STRIPE_PRO_PRICE_ID!
+    : process.env.STRIPE_BASIC_PRICE_ID!;
 
   const session = await stripe.checkout.sessions.create({
     customer: customerId,

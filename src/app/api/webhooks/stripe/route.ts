@@ -27,24 +27,38 @@ export async function POST(request: NextRequest) {
       const session = event.data.object as Stripe.Checkout.Session;
       const userId = session.metadata?.userId;
       const plan = session.metadata?.plan; // "BASIC" or "PRO"
+      const billing = session.metadata?.billing; // "annual" for one-time
       if (!userId || !plan) break;
 
-      const subscriptionId = session.subscription as string;
+      if (billing === "annual") {
+        // One-time annual payment — active through Dec 31
+        const yearEnd = new Date(new Date().getFullYear(), 11, 31, 23, 59, 59);
+        await prisma.subscription.update({
+          where: { userId },
+          data: {
+            stripeCustomerId: session.customer as string,
+            plan,
+            status: "ACTIVE",
+            currentPeriodEnd: yearEnd,
+          },
+        });
+      } else {
+        // Monthly subscription
+        const subscriptionId = session.subscription as string;
+        const stripeSub = await getStripe().subscriptions.retrieve(subscriptionId);
+        const periodEnd = stripeSub.items.data[0]?.current_period_end;
 
-      // Fetch the Stripe subscription to get the current period end
-      const stripeSub = await getStripe().subscriptions.retrieve(subscriptionId);
-      const periodEnd = stripeSub.items.data[0]?.current_period_end;
-
-      await prisma.subscription.update({
-        where: { userId },
-        data: {
-          stripeSubscriptionId: subscriptionId,
-          stripeCustomerId: session.customer as string,
-          plan,
-          status: "ACTIVE",
-          currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
-        },
-      });
+        await prisma.subscription.update({
+          where: { userId },
+          data: {
+            stripeSubscriptionId: subscriptionId,
+            stripeCustomerId: session.customer as string,
+            plan,
+            status: "ACTIVE",
+            currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : null,
+          },
+        });
+      }
       break;
     }
 
