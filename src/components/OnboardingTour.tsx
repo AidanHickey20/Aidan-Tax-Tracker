@@ -1,13 +1,19 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 
-const TOUR_STEPS = [
+interface TourStep {
+  title: string;
+  description: string;
+  target: string | null; // data-tour attribute value, null for intro/outro
+}
+
+const TOUR_STEPS: TourStep[] = [
   {
     title: "Welcome to Taxora!",
     description: "Let's take a quick tour of your new financial dashboard. This will only take a minute.",
-    target: null, // intro step, no highlight
+    target: null,
   },
   {
     title: "Dashboard",
@@ -52,7 +58,7 @@ const TOUR_STEPS = [
   {
     title: "You're all set!",
     description: "Start by heading to Weekly Entry to log your first week. You can always revisit Getting Started from the sidebar.",
-    target: null, // outro step
+    target: null,
   },
 ];
 
@@ -61,6 +67,8 @@ export default function OnboardingTour() {
   const [step, setStep] = useState(0);
   const [show, setShow] = useState(false);
   const [checked, setChecked] = useState(false);
+  const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number } | null>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (status !== "authenticated" || checked) return;
@@ -73,6 +81,27 @@ export default function OnboardingTour() {
       .catch(() => {});
   }, [status, checked]);
 
+  // Position tooltip next to the target sidebar item
+  useEffect(() => {
+    if (!show) return;
+    const current = TOUR_STEPS[step];
+    if (!current.target) {
+      setTooltipPos(null);
+      return;
+    }
+
+    const el = document.querySelector(`[data-tour="${current.target}"]`) as HTMLElement | null;
+    if (!el) {
+      setTooltipPos(null);
+      return;
+    }
+
+    const rect = el.getBoundingClientRect();
+    const top = rect.top + rect.height / 2;
+    const left = rect.right + 16; // 16px gap from sidebar item
+    setTooltipPos({ top, left });
+  }, [step, show]);
+
   const dismiss = useCallback(() => {
     setShow(false);
     fetch("/api/tutorial", { method: "POST" }).catch(() => {});
@@ -84,15 +113,81 @@ export default function OnboardingTour() {
   const isFirst = step === 0;
   const isLast = step === TOUR_STEPS.length - 1;
   const progress = ((step + 1) / TOUR_STEPS.length) * 100;
+  const isCentered = !current.target || !tooltipPos;
+
+  // Highlight ring around current sidebar item
+  const highlightEl = current.target
+    ? (document.querySelector(`[data-tour="${current.target}"]`) as HTMLElement | null)
+    : null;
+  const highlightRect = highlightEl?.getBoundingClientRect();
 
   return (
     <div className="fixed inset-0 z-[100]">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      {/* Backdrop with cutout for highlighted element */}
+      <svg className="absolute inset-0 w-full h-full" style={{ pointerEvents: "none" }}>
+        <defs>
+          <mask id="tour-mask">
+            <rect width="100%" height="100%" fill="white" />
+            {highlightRect && (
+              <rect
+                x={highlightRect.left - 4}
+                y={highlightRect.top - 4}
+                width={highlightRect.width + 8}
+                height={highlightRect.height + 8}
+                rx="8"
+                fill="black"
+              />
+            )}
+          </mask>
+        </defs>
+        <rect
+          width="100%"
+          height="100%"
+          fill="rgba(0,0,0,0.6)"
+          mask="url(#tour-mask)"
+          style={{ pointerEvents: "auto" }}
+        />
+      </svg>
 
-      {/* Card */}
-      <div className="absolute inset-0 flex items-center justify-center p-4">
-        <div className="bg-slate-800 border border-slate-600 rounded-xl shadow-2xl max-w-md w-full overflow-hidden">
+      {/* Highlight border around target element */}
+      {highlightRect && (
+        <div
+          className="absolute border-2 border-emerald-400 rounded-lg pointer-events-none"
+          style={{
+            top: highlightRect.top - 4,
+            left: highlightRect.left - 4,
+            width: highlightRect.width + 8,
+            height: highlightRect.height + 8,
+            boxShadow: "0 0 0 4px rgba(16, 185, 129, 0.2)",
+          }}
+        />
+      )}
+
+      {/* Tooltip card */}
+      <div
+        ref={tooltipRef}
+        className={`absolute ${isCentered ? "inset-0 flex items-center justify-center p-4" : ""}`}
+        style={
+          !isCentered && tooltipPos
+            ? { top: tooltipPos.top, left: tooltipPos.left, transform: "translateY(-50%)" }
+            : undefined
+        }
+      >
+        <div className={`bg-slate-800 border border-slate-600 rounded-xl shadow-2xl w-80 overflow-hidden ${
+          !isCentered ? "relative" : ""
+        }`}>
+          {/* Arrow pointing left toward sidebar item */}
+          {!isCentered && (
+            <div
+              className="absolute -left-2 top-1/2 -translate-y-1/2 w-0 h-0"
+              style={{
+                borderTop: "8px solid transparent",
+                borderBottom: "8px solid transparent",
+                borderRight: "8px solid #475569",
+              }}
+            />
+          )}
+
           {/* Progress bar */}
           <div className="h-1 bg-slate-700">
             <div
@@ -101,9 +196,9 @@ export default function OnboardingTour() {
             />
           </div>
 
-          <div className="p-6">
-            {/* Step counter */}
-            <div className="flex items-center justify-between mb-4">
+          <div className="p-5">
+            {/* Step counter + skip */}
+            <div className="flex items-center justify-between mb-3">
               <span className="text-xs text-slate-400 font-medium">
                 {step + 1} of {TOUR_STEPS.length}
               </span>
@@ -115,34 +210,23 @@ export default function OnboardingTour() {
               </button>
             </div>
 
-            {/* Icon for current step */}
-            {current.target && (
-              <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center mb-4">
-                <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            )}
-
-            {/* Welcome/outro icon */}
+            {/* Icon for intro/outro */}
             {!current.target && (
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 ${
-                isFirst ? "bg-emerald-500/20" : "bg-emerald-500/20"
-              }`}>
+              <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center mb-3">
                 {isFirst ? (
-                  <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                   </svg>
                 ) : (
-                  <svg className="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 )}
               </div>
             )}
 
-            <h3 className="text-lg font-semibold text-slate-100 mb-2">{current.title}</h3>
-            <p className="text-sm text-slate-400 leading-relaxed mb-6">{current.description}</p>
+            <h3 className="text-base font-semibold text-slate-100 mb-1.5">{current.title}</h3>
+            <p className="text-sm text-slate-400 leading-relaxed mb-5">{current.description}</p>
 
             {/* Navigation */}
             <div className="flex items-center justify-between">
@@ -159,14 +243,14 @@ export default function OnboardingTour() {
               {isLast ? (
                 <button
                   onClick={dismiss}
-                  className="bg-emerald-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
+                  className="bg-emerald-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
                 >
                   Get Started
                 </button>
               ) : (
                 <button
                   onClick={() => setStep(step + 1)}
-                  className="bg-emerald-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
+                  className="bg-emerald-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
                 >
                   {isFirst ? "Start Tour" : "Next"}
                 </button>
