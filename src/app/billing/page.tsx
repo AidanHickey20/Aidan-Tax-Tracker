@@ -38,6 +38,10 @@ export default function BillingPage() {
   const [cancelConfirm, setCancelConfirm] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancelDone, setCancelDone] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState("");
+  const [promoSuccess, setPromoSuccess] = useState("");
 
   async function handleCheckout(selectedPlan: "BASIC" | "PRO") {
     setCheckoutLoading(selectedPlan);
@@ -86,6 +90,30 @@ export default function BillingPage() {
       }
     } finally {
       setCancelLoading(false);
+    }
+  }
+
+  async function handlePromo() {
+    setPromoLoading(true);
+    setPromoError("");
+    setPromoSuccess("");
+    try {
+      const res = await fetch("/api/stripe/promo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promoCode }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setPromoError(data.error || "Invalid promo code");
+      } else {
+        setPromoSuccess(`Promo applied! You now have ${data.plan} access.`);
+        setTimeout(() => window.location.reload(), 1500);
+      }
+    } catch {
+      setPromoError("Something went wrong. Please try again.");
+    } finally {
+      setPromoLoading(false);
     }
   }
 
@@ -288,6 +316,32 @@ export default function BillingPage() {
               {checkoutLoading === "PRO" ? "Redirecting..." : "Choose Pro"}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Promo Code */}
+      {showPlanCards && (
+        <div className="mt-6 bg-slate-800 border border-slate-700 rounded-lg p-6 shadow-sm">
+          <h3 className="text-sm font-semibold text-slate-200 mb-3">Have a promo code?</h3>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") handlePromo(); }}
+              placeholder="Enter promo code"
+              className="flex-1 border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+            />
+            <button
+              onClick={handlePromo}
+              disabled={promoLoading || !promoCode.trim()}
+              className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors disabled:opacity-50"
+            >
+              {promoLoading ? "Applying..." : "Apply"}
+            </button>
+          </div>
+          {promoError && <p className="text-sm text-red-400 mt-2">{promoError}</p>}
+          {promoSuccess && <p className="text-sm text-emerald-400 mt-2">{promoSuccess}</p>}
         </div>
       )}
     </div>

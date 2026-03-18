@@ -67,6 +67,25 @@ interface WeeklyEntry {
   investments: { amount: number }[];
 }
 
+interface PortfolioItem {
+  id: string;
+  symbol: string;
+  name: string;
+  type: string;
+  recurringAmount: number;
+  recurringDay: number; // 0=Sun ... 6=Sat
+}
+
+function countDayOccurrences(dayOfWeek: number, monthStart: Date, today: Date): number {
+  let count = 0;
+  const d = new Date(monthStart);
+  while (d <= today) {
+    if (d.getDay() === dayOfWeek) count++;
+    d.setDate(d.getDate() + 1);
+  }
+  return count;
+}
+
 export default function RecurringManager() {
   const { canEdit } = useSubscription();
   const [items, setItems] = useState<RecurringItem[]>([]);
@@ -74,6 +93,8 @@ export default function RecurringManager() {
   const [actualMonthlyIncome, setActualMonthlyIncome] = useState(0);
   const [actualMonthlyExpenses, setActualMonthlyExpenses] = useState(0);
   const [actualMonthlyInvesting, setActualMonthlyInvesting] = useState(0);
+  const [portfolioAutoInvest, setPortfolioAutoInvest] = useState<PortfolioItem[]>([]);
+  const [portfolioMTD, setPortfolioMTD] = useState(0);
   const [showAddItem, setShowAddItem] = useState(false);
   const [showAddReminder, setShowAddReminder] = useState(false);
   const [newDescription, setNewDescription] = useState("");
@@ -91,8 +112,9 @@ export default function RecurringManager() {
       fetch("/api/recurring").then((r) => (r.ok ? r.json() : [])),
       fetch("/api/reminders").then((r) => (r.ok ? r.json() : [])),
       fetch("/api/entries?yearOnly=true").then((r) => (r.ok ? r.json() : [])),
+      fetch("/api/portfolio").then((r) => (r.ok ? r.json() : [])),
     ])
-      .then(([itemsData, remindersData, entries]) => {
+      .then(([itemsData, remindersData, entries, portfolio]) => {
         setItems(itemsData);
         setReminders(remindersData);
 
@@ -114,6 +136,18 @@ export default function RecurringManager() {
         setActualMonthlyInvesting(
           monthEntries.flatMap((e) => e.investments).reduce((sum, i) => sum + i.amount, 0)
         );
+
+        // Calculate portfolio auto-invest MTD
+        const autoInvestItems = (portfolio as PortfolioItem[]).filter(
+          (p) => p.recurringAmount > 0 && p.recurringDay >= 0
+        );
+        setPortfolioAutoInvest(autoInvestItems);
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const mtd = autoInvestItems.reduce((sum, p) => {
+          const occurrences = countDayOccurrences(p.recurringDay, monthStart, today);
+          return sum + p.recurringAmount * occurrences;
+        }, 0);
+        setPortfolioMTD(mtd);
       })
       .catch(() => {});
   }, []);
@@ -239,9 +273,12 @@ export default function RecurringManager() {
   const monthlyExpenses = activeItems
     .filter((i) => i.category !== "INCOME" && i.category !== "INVESTMENT")
     .reduce((sum, i) => sum + (i.frequency === "WEEKLY" ? i.amount * 4.33 : i.amount), 0);
-  const monthlyInvestments = activeItems
+  const recurringInvestments = activeItems
     .filter((i) => i.category === "INVESTMENT")
     .reduce((sum, i) => sum + (i.frequency === "WEEKLY" ? i.amount * 4.33 : i.amount), 0);
+  const portfolioWeeklyTotal = portfolioAutoInvest.reduce((sum, p) => sum + p.recurringAmount, 0);
+  const monthlyInvestments = recurringInvestments + portfolioWeeklyTotal * 4.33;
+  const totalMTDInvesting = actualMonthlyInvesting + portfolioMTD;
   const netMonthly = monthlyIncome - monthlyExpenses - monthlyInvestments;
 
   const incomeItems = items.filter((i) => i.category === "INCOME");
@@ -298,7 +335,7 @@ export default function RecurringManager() {
               {new Date().toLocaleString("default", { month: "long" })} Investing
             </p>
           </div>
-          <p className="text-2xl font-bold text-blue-400">{formatCurrency(actualMonthlyInvesting)}</p>
+          <p className="text-2xl font-bold text-blue-400">{formatCurrency(totalMTDInvesting)}</p>
           <p className="text-xs text-slate-500 mt-1">Est. {formatCurrency(monthlyInvestments)}/mo from recurring</p>
         </div>
         <div className="bg-slate-800 border border-slate-700 rounded-lg p-4 shadow-sm">
@@ -307,7 +344,7 @@ export default function RecurringManager() {
             <p className="text-xs text-slate-400 uppercase tracking-wide">Net Cash Flow</p>
           </div>
           {(() => {
-            const actualNet = actualMonthlyIncome - monthlyExpenses - actualMonthlyInvesting;
+            const actualNet = actualMonthlyIncome - monthlyExpenses - totalMTDInvesting;
             return (
               <p className={`text-2xl font-bold ${actualNet >= 0 ? "text-emerald-600" : "text-red-500"}`}>
                 {formatCurrency(actualNet)}
@@ -554,7 +591,7 @@ export default function RecurringManager() {
               )}
 
               {/* Investment items */}
-              {investmentItems.length > 0 && (
+              {(investmentItems.length > 0 || portfolioAutoInvest.length > 0) && (
                 <div className="px-6 py-3">
                   <p className="text-xs font-semibold text-blue-400 uppercase tracking-wide mb-2">Investments</p>
                   <div className="space-y-2">
@@ -608,6 +645,47 @@ export default function RecurringManager() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
                           </button>
+                        </div>
+                      );
+                    })}
+                    {/* Portfolio auto-invest items */}
+                    {portfolioAutoInvest.map((p) => {
+                      const now = new Date();
+                      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                      const occurrences = countDayOccurrences(p.recurringDay, monthStart, today);
+                      const mtd = p.recurringAmount * occurrences;
+                      return (
+                        <div
+                          key={`portfolio-${p.id}`}
+                          className="flex items-center gap-3 px-4 py-3 rounded-lg border transition-all bg-blue-900/30 border-blue-700"
+                        >
+                          <div className="w-5 h-5 rounded-full bg-blue-500 flex-shrink-0 flex items-center justify-center">
+                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            </svg>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-slate-100">
+                              {p.name} ({p.symbol.toUpperCase()})
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-900/30 text-emerald-400">
+                                Weekly ({DAY_NAMES[p.recurringDay]})
+                              </span>
+                              <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-slate-700 text-slate-300">
+                                Portfolio Auto-Invest
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <span className="text-lg font-bold text-blue-400">
+                              {formatCurrency(p.recurringAmount)}/wk
+                            </span>
+                            <p className="text-xs text-slate-400">
+                              {formatCurrency(mtd)} MTD ({occurrences}x)
+                            </p>
+                          </div>
                         </div>
                       );
                     })}
