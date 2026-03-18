@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { formatCurrency } from "@/lib/utils";
 import { MaskedValue } from "./PrivacyProvider";
 import { useSubscription } from "./SubscriptionProvider";
+import AddressAutocomplete from "./AddressAutocomplete";
 
 interface Property {
   id: string;
@@ -269,11 +270,10 @@ export default function RealEstatePortfolio({ onEquityChange }: { onEquityChange
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <div className="sm:col-span-2 lg:col-span-3">
               <label className="block text-xs text-slate-400 mb-1">Address *</label>
-              <input
-                type="text"
-                placeholder="123 Main St, City, ST 12345"
+              <AddressAutocomplete
                 value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                onChange={setAddress}
+                placeholder="123 Main St, City, ST 12345"
                 className="w-full border border-slate-600 rounded-lg px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { formatCurrency } from "@/lib/utils";
 import { MaskedValue } from "./PrivacyProvider";
 import Link from "next/link";
+import AddressAutocomplete from "./AddressAutocomplete";
 
 const FIX_FLIP_STEP_LABELS: Record<string, string> = {
   ACQUISITION: "Acquisition",
@@ -350,11 +351,10 @@ export default function DealTracker() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="sm:col-span-2">
               <label className="block text-xs text-slate-400 mb-1">Property Address *</label>
-              <input
-                type="text"
-                placeholder="123 Main St, Cleveland, OH"
+              <AddressAutocomplete
                 value={ffAddress}
-                onChange={(e) => setFfAddress(e.target.value)}
+                onChange={setFfAddress}
+                placeholder="123 Main St, Cleveland, OH"
                 className="w-full border border-slate-600 rounded px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500"
               />
             </div>
@@ -429,11 +429,10 @@ export default function DealTracker() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="sm:col-span-2">
               <label className="block text-xs text-slate-400 mb-1">Property Address *</label>
-              <input
-                type="text"
-                placeholder="456 Oak Ave, Columbus, OH"
+              <AddressAutocomplete
                 value={wsAddress}
-                onChange={(e) => setWsAddress(e.target.value)}
+                onChange={setWsAddress}
+                placeholder="456 Oak Ave, Columbus, OH"
                 className="w-full border border-slate-600 rounded px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500"
               />
             </div>
@@ -498,11 +497,10 @@ export default function DealTracker() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="sm:col-span-2">
               <label className="block text-xs text-slate-400 mb-1">Property Address *</label>
-              <input
-                type="text"
-                placeholder="789 Elm Dr, Akron, OH"
+              <AddressAutocomplete
                 value={rtAddress}
-                onChange={(e) => setRtAddress(e.target.value)}
+                onChange={setRtAddress}
+                placeholder="789 Elm Dr, Akron, OH"
                 className="w-full border border-slate-600 rounded px-3 py-2 text-sm bg-slate-900 text-slate-100 placeholder-slate-500"
               />
             </div>
