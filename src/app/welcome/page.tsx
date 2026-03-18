@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import WelcomeLoginForm from "@/components/WelcomeLoginForm";
 import Logo from "@/components/Logo";
+import { getSeasonalPromo } from "@/lib/seasonal-promo";
 
 export const metadata: Metadata = {
   title: "Taxora — Financial Tool for Real Estate Professionals",
@@ -56,6 +57,7 @@ const PRO_FEATURES = [
 ];
 
 export default function WelcomePage() {
+  const promo = getSeasonalPromo();
   return (
     <div className="min-h-screen bg-slate-950">
       {/* Nav */}
@@ -162,13 +164,17 @@ export default function WelcomePage() {
 
       {/* Pricing */}
       <section id="pricing" className="max-w-6xl mx-auto px-6 py-20">
-        <h3 className="text-2xl font-bold text-slate-100 text-center mb-2">Simple, transparent pricing</h3>
-        <p className="text-slate-400 text-center mb-12">Start with a 14-day free trial. No credit card required.</p>
+        <div className="flex justify-center mb-3">
+          <span className="bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">{promo.badge}</span>
+        </div>
+        <h3 className="text-2xl font-bold text-slate-100 text-center mb-2">{promo.name}</h3>
+        <p className="text-slate-400 text-center mb-12">Limited time pricing. Start with a 14-day free trial — no credit card required.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
           {/* Basic */}
           <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 shadow-sm">
             <h4 className="text-lg font-semibold text-slate-100 mb-1">Basic</h4>
-            <div className="flex items-baseline gap-1 mb-4">
+            <div className="flex items-baseline gap-2 mb-4">
+              <span className="text-xl font-semibold text-slate-500 line-through">{promo.basicOriginal}</span>
               <span className="text-4xl font-bold text-slate-100">$9.99</span>
               <span className="text-slate-400">/month</span>
             </div>
@@ -197,7 +203,8 @@ export default function WelcomePage() {
               MOST POPULAR
             </span>
             <h4 className="text-lg font-semibold text-slate-100 mb-1">Pro</h4>
-            <div className="flex items-baseline gap-1 mb-4">
+            <div className="flex items-baseline gap-2 mb-4">
+              <span className="text-xl font-semibold text-slate-500 line-through">{promo.proOriginal}</span>
               <span className="text-4xl font-bold text-slate-100">$19.99</span>
               <span className="text-slate-400">/month</span>
             </div>

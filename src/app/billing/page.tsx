@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSubscription } from "@/components/SubscriptionProvider";
+import { getSeasonalPromo } from "@/lib/seasonal-promo";
 
 const BASIC_FEATURES = [
   "Weekly income & expense tracking",
@@ -121,6 +122,7 @@ export default function BillingPage() {
 
   const showPlanCards = plan === "TRIAL" || plan === "EXPIRED";
   const isActivePaid = plan === "BASIC" || plan === "PRO";
+  const promo = getSeasonalPromo();
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -190,7 +192,10 @@ export default function BillingPage() {
             <div className="flex justify-between text-sm">
               <span className="text-slate-400">Plan</span>
               <span className="text-slate-100 font-medium">
-                {plan === "PRO" ? "Pro — $19.99/mo" : "Basic — $9.99/mo"}
+                {plan === "PRO"
+                  ? <>{`Pro — `}<span className="line-through text-slate-500">{promo.proOriginal}</span>{` $19.99/mo`}</>
+                  : <>{`Basic — `}<span className="line-through text-slate-500">{promo.basicOriginal}</span>{` $9.99/mo`}</>
+                }
               </span>
             </div>
             {currentPeriodEnd && (
@@ -259,13 +264,24 @@ export default function BillingPage() {
         </div>
       )}
 
+      {/* Seasonal promo banner */}
+      {showPlanCards && (
+        <div className="bg-gradient-to-r from-emerald-900/30 to-slate-800 border border-emerald-700/50 rounded-lg px-5 py-3 mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="bg-emerald-500 text-white text-xs font-bold px-2.5 py-1 rounded uppercase tracking-wide">{promo.badge}</span>
+            <span className="text-sm text-slate-200 font-medium">{promo.name} — Limited time pricing</span>
+          </div>
+        </div>
+      )}
+
       {/* Plan comparison cards */}
       {showPlanCards && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Basic */}
           <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 shadow-sm">
             <h3 className="text-lg font-semibold text-slate-100 mb-1">Basic</h3>
-            <div className="flex items-baseline gap-1 mb-4">
+            <div className="flex items-baseline gap-2 mb-4">
+              <span className="text-lg font-semibold text-slate-500 line-through">{promo.basicOriginal}</span>
               <span className="text-3xl font-bold text-slate-100">$9.99</span>
               <span className="text-sm text-slate-400">/month</span>
             </div>
@@ -294,7 +310,8 @@ export default function BillingPage() {
               RECOMMENDED
             </span>
             <h3 className="text-lg font-semibold text-slate-100 mb-1">Pro</h3>
-            <div className="flex items-baseline gap-1 mb-4">
+            <div className="flex items-baseline gap-2 mb-4">
+              <span className="text-lg font-semibold text-slate-500 line-through">{promo.proOriginal}</span>
               <span className="text-3xl font-bold text-slate-100">$19.99</span>
               <span className="text-sm text-slate-400">/month</span>
             </div>

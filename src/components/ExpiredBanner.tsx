@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useSubscription } from "./SubscriptionProvider";
+import { getSeasonalPromo } from "@/lib/seasonal-promo";
 
 interface ExpiredBannerProps {
   message?: string;
@@ -10,6 +11,7 @@ interface ExpiredBannerProps {
 
 export default function ExpiredBanner({ message, compact }: ExpiredBannerProps) {
   const { plan } = useSubscription();
+  const promo = getSeasonalPromo();
   if (plan !== "EXPIRED") return null;
 
   if (compact) {
@@ -43,7 +45,7 @@ export default function ExpiredBanner({ message, compact }: ExpiredBannerProps) 
               href="/billing"
               className="bg-emerald-600 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-emerald-700 transition-colors"
             >
-              View Plans — Starting at $9.99/mo
+              View Plans — <span className="line-through opacity-60">{promo.basicOriginal}</span> Starting at $9.99/mo
             </Link>
           </div>
         </div>

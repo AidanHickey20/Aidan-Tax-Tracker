@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { getSeasonalPromo } from "@/lib/seasonal-promo";
 
 const FEATURE_DESCRIPTIONS: Record<string, string> = {
   "AI Tax Advisor": "Get personalized tax advice powered by AI, tailored to your real estate business.",
@@ -9,6 +10,7 @@ const FEATURE_DESCRIPTIONS: Record<string, string> = {
 };
 
 export default function UpgradePrompt({ feature }: { feature: string }) {
+  const promo = getSeasonalPromo();
   return (
     <div className="bg-slate-900 border border-slate-700 rounded-lg p-8 text-center">
       <div className="inline-flex items-center justify-center w-12 h-12 bg-slate-700 rounded-full mb-4">
@@ -26,7 +28,7 @@ export default function UpgradePrompt({ feature }: { feature: string }) {
         href="/billing"
         className="inline-flex items-center gap-2 bg-emerald-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
       >
-        Upgrade to Pro — $19.99/mo
+        Upgrade to Pro — <span className="line-through opacity-60">{promo.proOriginal}</span> $19.99/mo
       </Link>
     </div>
   );

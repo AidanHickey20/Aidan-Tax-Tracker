@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { getSeasonalPromo } from "./seasonal-promo";
 
 let _resend: Resend | null = null;
 
@@ -97,21 +98,25 @@ export async function sendWelcomeEmail(email: string, name: string) {
 
 export async function sendTrialEndingEmail(email: string, name: string, daysLeft: number) {
   const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  const promo = getSeasonalPromo();
 
   await getResend().emails.send({
     from: process.env.EMAIL_FROM || "Taxora <noreply@resend.dev>",
     to: email,
-    subject: daysLeft > 0 ? `Your Taxora trial ends in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}` : "Your Taxora trial has ended",
+    subject: daysLeft > 0 ? `Your Taxora trial ends in ${daysLeft} day${daysLeft !== 1 ? "s" : ""} — ${promo.badge}` : `Your Taxora trial has ended — ${promo.badge}`,
     html: `
-      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
-        <h2 style="color: #1e293b;">${daysLeft > 0 ? `Your trial ends in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}` : "Your free trial has ended"}</h2>
-        <p style="color: #475569;">${daysLeft > 0
-          ? `Hi${name ? ` ${name}` : ""}, your 14-day free trial is almost over. Choose a plan to keep using all your favorite features.`
-          : `Hi${name ? ` ${name}` : ""}, your free trial has ended. Choose a plan to continue using Taxora.`
-        }</p>
-        <p style="color: #475569;"><strong>Basic — $9.99/mo:</strong> Income tracking, tax estimates, exports, and net worth dashboard.</p>
-        <p style="color: #475569;"><strong>Pro — $19.99/mo:</strong> Everything in Basic plus AI Tax Advisor, Investment Tracker, and Deal Tracker.</p>
-        <a href="${baseUrl}/billing" style="display: inline-block; background: #059669; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 16px 0;">Choose a Plan</a>
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 480px; margin: 0 auto;">
+        <div style="background: #059669; color: white; text-align: center; padding: 8px; border-radius: 8px 8px 0 0; font-size: 13px; font-weight: 600; letter-spacing: 0.5px;">${promo.name.toUpperCase()} — LIMITED TIME</div>
+        <div style="padding: 24px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 8px 8px;">
+          <h2 style="color: #1e293b; margin: 0 0 12px;">${daysLeft > 0 ? `Your trial ends in ${daysLeft} day${daysLeft !== 1 ? "s" : ""}` : "Your free trial has ended"}</h2>
+          <p style="color: #475569;">${daysLeft > 0
+            ? `Hi${name ? ` ${name}` : ""}, your 14-day free trial is almost over. Choose a plan to keep using all your favorite features.`
+            : `Hi${name ? ` ${name}` : ""}, your free trial has ended. Choose a plan to continue using Taxora.`
+          }</p>
+          <p style="color: #475569;"><strong>Basic — <span style="text-decoration: line-through; color: #94a3b8;">${promo.basicOriginal}</span> $9.99/mo:</strong> Income tracking, tax estimates, exports, and net worth dashboard.</p>
+          <p style="color: #475569;"><strong>Pro — <span style="text-decoration: line-through; color: #94a3b8;">${promo.proOriginal}</span> $19.99/mo:</strong> Everything in Basic plus AI Tax Advisor, Investment Tracker, and Deal Tracker.</p>
+          <a href="${baseUrl}/billing" style="display: inline-block; background: #059669; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 16px 0;">Choose a Plan</a>
+        </div>
       </div>
     `,
   });
