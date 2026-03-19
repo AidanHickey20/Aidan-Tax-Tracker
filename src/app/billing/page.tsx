@@ -167,7 +167,7 @@ export default function BillingPage() {
         )}
         {plan === "EXPIRED" && (
           <p className="text-sm text-slate-400">
-            Your trial has ended. Choose a plan below to continue using Taxora.
+            Your trial has ended. Choose a plan below to continue using REtaxly.
           </p>
         )}
         {isActivePaid && (

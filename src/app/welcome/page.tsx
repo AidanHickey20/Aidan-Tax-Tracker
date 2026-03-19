@@ -6,10 +6,10 @@ import Logo from "@/components/Logo";
 import { getSeasonalPromo, getAnnualPricing } from "@/lib/seasonal-promo";
 
 export const metadata: Metadata = {
-  title: "Taxora — Financial Tool for Real Estate Professionals",
+  title: "REtaxly — Financial Tool for Real Estate Professionals",
   description: "Track income, expenses, mileage, and taxes in one place. Built for realtors and real estate professionals. AI tax advisor, deal tracker, and investment portfolio included.",
   openGraph: {
-    title: "Taxora — Financial Tool for Real Estate Professionals",
+    title: "REtaxly — Financial Tool for Real Estate Professionals",
     description: "Track income, expenses, mileage, and taxes in one place. Built for realtors and real estate professionals.",
     type: "website",
   },
@@ -273,7 +273,7 @@ export default function WelcomePage() {
       {/* Footer */}
       <footer className="bg-slate-900 py-8">
         <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
-          <p className="text-sm text-slate-500">&copy; {new Date().getFullYear()} Taxora. All rights reserved.</p>
+          <p className="text-sm text-slate-500">&copy; {new Date().getFullYear()} REtaxly. All rights reserved.</p>
           <div className="flex gap-6">
             <Link href="/terms" className="text-sm text-slate-500 hover:text-slate-300">Terms</Link>
             <Link href="/privacy" className="text-sm text-slate-500 hover:text-slate-300">Privacy</Link>

@@ -156,7 +156,7 @@ export default function TutorialPage() {
         <div>
           <h2 className="text-2xl font-bold text-slate-100">Getting Started</h2>
           <p className="text-sm text-slate-400 mt-1">
-            Learn how to use every feature of Taxora
+            Learn how to use every feature of REtaxly
             {isTrial && daysLeft !== null && (
               <span className="ml-2 text-emerald-600 font-medium">
                 — {daysLeft} days left in your free trial
@@ -179,7 +179,7 @@ export default function TutorialPage() {
           <iframe
             className="absolute inset-0 w-full h-full"
             src="https://www.youtube.com/embed/VIDEO_ID_HERE?autoplay=1&loop=1&playlist=VIDEO_ID_HERE&rel=0"
-            title="Taxora Tutorial"
+            title="REtaxly Tutorial"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />

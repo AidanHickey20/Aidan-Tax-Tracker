@@ -262,7 +262,7 @@ export default function ExportPage() {
         {/* Footer */}
         <div className="px-8 py-4 bg-slate-900 text-center print:bg-white print:border-t print:border-slate-300">
           <p className="text-xs text-slate-500 print:text-slate-400">
-            Generated on {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })} | Taxora
+            Generated on {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })} | REtaxly
           </p>
         </div>
       </div>

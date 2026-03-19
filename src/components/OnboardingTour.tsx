@@ -11,7 +11,7 @@ interface TourStep {
 
 const TOUR_STEPS: TourStep[] = [
   {
-    title: "Welcome to Taxora!",
+    title: "Welcome to REtaxly!",
     description: "Let's take a quick tour of your new financial dashboard. This will only take a minute.",
     target: null,
   },

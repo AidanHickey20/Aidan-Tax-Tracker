@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
         price_data: {
           currency: "usd",
           product_data: {
-            name: `Taxora ${plan === "PRO" ? "Pro" : "Basic"} — Annual Plan`,
+            name: `REtaxly ${plan === "PRO" ? "Pro" : "Basic"} — Annual Plan`,
             description: `12 months of ${plan === "PRO" ? "Pro" : "Basic"} access (15% off)`,
           },
           unit_amount: amountCents,

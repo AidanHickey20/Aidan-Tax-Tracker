@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Logo from "@/components/Logo";
 
-export const metadata = { title: "Privacy Policy — Taxora" };
+export const metadata = { title: "Privacy Policy — REtaxly" };
 
 export default function PrivacyPage() {
   return (
