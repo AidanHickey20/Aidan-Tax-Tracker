@@ -49,6 +49,7 @@ export const importEntriesSchema = z.object({
 export const updateSettingsSchema = z.object({
   incomeGoal: z.number().optional().default(0),
   bankBalance: z.number().optional().default(0),
+  taxSavingsBalance: z.number().optional().default(0),
   homeValue: z.number().min(0).optional().default(0),
   homeAppreciation: z.number().optional().default(0),
   mortgageBalance: z.number().min(0).optional().default(0),

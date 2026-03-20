@@ -45,6 +45,7 @@ model UserSettings {
 
   incomeGoal          Float @default(0)
   bankBalance         Float @default(0)
+  taxSavingsBalance   Float @default(0)
   homeValue           Float @default(0)
   homeAppreciation    Float @default(0)
   mortgageBalance     Float @default(0)

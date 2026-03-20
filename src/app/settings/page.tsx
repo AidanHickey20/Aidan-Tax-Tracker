@@ -11,6 +11,7 @@ import UpgradePrompt from "@/components/UpgradePrompt";
 interface Settings {
   incomeGoal: number;
   bankBalance: number;
+  taxSavingsBalance: number;
   homeValue: number;
   homeAppreciation: number;
   mortgageBalance: number;
@@ -96,7 +97,7 @@ function numToForm(val: number): string {
 }
 
 const NUM_FIELDS: (keyof Settings)[] = [
-  "incomeGoal", "bankBalance", "homeValue", "homeAppreciation",
+  "incomeGoal", "bankBalance", "taxSavingsBalance", "homeValue", "homeAppreciation",
   "mortgageBalance", "mortgageRate", "mortgagePayment",
   "studentLoanBalance", "studentLoanRate", "studentLoanPayment", "studentLoanPaymentDay",
   "carLoanBalance", "carLoanRate", "carLoanPayment", "carLoanPaymentDay",
@@ -316,6 +317,13 @@ export default function SettingsPage() {
               onChange={(v) => update("bankBalance", v)}
               prefix="$"
               hint="Your bank balance as of the reference date"
+            />
+            <Field
+              label="Tax Savings Balance"
+              value={fields.taxSavingsBalance}
+              onChange={(v) => update("taxSavingsBalance", v)}
+              prefix="$"
+              hint="Money set aside for tax payments"
             />
           </div>
         </div>

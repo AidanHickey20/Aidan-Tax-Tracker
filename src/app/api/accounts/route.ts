@@ -10,6 +10,7 @@ const DEFAULT_ACCOUNTS = [
   { name: "Checking", category: "CASH", group: null, sortOrder: 0 },
   { name: "Savings", category: "CASH", group: null, sortOrder: 1 },
   { name: "Business", category: "CASH", group: null, sortOrder: 2 },
+  { name: "Tax Savings", category: "CASH", group: null, sortOrder: 3 },
 ];
 
 export async function GET() {

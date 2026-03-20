@@ -34,6 +34,7 @@ export async function PUT(request: NextRequest) {
     update: {
       incomeGoal: parsed.data.incomeGoal ?? 0,
       bankBalance: parsed.data.bankBalance ?? 0,
+      taxSavingsBalance: parsed.data.taxSavingsBalance ?? 0,
       homeValue: parsed.data.homeValue ?? 0,
       homeAppreciation: parsed.data.homeAppreciation ?? 0,
       mortgageBalance: parsed.data.mortgageBalance ?? 0,
@@ -62,6 +63,7 @@ export async function PUT(request: NextRequest) {
       userId,
       incomeGoal: parsed.data.incomeGoal ?? 0,
       bankBalance: parsed.data.bankBalance ?? 0,
+      taxSavingsBalance: parsed.data.taxSavingsBalance ?? 0,
       homeValue: parsed.data.homeValue ?? 0,
       homeAppreciation: parsed.data.homeAppreciation ?? 0,
       mortgageBalance: parsed.data.mortgageBalance ?? 0,
