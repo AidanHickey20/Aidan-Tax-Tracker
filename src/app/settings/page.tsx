@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSubscription } from "@/components/SubscriptionProvider";
+import { useTheme } from "@/components/ThemeProvider";
 import ExpiredBanner from "@/components/ExpiredBanner";
 import RealEstatePortfolio from "@/components/RealEstatePortfolio";
 import UpgradePrompt from "@/components/UpgradePrompt";
@@ -105,6 +106,7 @@ const NUM_FIELDS: (keyof Settings)[] = [
 
 export default function SettingsPage() {
   const { canEdit, isProUser } = useSubscription();
+  const { theme, toggleTheme } = useTheme();
   const [fields, setFields] = useState<Record<string, string>>({});
   const [savedDescriptions, setSavedDescriptions] = useState<Record<string, string[]>>({});
   const [newDesc, setNewDesc] = useState<Record<string, string>>({});
@@ -179,6 +181,29 @@ export default function SettingsPage() {
       </p>
 
       <div className="space-y-8">
+        {/* Appearance */}
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 shadow-sm">
+          <h3 className="font-semibold text-slate-200 mb-4">Appearance</h3>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-slate-200">Dark Mode</p>
+              <p className="text-xs text-slate-500">Switch between light and dark theme</p>
+            </div>
+            <button
+              onClick={toggleTheme}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                theme === "dark" ? "bg-emerald-600" : "bg-slate-600"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  theme === "dark" ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+
         {/* Income Goal */}
         <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 shadow-sm">
           <h3 className="font-semibold text-slate-200 mb-4">Income Goal</h3>

@@ -92,7 +92,7 @@ export default function Sidebar() {
       {/* Mobile hamburger */}
       <button
         onClick={() => setOpen(true)}
-        className="md:hidden fixed top-4 left-4 z-50 bg-slate-900 text-white p-2 rounded-lg shadow-lg"
+        className="dark-panel md:hidden fixed top-4 left-4 z-50 bg-slate-900 text-white p-2 rounded-lg shadow-lg"
         aria-label="Open menu"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,7 +104,7 @@ export default function Sidebar() {
       {open && (
         <div className="md:hidden fixed inset-0 z-40">
           <div className="absolute inset-0 bg-black/50" onClick={() => setOpen(false)} />
-          <aside className="relative w-64 bg-slate-900 text-white min-h-screen p-4 flex flex-col z-50">
+          <aside className="dark-panel relative w-64 bg-slate-900 text-white min-h-screen p-4 flex flex-col z-50">
             <button
               onClick={() => setOpen(false)}
               className="absolute top-4 right-4 text-slate-400 hover:text-white"
@@ -120,7 +120,7 @@ export default function Sidebar() {
       )}
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-64 bg-slate-900 text-white min-h-screen p-4 flex-col">
+      <aside className="dark-panel hidden md:flex w-64 bg-slate-900 text-white min-h-screen p-4 flex-col">
         {nav}
       </aside>
     </>

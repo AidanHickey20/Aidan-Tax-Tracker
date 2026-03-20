@@ -1,15 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { rateLimit } from "@/lib/rate-limit";
+import { z } from "zod";
+
+const resetPasswordSchema = z.object({
+  token: z.string().uuid(),
+  password: z.string().min(8).max(128),
+});
 
 export async function POST(request: NextRequest) {
-  const { token, password } = await request.json();
-  if (!token || !password) {
-    return NextResponse.json({ error: "Token and password required" }, { status: 400 });
+  const ip = request.headers.get("x-forwarded-for") ?? "unknown";
+  const { ok } = rateLimit(`reset:${ip}`, { limit: 5, windowMs: 15 * 60 * 1000 });
+  if (!ok) {
+    return NextResponse.json({ error: "Too many requests. Try again later." }, { status: 429 });
   }
-  if (password.length < 8) {
-    return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
+
+  const body = await request.json();
+  const parsed = resetPasswordSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid token or password (min 8 characters)" }, { status: 400 });
   }
+  const { token, password } = parsed.data;
 
   const resetToken = await prisma.passwordResetToken.findUnique({ where: { token } });
   if (!resetToken || resetToken.expiresAt < new Date()) {

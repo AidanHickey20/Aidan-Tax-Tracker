@@ -3,9 +3,16 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { validate, registerSchema } from "@/lib/validations";
 import { sendWelcomeEmail } from "@/lib/email";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get("x-forwarded-for") ?? "unknown";
+    const { ok } = rateLimit(`register:${ip}`, { limit: 5, windowMs: 15 * 60 * 1000 });
+    if (!ok) {
+      return NextResponse.json({ error: "Too many requests. Try again later." }, { status: 429 });
+    }
+
     const body = await request.json();
     const parsed = validate(registerSchema, body);
     if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
