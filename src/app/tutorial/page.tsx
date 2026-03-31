@@ -8,7 +8,6 @@ const TUTORIAL_SECTIONS = [
   {
     id: "weekly-entry",
     title: "Logging Your Weekly Entry",
-    time: "0:00",
     description:
       "Every week, open the Weekly Entry page and log your income, business expenses, personal expenses, and owner draws. The form pre-fills recurring items you've set up so you don't have to re-enter the same things every week.",
     steps: [
@@ -26,7 +25,6 @@ const TUTORIAL_SECTIONS = [
   {
     id: "recurring",
     title: "Setting Up Recurring Items",
-    time: "2:30",
     description:
       "Recurring items auto-populate your weekly entry form so you don't have to manually enter the same expenses every time. Set up your regular income, subscriptions, and bills here.",
     steps: [
@@ -41,7 +39,6 @@ const TUTORIAL_SECTIONS = [
   {
     id: "dashboard",
     title: "Reading Your Dashboard",
-    time: "4:15",
     description:
       "Your dashboard is your financial command center. It shows year-to-date income, expenses, estimated taxes, net worth, and more. The chart tracks your weekly income vs. expenses over time.",
     steps: [
@@ -55,7 +52,6 @@ const TUTORIAL_SECTIONS = [
   {
     id: "settings",
     title: "Configuring Your Settings",
-    time: "6:00",
     description:
       "Settings control your financial starting points — bank balance, home value, loans, and income goal. These feed into your net worth calculations and the progress bar at the top of the page.",
     steps: [
@@ -71,7 +67,6 @@ const TUTORIAL_SECTIONS = [
   {
     id: "accounts",
     title: "Managing Your Accounts",
-    time: "7:30",
     description:
       "Customize which accounts appear in your weekly entry form. You can add bank accounts, investment accounts, crypto wallets — and group them together for clean organization.",
     steps: [
@@ -85,7 +80,6 @@ const TUTORIAL_SECTIONS = [
   {
     id: "tax-advisor",
     title: "Using the AI Tax Advisor",
-    time: "9:00",
     badge: "PRO",
     description:
       "The AI Tax Advisor analyzes your financial data and provides personalized tax strategies. Ask it questions about deductions, quarterly estimates, entity structure, and more.",
@@ -100,7 +94,6 @@ const TUTORIAL_SECTIONS = [
   {
     id: "investments",
     title: "Tracking Investments & Crypto",
-    time: "10:30",
     description:
       "Add stocks and crypto to your portfolio to see real-time values, gains/losses, and growth projections. Set up auto-invest amounts that pre-fill in your weekly entry.",
     steps: [
@@ -115,7 +108,6 @@ const TUTORIAL_SECTIONS = [
   {
     id: "deals",
     title: "Tracking Real Estate Deals",
-    time: "12:00",
     badge: "PRO",
     description:
       "The Deal Tracker lets you manage real estate transactions from lead through closing. Track expenses, steps, and commission for each deal.",
@@ -131,7 +123,6 @@ const TUTORIAL_SECTIONS = [
   {
     id: "export",
     title: "Exporting for Your Accountant",
-    time: "13:30",
     description:
       "At tax time, export your full year of data as a clean spreadsheet your CPA can use directly. No more scrambling for receipts or digging through bank statements.",
     steps: [
@@ -172,41 +163,6 @@ export default function TutorialPage() {
         </Link>
       </div>
 
-      {/* Video Section */}
-      <div className="bg-slate-900 rounded-xl overflow-hidden mb-8 shadow-lg">
-        <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-          {/* Replace this src with your actual tutorial video URL */}
-          <iframe
-            className="absolute inset-0 w-full h-full"
-            src="https://www.youtube.com/embed/VIDEO_ID_HERE?autoplay=1&loop=1&playlist=VIDEO_ID_HERE&rel=0"
-            title="REtaxly Tutorial"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        </div>
-        <div className="px-6 py-4 flex items-center justify-between">
-          <div>
-            <p className="text-white font-medium">Full Walkthrough Tutorial</p>
-            <p className="text-slate-500 text-sm">Watch the complete guide or jump to a section below</p>
-          </div>
-          <div className="flex gap-2 overflow-x-auto">
-            {TUTORIAL_SECTIONS.map((section) => (
-              <button
-                key={section.id}
-                onClick={() => setActiveSection(section.id)}
-                className={`flex-shrink-0 text-xs px-3 py-1.5 rounded-full transition-colors ${
-                  activeSection === section.id
-                    ? "bg-emerald-600 text-white"
-                    : "bg-slate-800 text-slate-300 hover:bg-slate-700"
-                }`}
-              >
-                {section.time}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
       {/* Section Navigation + Content */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Section Nav */}
@@ -244,7 +200,6 @@ export default function TutorialPage() {
                     {section.badge}
                   </span>
                 )}
-                <span className="text-xs text-slate-500 ml-auto">{section.time} in video</span>
               </div>
               <p className="text-sm text-slate-300 mb-6">{section.description}</p>
               <div className="space-y-3">

@@ -34,8 +34,6 @@ model User {
   userAccounts       UserAccount[]
   subscription       Subscription?
   netWorthItems      NetWorthItem[]
-  linkedBanks             LinkedBank[]
-  importedTransactions    ImportedTransaction[]
 }
 
 model UserSettings {
@@ -149,7 +147,6 @@ model WeeklyEntry {
   lineItems       LineItem[]
   accountBalances AccountBalance[]
   investments     InvestmentEntry[]
-  importedTransactions ImportedTransaction[]
 }
 
 model LineItem {
@@ -328,43 +325,6 @@ model Subscription {
   currentPeriodEnd     DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
-}
-
-model LinkedBank {
-  id              String    @id @default(uuid())
-  userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken     String
-  itemId          String
-  institutionId   String?
-  institutionName String?
-  cursor          String?   // Plaid sync cursor for incremental transaction fetching
-  lastSyncedAt    DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  transactions ImportedTransaction[]
-
-  @@unique([userId, itemId])
-}
-
-model ImportedTransaction {
-  id                 String      @id @default(uuid())
-  userId             String
-  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  linkedBankId       String
-  linkedBank         LinkedBank  @relation(fields: [linkedBankId], references: [id], onDelete: Cascade)
-  plaidTransactionId String      @unique
-  date               DateTime
-  name               String
-  amount             Float       // Plaid convention: positive = outflow, negative = inflow
-  category           String?     // User-assigned: INCOME, BUSINESS_EXPENSE, PERSONAL_EXPENSE, OWNER_DRAW
-  status             String      @default("PENDING") // PENDING, CATEGORIZED, SKIPPED, APPLIED
-  weeklyEntryId      String?
-  weeklyEntry        WeeklyEntry? @relation(fields: [weeklyEntryId], references: [id])
-  createdAt          DateTime    @default(now())
-
-  @@index([userId, status])
 }
 
 model PasswordResetToken {
