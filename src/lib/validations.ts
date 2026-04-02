@@ -25,6 +25,7 @@ export const createEntrySchema = z.object({
   weekEnd: z.string().min(1),
   mileage: z.number().min(0).optional().default(0),
   notes: z.string().max(5000).optional().default(""),
+  status: z.enum(["DRAFT", "SUBMITTED"]).optional().default("SUBMITTED"),
   lineItems: z.array(lineItemSchema).optional().default([]),
   accountBalances: z.array(accountBalanceSchema).optional().default([]),
   investments: z.array(investmentEntrySchema).optional().default([]),

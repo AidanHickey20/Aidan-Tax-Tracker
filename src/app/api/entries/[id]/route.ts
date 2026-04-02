@@ -51,6 +51,7 @@ export async function PUT(
       weekEnd: new Date(parsed.data.weekEnd),
       mileage: parsed.data.mileage || 0,
       notes: parsed.data.notes || "",
+      status: parsed.data.status || existing.status,
       lineItems: {
         create: (parsed.data.lineItems || []).map(
           (item: { description: string; amount: number; category: string }) => ({

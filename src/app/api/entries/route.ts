@@ -21,11 +21,31 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(entry);
   }
 
+  // Return draft for a given week (used by auto-save)
+  const draft = searchParams.get("draft");
+  if (draft === "true") {
+    const weekStart = searchParams.get("weekStart");
+    const weekEnd = searchParams.get("weekEnd");
+    if (weekStart && weekEnd) {
+      const entry = await prisma.weeklyEntry.findFirst({
+        where: {
+          userId,
+          status: "DRAFT",
+          weekStart: new Date(weekStart),
+          weekEnd: new Date(weekEnd),
+        },
+        include: { lineItems: true, accountBalances: true, investments: true },
+      });
+      return NextResponse.json(entry);
+    }
+  }
+
   if (yearOnly) {
     const { start, end } = getCurrentYearRange();
     const entries = await prisma.weeklyEntry.findMany({
       where: {
         userId,
+        status: "SUBMITTED",
         weekStart: { gte: start },
         weekEnd: { lte: end },
       },
@@ -36,7 +56,7 @@ export async function GET(request: NextRequest) {
   }
 
   const entries = await prisma.weeklyEntry.findMany({
-    where: { userId },
+    where: { userId, status: "SUBMITTED" },
     include: { lineItems: true, accountBalances: true, investments: true },
     orderBy: { weekStart: "desc" },
   });
@@ -57,6 +77,7 @@ export async function POST(request: NextRequest) {
       weekEnd: new Date(parsed.data.weekEnd),
       mileage: parsed.data.mileage || 0,
       notes: parsed.data.notes || "",
+      status: parsed.data.status || "SUBMITTED",
       lineItems: {
         create: (parsed.data.lineItems || []).map(
           (item: { description: string; amount: number; category: string }) => ({
