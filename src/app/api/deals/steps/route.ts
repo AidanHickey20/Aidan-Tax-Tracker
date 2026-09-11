@@ -47,51 +47,51 @@ export async function PUT(request: NextRequest) {
         },
       });
 
-      // When closing a deal with profit, add it as INCOME to the current week's entry
+      // When closing a deal with profit, optionally reflect it in the current
+      // week's entry. The profit is always saved on the deal record (above);
+      // here we add weekly line items unless the user says they've handled it.
       if (isClosed && profit > 0) {
         const deal = stepCheck.deal;
         const dealLabel = deal.nickname || deal.address;
-        const { start, end } = getCurrentWeekRange();
 
-        // Find or create the current week's entry
-        let entry = await prisma.weeklyEntry.findFirst({
-          where: {
-            userId,
-            weekStart: start,
-            weekEnd: end,
-          },
-        });
+        // INCOME line item — skipped if the user already logged this income.
+        const addIncome = parsed.data.incomeAlreadyReported !== true;
 
-        if (!entry) {
-          entry = await prisma.weeklyEntry.create({
-            data: {
-              userId,
-              weekStart: start,
-              weekEnd: end,
-            },
-          });
-        }
-
-        // Add the profit as an INCOME line item
-        await prisma.lineItem.create({
-          data: {
-            weeklyEntryId: entry.id,
-            description: `Deal closed: ${dealLabel}`,
-            amount: profit,
-            category: "INCOME",
-          },
-        });
-
-        // Optionally record the flip's rehab spend as a business-expense
-        // write-off in the same week. Only for Fix & Flip, and only when the
-        // user opted in at close (so profit entered as "gross" isn't double-hit).
+        // Rehab write-off (Fix & Flip only) — opted in per-deal at close.
+        let rehab = 0;
         if (parsed.data.addRehabWriteoff && deal.dealType === "FIX_AND_FLIP") {
           const rehabTotal = await prisma.dealExpense.aggregate({
             where: { dealId: deal.id },
             _sum: { amount: true },
           });
-          const rehab = rehabTotal._sum.amount ?? 0;
-          if (rehab > 0) {
+          rehab = rehabTotal._sum.amount ?? 0;
+        }
+        const addRehab = rehab > 0;
+
+        // Only touch a weekly entry if we're actually adding a line item.
+        if (addIncome || addRehab) {
+          const { start, end } = getCurrentWeekRange();
+          let entry = await prisma.weeklyEntry.findFirst({
+            where: { userId, weekStart: start, weekEnd: end },
+          });
+          if (!entry) {
+            entry = await prisma.weeklyEntry.create({
+              data: { userId, weekStart: start, weekEnd: end },
+            });
+          }
+
+          if (addIncome) {
+            await prisma.lineItem.create({
+              data: {
+                weeklyEntryId: entry.id,
+                description: `Deal closed: ${dealLabel}`,
+                amount: profit,
+                category: "INCOME",
+              },
+            });
+          }
+
+          if (addRehab) {
             await prisma.lineItem.create({
               data: {
                 weeklyEntryId: entry.id,

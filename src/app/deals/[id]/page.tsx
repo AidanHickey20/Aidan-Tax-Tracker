@@ -148,6 +148,7 @@ export default function DealDetailPage() {
   const [closeStepId, setCloseStepId] = useState<string | null>(null);
   const [closeProfit, setCloseProfit] = useState("");
   const [closeRehabWriteoff, setCloseRehabWriteoff] = useState(true);
+  const [closeIncomeReported, setCloseIncomeReported] = useState(false);
   const [closing, setClosing] = useState(false);
 
   const fetchDeal = useCallback(async () => {
@@ -177,6 +178,7 @@ export default function DealDetailPage() {
       setCloseStepId(step.id);
       setCloseProfit("");
       setCloseRehabWriteoff(true);
+      setCloseIncomeReported(false);
       setShowCloseDialog(true);
       return;
     }
@@ -199,6 +201,7 @@ export default function DealDetailPage() {
         id: closeStepId,
         completed: true,
         profit: parseFloat(closeProfit) || 0,
+        incomeAlreadyReported: closeIncomeReported,
         addRehabWriteoff: deal?.dealType === "FIX_AND_FLIP" && closeRehabWriteoff,
       }),
     });
@@ -795,7 +798,10 @@ export default function DealDetailPage() {
           <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 w-full max-w-md shadow-2xl">
             <h3 className="text-lg font-bold text-slate-100 mb-2">Close Deal</h3>
             <p className="text-sm text-slate-400 mb-4">
-              Enter your profit from this deal. This will be recorded as income in your weekly entry.
+              Enter your profit from this deal.{" "}
+              {closeIncomeReported
+                ? "It will be saved on the deal record only — no weekly income entry will be added."
+                : "This will be recorded as income in your current weekly entry."}
             </p>
             <div className="mb-4">
               <label className="block text-xs text-slate-400 mb-1">Profit</label>
@@ -809,6 +815,22 @@ export default function DealDetailPage() {
                 className="w-full border border-slate-600 rounded px-3 py-2.5 text-lg bg-slate-900 text-slate-100 placeholder-slate-500"
               />
             </div>
+
+            {/* Income already reported — skip creating a duplicate weekly income line item */}
+            <label className="flex items-start gap-3 mb-4 p-3 rounded-lg bg-slate-900 border border-slate-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={closeIncomeReported}
+                onChange={(e) => setCloseIncomeReported(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-800 accent-emerald-600"
+              />
+              <span className="text-sm text-slate-300">
+                I already reported this income in a weekly entry
+                <span className="block text-xs text-slate-500 mt-0.5">
+                  Check this to close and file the deal without adding another income line item (avoids double-counting).
+                </span>
+              </span>
+            </label>
 
             {/* Rehab write-off — Fix & Flip only, when there's rehab spend */}
             {isFixAndFlip && totalSpent > 0 && (

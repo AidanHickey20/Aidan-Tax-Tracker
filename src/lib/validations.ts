@@ -179,6 +179,9 @@ export const updateDealStepSchema = z.object({
   completed: z.boolean(),
   notes: z.string().max(5000).optional(),
   profit: z.number().optional(),
+  // When true, the profit is saved on the deal record but NO income line item is
+  // created — the user already logged this income in a weekly entry themselves.
+  incomeAlreadyReported: z.boolean().optional(),
   // When closing a Fix & Flip: also record the deal's rehab spend as a
   // BUSINESS_EXPENSE (write-off) line item in the current week. Chosen per-deal
   // at close so it never double-counts rehab already netted out of profit.
