@@ -6,6 +6,8 @@ import { isProUser } from "@/lib/subscription";
 import { getSupabase, DOCUMENTS_BUCKET } from "@/lib/supabase";
 import { classifyDocument } from "@/lib/documents";
 import { isDocType } from "@/lib/doc-types";
+import { rateLimit } from "@/lib/rate-limit";
+import { logError } from "@/lib/logger";
 
 const MAX_BYTES = 15 * 1024 * 1024; // 15 MB
 const ALLOWED = [
@@ -58,6 +60,7 @@ export async function GET() {
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Failed to load documents";
     const status = message === "Unauthorized" ? 401 : 500;
+    if (status === 500) logError("documents.list_failed", e);
     return NextResponse.json({ error: message }, { status });
   }
 }
@@ -69,6 +72,14 @@ export async function POST(request: NextRequest) {
     const userId = await requireUserId();
     if (!(await isProUser(userId))) {
       return NextResponse.json({ error: "Pro plan required" }, { status: 403 });
+    }
+    // Cap uploads per user — each one costs an AI classification + storage write.
+    const { ok } = rateLimit(`doc-upload:${userId}`, { limit: 40, windowMs: 10 * 60 * 1000 });
+    if (!ok) {
+      return NextResponse.json(
+        { error: "Too many uploads at once. Please wait a few minutes." },
+        { status: 429 }
+      );
     }
 
     const form = await request.formData();
@@ -103,6 +114,7 @@ export async function POST(request: NextRequest) {
       .from(DOCUMENTS_BUCKET)
       .upload(storagePath, buffer, { contentType: mimeType, upsert: false });
     if (uploadError) {
+      logError("documents.storage_upload_failed", uploadError, { mimeType, size: file.size });
       return NextResponse.json(
         { error: `Storage upload failed: ${uploadError.message}` },
         { status: 500 }
@@ -138,6 +150,7 @@ export async function POST(request: NextRequest) {
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Upload failed";
     const status = message === "Unauthorized" ? 401 : 500;
+    if (status === 500) logError("documents.upload_failed", e);
     return NextResponse.json({ error: message }, { status });
   }
 }
@@ -162,6 +175,7 @@ export async function PATCH(request: NextRequest) {
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Update failed";
     const status = message === "Unauthorized" ? 401 : 500;
+    if (status === 500) logError("documents.refile_failed", e);
     return NextResponse.json({ error: message }, { status });
   }
 }
@@ -184,6 +198,7 @@ export async function DELETE(request: NextRequest) {
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Delete failed";
     const status = message === "Unauthorized" ? 401 : 500;
+    if (status === 500) logError("documents.delete_failed", e);
     return NextResponse.json({ error: message }, { status });
   }
 }

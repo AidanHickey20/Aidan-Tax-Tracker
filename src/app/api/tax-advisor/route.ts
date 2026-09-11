@@ -3,6 +3,8 @@ import OpenAI from "openai";
 import { requireUserId } from "@/lib/get-user";
 import { validate, taxAdvisorSchema } from "@/lib/validations";
 import { isProUser } from "@/lib/subscription";
+import { rateLimit } from "@/lib/rate-limit";
+import { logError } from "@/lib/logger";
 
 function getOpenAI() {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -38,6 +40,14 @@ export async function POST(req: NextRequest) {
     if (!(await isProUser(userId))) {
       return NextResponse.json({ error: "Pro plan required" }, { status: 403 });
     }
+    // Cap AI usage per user to contain OpenAI cost / abuse.
+    const { ok } = rateLimit(`tax-advisor:${userId}`, { limit: 20, windowMs: 10 * 60 * 1000 });
+    if (!ok) {
+      return NextResponse.json(
+        { error: "You're sending messages too quickly. Please wait a few minutes." },
+        { status: 429 }
+      );
+    }
     const body = await req.json();
     const parsed = validate(taxAdvisorSchema, body);
     if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
@@ -57,6 +67,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ reply });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+    if (message !== "Unauthorized") logError("tax-advisor.failed", error);
+    return NextResponse.json({ error: message }, { status: message === "Unauthorized" ? 401 : 500 });
   }
 }
