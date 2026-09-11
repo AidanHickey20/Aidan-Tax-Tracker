@@ -6,6 +6,7 @@ import { useSubscription } from "@/components/SubscriptionProvider";
 import { useTheme } from "@/components/ThemeProvider";
 import ExpiredBanner from "@/components/ExpiredBanner";
 import RealEstatePortfolio from "@/components/RealEstatePortfolio";
+import LinkedCards from "@/components/LinkedCards";
 import UpgradePrompt from "@/components/UpgradePrompt";
 
 interface Settings {
@@ -327,6 +328,9 @@ export default function SettingsPage() {
             />
           </div>
         </div>
+
+        {/* Linked Cards & Accounts */}
+        {isProUser ? <LinkedCards /> : <UpgradePrompt feature="Linked Cards & Auto-Categorization" />}
 
         {/* Real Estate Portfolio */}
         {isProUser ? <RealEstatePortfolio /> : <UpgradePrompt feature="Real Estate Portfolio" />}

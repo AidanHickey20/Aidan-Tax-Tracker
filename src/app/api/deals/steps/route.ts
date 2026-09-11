@@ -81,6 +81,27 @@ export async function PUT(request: NextRequest) {
             category: "INCOME",
           },
         });
+
+        // Optionally record the flip's rehab spend as a business-expense
+        // write-off in the same week. Only for Fix & Flip, and only when the
+        // user opted in at close (so profit entered as "gross" isn't double-hit).
+        if (parsed.data.addRehabWriteoff && deal.dealType === "FIX_AND_FLIP") {
+          const rehabTotal = await prisma.dealExpense.aggregate({
+            where: { dealId: deal.id },
+            _sum: { amount: true },
+          });
+          const rehab = rehabTotal._sum.amount ?? 0;
+          if (rehab > 0) {
+            await prisma.lineItem.create({
+              data: {
+                weeklyEntryId: entry.id,
+                description: `Rehab: ${dealLabel}`,
+                amount: rehab,
+                category: "BUSINESS_EXPENSE",
+              },
+            });
+          }
+        }
       }
     }
   }

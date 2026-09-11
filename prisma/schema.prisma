@@ -34,6 +34,10 @@ model User {
   userAccounts       UserAccount[]
   subscription       Subscription?
   netWorthItems      NetWorthItem[]
+  linkedBanks           LinkedBank[]
+  importedTransactions  ImportedTransaction[]
+  merchantRules         MerchantRule[]
+  documents             Document[]
 }
 
 model UserSettings {
@@ -148,6 +152,7 @@ model WeeklyEntry {
   lineItems       LineItem[]
   accountBalances AccountBalance[]
   investments     InvestmentEntry[]
+  importedTransactions ImportedTransaction[]
 }
 
 model LineItem {
@@ -328,6 +333,24 @@ model Subscription {
   updatedAt            DateTime  @updatedAt
 }
 
+// An uploaded document (settlement statement, W-9, receipt, etc.) stored in
+// Supabase Storage. `docType` is assigned by AI classification on upload and
+// can be corrected by the user; it doubles as the "folder" the file is filed in.
+model Document {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String   // original filename
+  docType      String   // classification key, e.g. W9, SETTLEMENT_STATEMENT, OTHER
+  storagePath  String   // object path within the Supabase Storage bucket
+  mimeType     String
+  size         Int      @default(0)
+  aiClassified Boolean  @default(false) // false once the user overrides the type
+  createdAt    DateTime @default(now())
+
+  @@index([userId, docType])
+}
+
 model PasswordResetToken {
   id        String   @id @default(uuid())
   email     String
@@ -336,4 +359,60 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@index([email])
+}
+
+// A credit card / bank connection via Plaid.
+model LinkedBank {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Plaid access token, stored as AES-256-GCM ciphertext (see src/lib/crypto.ts).
+  // Never stored in plaintext and never returned to the client.
+  accessToken     String
+  itemId          String
+  institutionId   String?
+  institutionName String?
+  cursor          String?   // Plaid sync cursor for incremental transaction fetching
+  lastSyncedAt    DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  transactions ImportedTransaction[]
+
+  @@unique([userId, itemId])
+}
+
+// A transaction pulled from Plaid, awaiting/holding the user's category decision.
+model ImportedTransaction {
+  id                 String      @id @default(uuid())
+  userId             String
+  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  linkedBankId       String
+  linkedBank         LinkedBank  @relation(fields: [linkedBankId], references: [id], onDelete: Cascade)
+  plaidTransactionId String      @unique
+  date               DateTime
+  name               String      // display name (merchant or raw description)
+  merchant           String?     // normalized merchant key used for MerchantRule matching
+  amount             Float       // Plaid convention: positive = outflow, negative = inflow
+  category           String?     // User-assigned: INCOME, BUSINESS_EXPENSE, PERSONAL_EXPENSE, OWNER_DRAW
+  status             String      @default("PENDING") // PENDING, CATEGORIZED, SKIPPED, APPLIED
+  autoCategorized    Boolean     @default(false) // true if a MerchantRule set the category
+  weeklyEntryId      String?
+  weeklyEntry        WeeklyEntry? @relation(fields: [weeklyEntryId], references: [id])
+  createdAt          DateTime    @default(now())
+
+  @@index([userId, status])
+}
+
+// Remembered "this merchant is always X" mapping, applied automatically on sync.
+model MerchantRule {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  merchant  String   // normalized merchant key (lowercased)
+  category  String   // INCOME, BUSINESS_EXPENSE, PERSONAL_EXPENSE, OWNER_DRAW
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, merchant])
 }

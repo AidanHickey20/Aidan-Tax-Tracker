@@ -147,6 +147,7 @@ export default function DealDetailPage() {
   const [showCloseDialog, setShowCloseDialog] = useState(false);
   const [closeStepId, setCloseStepId] = useState<string | null>(null);
   const [closeProfit, setCloseProfit] = useState("");
+  const [closeRehabWriteoff, setCloseRehabWriteoff] = useState(true);
   const [closing, setClosing] = useState(false);
 
   const fetchDeal = useCallback(async () => {
@@ -175,6 +176,7 @@ export default function DealDetailPage() {
     if (step.name === "CLOSED" && !step.completed) {
       setCloseStepId(step.id);
       setCloseProfit("");
+      setCloseRehabWriteoff(true);
       setShowCloseDialog(true);
       return;
     }
@@ -197,6 +199,7 @@ export default function DealDetailPage() {
         id: closeStepId,
         completed: true,
         profit: parseFloat(closeProfit) || 0,
+        addRehabWriteoff: deal?.dealType === "FIX_AND_FLIP" && closeRehabWriteoff,
       }),
     });
     setShowCloseDialog(false);
@@ -806,6 +809,25 @@ export default function DealDetailPage() {
                 className="w-full border border-slate-600 rounded px-3 py-2.5 text-lg bg-slate-900 text-slate-100 placeholder-slate-500"
               />
             </div>
+
+            {/* Rehab write-off — Fix & Flip only, when there's rehab spend */}
+            {isFixAndFlip && totalSpent > 0 && (
+              <label className="flex items-start gap-3 mb-4 p-3 rounded-lg bg-slate-900 border border-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={closeRehabWriteoff}
+                  onChange={(e) => setCloseRehabWriteoff(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-slate-600 bg-slate-800 accent-emerald-600"
+                />
+                <span className="text-sm text-slate-300">
+                  Add rehab (<MaskedValue value={formatCurrency(totalSpent)} className="font-semibold text-slate-100" />) as a business write-off
+                  <span className="block text-xs text-slate-500 mt-0.5">
+                    Leave unchecked if the profit above already has rehab subtracted out (avoids deducting it twice).
+                  </span>
+                </span>
+              </label>
+            )}
+
             <div className="flex gap-2">
               <button
                 onClick={confirmCloseDeal}

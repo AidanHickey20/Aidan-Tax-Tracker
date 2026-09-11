@@ -15,6 +15,7 @@ import { MaskedValue } from "./PrivacyProvider";
 import TaxAdvisor from "./TaxAdvisor";
 import UpgradePrompt from "./UpgradePrompt";
 import ExpiredBanner from "./ExpiredBanner";
+import BankReviewQueue from "./BankReviewQueue";
 import { useSubscription } from "./SubscriptionProvider";
 
 interface LineItem {
@@ -333,9 +334,18 @@ export default function DashboardContent() {
 
   return (
     <div>
+      {isProUser && <BankReviewQueue />}
+
       <h2 className="text-2xl font-bold text-slate-100 mb-6">
         Dashboard — {new Date().getFullYear()}
       </h2>
+
+      <button
+        className="mb-6 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow"
+        onClick={() => alert("Test button clicked!")}
+      >
+        Test
+      </button>
 
       <ExpiredBanner />
 
