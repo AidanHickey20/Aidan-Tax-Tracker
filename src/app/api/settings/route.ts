@@ -4,22 +4,43 @@ import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/get-user";
 import { validate, updateSettingsSchema } from "@/lib/validations";
 import { canUserEdit } from "@/lib/subscription";
+import { getActiveBusinessId } from "@/lib/business";
 
 const EXPIRED_MSG = { error: "Your trial has ended. Choose a plan to continue editing." };
+
+// Personal settings live on UserSettings (shared across businesses); tax/income
+// settings live on the active business's BusinessSettings. We merge them into
+// one flat object so the UI keeps working with a single `settings` shape.
+type UserSettingsRow = NonNullable<Awaited<ReturnType<typeof prisma.userSettings.findUnique>>>;
+type BusinessSettingsRow = NonNullable<Awaited<ReturnType<typeof prisma.businessSettings.findUnique>>>;
+
+function merge(us: UserSettingsRow, bs: BusinessSettingsRow | null) {
+  return {
+    ...us,
+    incomeGoal: bs?.incomeGoal ?? us.incomeGoal,
+    filingStatus: bs?.filingStatus ?? us.filingStatus,
+    state: bs?.state ?? us.state,
+    stateTaxRate: bs?.stateTaxRate ?? us.stateTaxRate,
+    municipalTaxRate: bs?.municipalTaxRate ?? us.municipalTaxRate,
+    mileageRate: bs?.mileageRate ?? us.mileageRate,
+    additionalW2Income: bs?.additionalW2Income ?? us.additionalW2Income,
+    rentalIncome: bs?.rentalIncome ?? us.rentalIncome,
+    savedDescriptions: bs?.savedDescriptions ?? us.savedDescriptions,
+  };
+}
 
 export async function GET() {
   const userId = await requireUserId();
 
   let settings = await prisma.userSettings.findUnique({ where: { userId } });
-
-  // Auto-create default settings for new users
   if (!settings) {
-    settings = await prisma.userSettings.create({
-      data: { userId, refDate: new Date() },
-    });
+    settings = await prisma.userSettings.create({ data: { userId, refDate: new Date() } });
   }
 
-  return NextResponse.json(settings);
+  const businessId = await getActiveBusinessId(userId);
+  const bs = await prisma.businessSettings.findUnique({ where: { businessId } });
+
+  return NextResponse.json(merge(settings, bs));
 }
 
 export async function PUT(request: NextRequest) {
@@ -29,66 +50,54 @@ export async function PUT(request: NextRequest) {
   const parsed = validate(updateSettingsSchema, body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
 
-  const settings = await prisma.userSettings.upsert({
-    where: { userId },
-    update: {
-      incomeGoal: parsed.data.incomeGoal ?? 0,
-      bankBalance: parsed.data.bankBalance ?? 0,
-      taxSavingsBalance: parsed.data.taxSavingsBalance ?? 0,
-      homeValue: parsed.data.homeValue ?? 0,
-      homeAppreciation: parsed.data.homeAppreciation ?? 0,
-      mortgageBalance: parsed.data.mortgageBalance ?? 0,
-      mortgageRate: parsed.data.mortgageRate ?? 0,
-      mortgagePayment: parsed.data.mortgagePayment ?? 0,
-      studentLoanBalance: parsed.data.studentLoanBalance ?? 0,
-      studentLoanRate: parsed.data.studentLoanRate ?? 0,
-      studentLoanPayment: parsed.data.studentLoanPayment ?? 0,
-      carLoanBalance: parsed.data.carLoanBalance ?? 0,
-      carLoanRate: parsed.data.carLoanRate ?? 0,
-      carLoanPayment: parsed.data.carLoanPayment ?? 0,
-      refDate: parsed.data.refDate ? new Date(parsed.data.refDate) : new Date(),
-      studentLoanPaymentDay: parsed.data.studentLoanPaymentDay ?? 1,
-      carLoanPaymentDay: parsed.data.carLoanPaymentDay ?? 16,
-      investmentGrowthRate: parsed.data.investmentGrowthRate ?? 0.07,
-      filingStatus: parsed.data.filingStatus ?? "SINGLE",
-      state: parsed.data.state ?? "OH",
-      stateTaxRate: parsed.data.stateTaxRate ?? 0.035,
-      municipalTaxRate: parsed.data.municipalTaxRate ?? 0.02,
-      mileageRate: parsed.data.mileageRate ?? 0.70,
-      additionalW2Income: parsed.data.additionalW2Income ?? 0,
-      rentalIncome: parsed.data.rentalIncome ?? 0,
-      savedDescriptions: (parsed.data.savedDescriptions ?? Prisma.JsonNull) as Prisma.InputJsonValue,
-    },
-    create: {
-      userId,
-      incomeGoal: parsed.data.incomeGoal ?? 0,
-      bankBalance: parsed.data.bankBalance ?? 0,
-      taxSavingsBalance: parsed.data.taxSavingsBalance ?? 0,
-      homeValue: parsed.data.homeValue ?? 0,
-      homeAppreciation: parsed.data.homeAppreciation ?? 0,
-      mortgageBalance: parsed.data.mortgageBalance ?? 0,
-      mortgageRate: parsed.data.mortgageRate ?? 0,
-      mortgagePayment: parsed.data.mortgagePayment ?? 0,
-      studentLoanBalance: parsed.data.studentLoanBalance ?? 0,
-      studentLoanRate: parsed.data.studentLoanRate ?? 0,
-      studentLoanPayment: parsed.data.studentLoanPayment ?? 0,
-      carLoanBalance: parsed.data.carLoanBalance ?? 0,
-      carLoanRate: parsed.data.carLoanRate ?? 0,
-      carLoanPayment: parsed.data.carLoanPayment ?? 0,
-      refDate: parsed.data.refDate ? new Date(parsed.data.refDate) : new Date(),
-      studentLoanPaymentDay: parsed.data.studentLoanPaymentDay ?? 1,
-      carLoanPaymentDay: parsed.data.carLoanPaymentDay ?? 16,
-      investmentGrowthRate: parsed.data.investmentGrowthRate ?? 0.07,
-      filingStatus: parsed.data.filingStatus ?? "SINGLE",
-      state: parsed.data.state ?? "OH",
-      stateTaxRate: parsed.data.stateTaxRate ?? 0.035,
-      municipalTaxRate: parsed.data.municipalTaxRate ?? 0.02,
-      mileageRate: parsed.data.mileageRate ?? 0.70,
-      additionalW2Income: parsed.data.additionalW2Income ?? 0,
-      rentalIncome: parsed.data.rentalIncome ?? 0,
-      savedDescriptions: (parsed.data.savedDescriptions ?? Prisma.JsonNull) as Prisma.InputJsonValue,
-    },
-  });
+  const businessId = await getActiveBusinessId(userId);
 
-  return NextResponse.json(settings);
+  // Personal / shared fields → UserSettings.
+  const personal = {
+    bankBalance: parsed.data.bankBalance ?? 0,
+    taxSavingsBalance: parsed.data.taxSavingsBalance ?? 0,
+    homeValue: parsed.data.homeValue ?? 0,
+    homeAppreciation: parsed.data.homeAppreciation ?? 0,
+    mortgageBalance: parsed.data.mortgageBalance ?? 0,
+    mortgageRate: parsed.data.mortgageRate ?? 0,
+    mortgagePayment: parsed.data.mortgagePayment ?? 0,
+    studentLoanBalance: parsed.data.studentLoanBalance ?? 0,
+    studentLoanRate: parsed.data.studentLoanRate ?? 0,
+    studentLoanPayment: parsed.data.studentLoanPayment ?? 0,
+    carLoanBalance: parsed.data.carLoanBalance ?? 0,
+    carLoanRate: parsed.data.carLoanRate ?? 0,
+    carLoanPayment: parsed.data.carLoanPayment ?? 0,
+    refDate: parsed.data.refDate ? new Date(parsed.data.refDate) : new Date(),
+    studentLoanPaymentDay: parsed.data.studentLoanPaymentDay ?? 1,
+    carLoanPaymentDay: parsed.data.carLoanPaymentDay ?? 16,
+    investmentGrowthRate: parsed.data.investmentGrowthRate ?? 0.07,
+  };
+
+  // Tax / income / templates → active business's BusinessSettings.
+  const business = {
+    incomeGoal: parsed.data.incomeGoal ?? 0,
+    filingStatus: parsed.data.filingStatus ?? "SINGLE",
+    state: parsed.data.state ?? "OH",
+    stateTaxRate: parsed.data.stateTaxRate ?? 0.035,
+    municipalTaxRate: parsed.data.municipalTaxRate ?? 0.02,
+    mileageRate: parsed.data.mileageRate ?? 0.7,
+    additionalW2Income: parsed.data.additionalW2Income ?? 0,
+    rentalIncome: parsed.data.rentalIncome ?? 0,
+    savedDescriptions: (parsed.data.savedDescriptions ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+  };
+
+  const [settings, bs] = await Promise.all([
+    prisma.userSettings.upsert({
+      where: { userId },
+      update: personal,
+      create: { userId, ...personal },
+    }),
+    prisma.businessSettings.upsert({
+      where: { businessId },
+      update: business,
+      create: { businessId, ...business },
+    }),
+  ]);
+
+  return NextResponse.json(merge(settings, bs));
 }
