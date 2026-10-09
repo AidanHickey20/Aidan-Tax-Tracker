@@ -18,26 +18,67 @@ model User {
   image         String?
   createdAt     DateTime  @default(now())
 
-  accounts    Account[]
-  sessions    Session[]
+  accounts Account[]
+  sessions Session[]
 
-  password      String?
+  password String?
 
-  weeklyEntries      WeeklyEntry[]
-  recurringItems     RecurringItem[]
-  trackedInvestments      TrackedInvestment[]
-  investmentTransactions  InvestmentTransaction[]
-  properties         Property[]
-  deals              Deal[]
-  reminders          Reminder[]
-  settings           UserSettings?
-  userAccounts       UserAccount[]
-  subscription       Subscription?
-  netWorthItems      NetWorthItem[]
-  linkedBanks           LinkedBank[]
-  importedTransactions  ImportedTransaction[]
-  merchantRules         MerchantRule[]
-  documents             Document[]
+  weeklyEntries          WeeklyEntry[]
+  recurringItems         RecurringItem[]
+  trackedInvestments     TrackedInvestment[]
+  investmentTransactions InvestmentTransaction[]
+  properties             Property[]
+  deals                  Deal[]
+  reminders              Reminder[]
+  settings               UserSettings?
+  userAccounts           UserAccount[]
+  subscription           Subscription?
+  netWorthItems          NetWorthItem[]
+  linkedBanks            LinkedBank[]
+  importedTransactions   ImportedTransaction[]
+  merchantRules          MerchantRule[]
+  documents              Document[]
+  businesses             Business[]
+}
+
+// A business/entity tracked separately (income, expenses, deals, mileage,
+// recurring items, documents, and tax settings are scoped to it). Personal
+// finances — net worth, loans, portfolio — stay shared at the User level.
+model Business {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  settings       BusinessSettings?
+  weeklyEntries  WeeklyEntry[]
+  recurringItems RecurringItem[]
+  deals          Deal[]
+  reminders      Reminder[]
+  documents      Document[]
+
+  @@index([userId])
+}
+
+// Per-business settings: tax configuration, income goal, and saved description
+// templates. Personal settings remain on UserSettings.
+model BusinessSettings {
+  id         String   @id @default(uuid())
+  businessId String   @unique
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  incomeGoal         Float  @default(0)
+  filingStatus       String @default("SINGLE")
+  state              String @default("OH")
+  stateTaxRate       Float  @default(0.035)
+  municipalTaxRate   Float  @default(0.02)
+  mileageRate        Float  @default(0.70)
+  additionalW2Income Float  @default(0)
+  rentalIncome       Float  @default(0)
+  savedDescriptions  Json?
 }
 
 model UserSettings {
@@ -45,21 +86,21 @@ model UserSettings {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  incomeGoal          Float @default(0)
-  bankBalance         Float @default(0)
-  taxSavingsBalance   Float @default(0)
-  homeValue           Float @default(0)
-  homeAppreciation    Float @default(0)
-  mortgageBalance     Float @default(0)
-  mortgageRate        Float @default(0)
-  mortgagePayment     Float @default(0)
-  studentLoanBalance  Float @default(0)
-  studentLoanRate     Float @default(0)
-  studentLoanPayment  Float @default(0)
-  carLoanBalance      Float @default(0)
-  carLoanRate         Float @default(0)
-  carLoanPayment      Float @default(0)
-  refDate             DateTime @default(now())
+  incomeGoal         Float    @default(0)
+  bankBalance        Float    @default(0)
+  taxSavingsBalance  Float    @default(0)
+  homeValue          Float    @default(0)
+  homeAppreciation   Float    @default(0)
+  mortgageBalance    Float    @default(0)
+  mortgageRate       Float    @default(0)
+  mortgagePayment    Float    @default(0)
+  studentLoanBalance Float    @default(0)
+  studentLoanRate    Float    @default(0)
+  studentLoanPayment Float    @default(0)
+  carLoanBalance     Float    @default(0)
+  carLoanRate        Float    @default(0)
+  carLoanPayment     Float    @default(0)
+  refDate            DateTime @default(now())
 
   studentLoanPaymentDay Int   @default(1)
   carLoanPaymentDay     Int   @default(16)
@@ -81,16 +122,21 @@ model UserSettings {
 
   // Onboarding
   hasSeenTutorial Boolean @default(false)
+
+  // Multi-business: when enabled, per-business data is scoped by business tabs.
+  // activeBusinessId is the business currently being viewed/edited.
+  multiBusinessEnabled Boolean @default(false)
+  activeBusinessId     String?
 }
 
 model UserAccount {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  name      String   // e.g. "Personal", "Coinbase - Bitcoin"
-  category  String   // CASH, INVESTMENT, CRYPTO, RETIREMENT
-  group     String?  // e.g. "Coinbase", "Robinhood", or null for standalone
+  name      String // e.g. "Personal", "Coinbase - Bitcoin"
+  category  String // CASH, INVESTMENT, CRYPTO, RETIREMENT
+  group     String? // e.g. "Coinbase", "Robinhood", or null for standalone
   sortOrder Int      @default(0)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -149,17 +195,22 @@ model WeeklyEntry {
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  lineItems       LineItem[]
-  accountBalances AccountBalance[]
-  investments     InvestmentEntry[]
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  lineItems            LineItem[]
+  accountBalances      AccountBalance[]
+  investments          InvestmentEntry[]
   importedTransactions ImportedTransaction[]
+
+  @@index([businessId])
 }
 
 model LineItem {
-  id            String @id @default(uuid())
-  description   String
-  amount        Float
-  category      String // INCOME, BUSINESS_EXPENSE, PERSONAL_EXPENSE, OWNER_DRAW
+  id          String @id @default(uuid())
+  description String
+  amount      Float
+  category    String // INCOME, BUSINESS_EXPENSE, PERSONAL_EXPENSE, OWNER_DRAW
 
   weeklyEntry   WeeklyEntry @relation(fields: [weeklyEntryId], references: [id], onDelete: Cascade)
   weeklyEntryId String
@@ -187,7 +238,7 @@ model RecurringItem {
   id           String   @id @default(uuid())
   description  String
   amount       Float
-  category     String   // INCOME, BUSINESS_EXPENSE, PERSONAL_EXPENSE, OWNER_DRAW, INVESTMENT
+  category     String // INCOME, BUSINESS_EXPENSE, PERSONAL_EXPENSE, OWNER_DRAW, INVESTMENT
   frequency    String   @default("WEEKLY") // WEEKLY or MONTHLY
   scheduledDay Int      @default(-1) // WEEKLY: 0=Sun..6=Sat, MONTHLY: 1-31, -1=unset
   isActive     Boolean  @default(true)
@@ -195,15 +246,20 @@ model RecurringItem {
 
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
 }
 
 model TrackedInvestment {
-  id               String   @id @default(uuid())
-  symbol           String   // Ticker for stocks (AAPL), CoinGecko ID for crypto (bitcoin)
-  name             String   // Display name
-  type             String   // STOCK or CRYPTO
-  shares           Float    @default(0)
-  avgCost          Float    @default(0)
+  id                String    @id @default(uuid())
+  symbol            String // Ticker for stocks (AAPL), CoinGecko ID for crypto (bitcoin)
+  name              String // Display name
+  type              String // STOCK or CRYPTO
+  shares            Float     @default(0)
+  avgCost           Float     @default(0)
   recurringAmount   Float     @default(0) // Weekly auto-invest amount in USD
   recurringDay      Int       @default(-1) // Day of week: 0=Sun,1=Mon,...6=Sat, -1=disabled
   lastProcessedDate DateTime? // Last auto-invest execution date
@@ -219,10 +275,10 @@ model InvestmentTransaction {
   id           String            @id @default(uuid())
   investmentId String
   investment   TrackedInvestment @relation(fields: [investmentId], references: [id], onDelete: Cascade)
-  type         String            // "AUTO_INVEST"
-  amount       Float             // USD spent
-  price        Float             // Price per share at time of purchase
-  shares       Float             // Shares acquired
+  type         String // "AUTO_INVEST"
+  amount       Float // USD spent
+  price        Float // Price per share at time of purchase
+  shares       Float // Shares acquired
   executedAt   DateTime          @default(now())
 
   userId String?
@@ -230,70 +286,75 @@ model InvestmentTransaction {
 }
 
 model Property {
-  id                String   @id @default(uuid())
-  address           String
-  nickname          String   @default("")
-  purchasePrice     Float    @default(0)
-  currentValue      Float    @default(0) // Market value at time of entry
-  appreciationRate  Float    @default(0.03) // Annual appreciation (e.g. 0.03 = 3%)
-  mortgageBalance   Float    @default(0)
-  mortgageRate      Float    @default(0) // Annual interest rate
-  mortgagePayment   Float    @default(0) // Monthly payment
-  mortgageTerm      Int      @default(360) // Total months (e.g. 360 = 30yr)
-  startDate         DateTime @default(now()) // When tracking begins
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id               String   @id @default(uuid())
+  address          String
+  nickname         String   @default("")
+  purchasePrice    Float    @default(0)
+  currentValue     Float    @default(0) // Market value at time of entry
+  appreciationRate Float    @default(0.03) // Annual appreciation (e.g. 0.03 = 3%)
+  mortgageBalance  Float    @default(0)
+  mortgageRate     Float    @default(0) // Annual interest rate
+  mortgagePayment  Float    @default(0) // Monthly payment
+  mortgageTerm     Int      @default(360) // Total months (e.g. 360 = 30yr)
+  startDate        DateTime @default(now()) // When tracking begins
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Deal {
-  id                String        @id @default(uuid())
-  dealType          String        @default("FIX_AND_FLIP") // FIX_AND_FLIP, WHOLESALE, REALTOR
+  id                String    @id @default(uuid())
+  dealType          String    @default("FIX_AND_FLIP") // FIX_AND_FLIP, WHOLESALE, REALTOR
   address           String
-  nickname          String        @default("")
-  purchasePrice     Float         @default(0)
-  arv               Float         @default(0) // After Repair Value (fix & flip)
-  assignmentFee     Float         @default(0) // Wholesale assignment fee
-  underContractDate DateTime?     // Date went under contract (realtor)
-  targetCloseDate   DateTime?     // Target closing date
-  closedProfit      Float         @default(0) // Profit recorded at close
-  status            String        @default("ACQUISITION") // current phase
-  notes             String        @default("")
+  nickname          String    @default("")
+  purchasePrice     Float     @default(0)
+  arv               Float     @default(0) // After Repair Value (fix & flip)
+  assignmentFee     Float     @default(0) // Wholesale assignment fee
+  underContractDate DateTime? // Date went under contract (realtor)
+  targetCloseDate   DateTime? // Target closing date
+  closedProfit      Float     @default(0) // Profit recorded at close
+  status            String    @default("ACQUISITION") // current phase
+  notes             String    @default("")
   closedAt          DateTime?
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  expenses     DealExpense[]
-  steps        DealStep[]
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  expenses DealExpense[]
+  steps    DealStep[]
+
+  @@index([businessId])
 }
 
 model DealExpense {
   id          String   @id @default(uuid())
   description String
   amount      Float
-  category    String   // ACQUISITION, DEMO, MATERIALS, LABOR, PERMITS, UTILITIES, INSURANCE, CLOSING, OTHER
+  category    String // ACQUISITION, DEMO, MATERIALS, LABOR, PERMITS, UTILITIES, INSURANCE, CLOSING, OTHER
   paidAt      DateTime @default(now())
 
-  deal        Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
-  dealId      String
+  deal   Deal   @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  dealId String
 }
 
 model DealStep {
   id          String    @id @default(uuid())
-  name        String    // Step identifier (e.g. ACQUISITION, CONTINGENCY:Inspection)
+  name        String // Step identifier (e.g. ACQUISITION, CONTINGENCY:Inspection)
   completed   Boolean   @default(false)
   completedAt DateTime?
   deadline    DateTime? // Contingency expiration date
   notes       String    @default("")
   sortOrder   Int       @default(0)
 
-  deal        Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
-  dealId      String
+  deal   Deal   @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  dealId String
 }
 
 model Reminder {
@@ -306,6 +367,11 @@ model Reminder {
 
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
 }
 
 model NetWorthItem {
@@ -314,7 +380,7 @@ model NetWorthItem {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
   value     Float
-  type      String   // ASSET or LIABILITY
+  type      String // ASSET or LIABILITY
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -325,7 +391,7 @@ model Subscription {
   user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   stripeCustomerId     String?   @unique
   stripeSubscriptionId String?   @unique
-  plan                 String    @default("TRIAL")  // TRIAL, BASIC, PRO
+  plan                 String    @default("TRIAL") // TRIAL, BASIC, PRO
   status               String    @default("ACTIVE") // ACTIVE, PAST_DUE, CANCELED, EXPIRED
   trialEndsAt          DateTime?
   currentPeriodEnd     DateTime?
@@ -340,15 +406,19 @@ model Document {
   id           String   @id @default(uuid())
   userId       String
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name         String   // original filename
-  docType      String   // classification key, e.g. W9, SETTLEMENT_STATEMENT, OTHER
-  storagePath  String   // object path within the Supabase Storage bucket
+  name         String // original filename
+  docType      String // classification key, e.g. W9, SETTLEMENT_STATEMENT, OTHER
+  storagePath  String // object path within the Supabase Storage bucket
   mimeType     String
   size         Int      @default(0)
   aiClassified Boolean  @default(false) // false once the user overrides the type
   createdAt    DateTime @default(now())
 
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
   @@index([userId, docType])
+  @@index([businessId])
 }
 
 model PasswordResetToken {
@@ -372,7 +442,7 @@ model LinkedBank {
   itemId          String
   institutionId   String?
   institutionName String?
-  cursor          String?   // Plaid sync cursor for incremental transaction fetching
+  cursor          String? // Plaid sync cursor for incremental transaction fetching
   lastSyncedAt    DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -384,22 +454,22 @@ model LinkedBank {
 
 // A transaction pulled from Plaid, awaiting/holding the user's category decision.
 model ImportedTransaction {
-  id                 String      @id @default(uuid())
+  id                 String       @id @default(uuid())
   userId             String
-  user               User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user               User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   linkedBankId       String
-  linkedBank         LinkedBank  @relation(fields: [linkedBankId], references: [id], onDelete: Cascade)
-  plaidTransactionId String      @unique
+  linkedBank         LinkedBank   @relation(fields: [linkedBankId], references: [id], onDelete: Cascade)
+  plaidTransactionId String       @unique
   date               DateTime
-  name               String      // display name (merchant or raw description)
-  merchant           String?     // normalized merchant key used for MerchantRule matching
-  amount             Float       // Plaid convention: positive = outflow, negative = inflow
-  category           String?     // User-assigned: INCOME, BUSINESS_EXPENSE, PERSONAL_EXPENSE, OWNER_DRAW
-  status             String      @default("PENDING") // PENDING, CATEGORIZED, SKIPPED, APPLIED
-  autoCategorized    Boolean     @default(false) // true if a MerchantRule set the category
+  name               String // display name (merchant or raw description)
+  merchant           String? // normalized merchant key used for MerchantRule matching
+  amount             Float // Plaid convention: positive = outflow, negative = inflow
+  category           String? // User-assigned: INCOME, BUSINESS_EXPENSE, PERSONAL_EXPENSE, OWNER_DRAW
+  status             String       @default("PENDING") // PENDING, CATEGORIZED, SKIPPED, APPLIED
+  autoCategorized    Boolean      @default(false) // true if a MerchantRule set the category
   weeklyEntryId      String?
   weeklyEntry        WeeklyEntry? @relation(fields: [weeklyEntryId], references: [id])
-  createdAt          DateTime    @default(now())
+  createdAt          DateTime     @default(now())
 
   @@index([userId, status])
 }
@@ -409,8 +479,8 @@ model MerchantRule {
   id        String   @id @default(uuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  merchant  String   // normalized merchant key (lowercased)
-  category  String   // INCOME, BUSINESS_EXPENSE, PERSONAL_EXPENSE, OWNER_DRAW
+  merchant  String // normalized merchant key (lowercased)
+  category  String // INCOME, BUSINESS_EXPENSE, PERSONAL_EXPENSE, OWNER_DRAW
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
