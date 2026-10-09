@@ -269,6 +269,13 @@ export default function DashboardContent() {
         Dashboard — {new Date().getFullYear()}
       </h2>
 
+      <button
+        className="mb-6 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow"
+        onClick={() => alert("Test button clicked!")}
+      >
+        Test
+      </button>
+
       <ExpiredBanner />
 
       {/* Reminders */}
