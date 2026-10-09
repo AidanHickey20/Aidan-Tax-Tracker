@@ -7,6 +7,7 @@ import { useTheme } from "@/components/ThemeProvider";
 import ExpiredBanner from "@/components/ExpiredBanner";
 import RealEstatePortfolio from "@/components/RealEstatePortfolio";
 import LinkedCards from "@/components/LinkedCards";
+import BusinessManager from "@/components/BusinessManager";
 import UpgradePrompt from "@/components/UpgradePrompt";
 
 interface Settings {
@@ -183,6 +184,9 @@ export default function SettingsPage() {
       </p>
 
       <div className="space-y-8">
+        {/* Multiple Businesses */}
+        <BusinessManager />
+
         {/* Appearance */}
         <div className="bg-slate-800 border border-slate-700 rounded-lg p-6 shadow-sm">
           <h3 className="font-semibold text-slate-200 mb-4">Appearance</h3>
