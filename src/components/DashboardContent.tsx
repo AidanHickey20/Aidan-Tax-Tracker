@@ -91,6 +91,21 @@ interface Settings {
   rentalIncome: number;
 }
 
+interface TaxSummaryRow {
+  id: string;
+  name: string;
+  income: number;
+  expenses: number;
+  taxableProfit: number;
+  estimatedTax: number;
+}
+
+interface TaxSummary {
+  businesses: TaxSummaryRow[];
+  combinedTaxableProfit: number;
+  combinedTax: number;
+}
+
 export default function DashboardContent() {
   const { isProUser } = useSubscription();
   const [entries, setEntries] = useState<WeeklyEntry[]>([]);
@@ -101,6 +116,7 @@ export default function DashboardContent() {
   const [recurringItems, setRecurringItems] = useState<RecurringItem[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [userAccounts, setUserAccounts] = useState<UserAccount[]>([]);
+  const [taxSummary, setTaxSummary] = useState<TaxSummary | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -117,6 +133,12 @@ export default function DashboardContent() {
       setUserAccounts(accountsData);
       setLoading(false);
     }).catch(() => setLoading(false));
+
+    // Multi-business: combined + per-business tax breakdown (only shown when >1).
+    fetch("/api/businesses/tax-summary")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setTaxSummary(d))
+      .catch(() => {});
   }, []);
 
   if (loading) {
@@ -326,6 +348,43 @@ export default function DashboardContent() {
           );
         })}
       </div>
+
+      {/* All-Businesses combined tax (only when tracking more than one) */}
+      {taxSummary && taxSummary.businesses.length > 1 && (
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-5 shadow-sm mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-slate-200">All Businesses — Est. Tax Liability</h3>
+            <MaskedValue
+              value={formatCurrency(taxSummary.combinedTax)}
+              className="text-xl font-bold text-red-500"
+              isCurrency
+            />
+          </div>
+          <div className="space-y-1.5">
+            {taxSummary.businesses.map((b) => (
+              <div
+                key={b.id}
+                className="flex items-center justify-between text-sm border-b border-slate-700/60 pb-1.5 last:border-0"
+              >
+                <span className="text-slate-300 truncate pr-3">{b.name}</span>
+                <div className="flex items-center gap-6 flex-shrink-0">
+                  <span className="text-xs text-slate-500">
+                    Taxable <MaskedValue value={formatCurrency(b.taxableProfit)} isCurrency />
+                  </span>
+                  <MaskedValue
+                    value={formatCurrency(b.estimatedTax)}
+                    className="font-semibold text-slate-200 w-24 text-right"
+                    isCurrency
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-slate-500 mt-3">
+            Combined estimate across all your businesses. Each tab above shows that business on its own.
+          </p>
+        </div>
+      )}
 
       {/* Tax Advisor */}
       {isProUser ? <TaxAdvisor /> : <div className="mb-8"><UpgradePrompt feature="AI Tax Advisor" /></div>}
