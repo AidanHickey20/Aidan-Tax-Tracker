@@ -3,13 +3,15 @@ import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/get-user";
 import { validate, createReminderSchema, updateReminderSchema, deleteByIdSchema } from "@/lib/validations";
 import { canUserEdit } from "@/lib/subscription";
+import { getActiveBusinessId } from "@/lib/business";
 
 const EXPIRED_MSG = { error: "Your trial has ended. Choose a plan to continue editing." };
 
 export async function GET() {
   const userId = await requireUserId();
+  const businessId = await getActiveBusinessId(userId);
   const reminders = await prisma.reminder.findMany({
-    where: { userId },
+    where: { userId, businessId },
     orderBy: { createdAt: "desc" },
   });
   return NextResponse.json(reminders);
@@ -18,6 +20,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const userId = await requireUserId();
   if (!(await canUserEdit(userId))) return NextResponse.json(EXPIRED_MSG, { status: 403 });
+  const businessId = await getActiveBusinessId(userId);
   const body = await request.json();
   const parsed = validate(createReminderSchema, body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
@@ -25,6 +28,7 @@ export async function POST(request: NextRequest) {
   const reminder = await prisma.reminder.create({
     data: {
       userId,
+      businessId,
       message: parsed.data.message,
       frequency: parsed.data.frequency ?? "WEEKLY",
       scheduledDay: parsed.data.scheduledDay ?? -1,

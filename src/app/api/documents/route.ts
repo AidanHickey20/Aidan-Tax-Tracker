@@ -8,6 +8,7 @@ import { classifyDocument } from "@/lib/documents";
 import { isDocType } from "@/lib/doc-types";
 import { rateLimit } from "@/lib/rate-limit";
 import { logError } from "@/lib/logger";
+import { getActiveBusinessId } from "@/lib/business";
 
 const MAX_BYTES = 15 * 1024 * 1024; // 15 MB
 const ALLOWED = [
@@ -32,8 +33,9 @@ export async function GET() {
       return NextResponse.json({ error: "Pro plan required" }, { status: 403 });
     }
 
+    const businessId = await getActiveBusinessId(userId);
     const docs = await prisma.document.findMany({
-      where: { userId },
+      where: { userId, businessId },
       orderBy: { createdAt: "desc" },
     });
 
@@ -121,9 +123,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const businessId = await getActiveBusinessId(userId);
     const doc = await prisma.document.create({
       data: {
         userId,
+        businessId,
         name: file.name.slice(0, 200),
         docType,
         storagePath,

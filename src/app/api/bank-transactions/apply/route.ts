@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireUserId } from "@/lib/get-user";
 import { isProUser } from "@/lib/subscription";
 import { prisma } from "@/lib/prisma";
+import { getActiveBusinessId } from "@/lib/business";
 import { startOfWeek, endOfWeek } from "date-fns";
 
 export async function POST() {
@@ -9,6 +10,7 @@ export async function POST() {
   if (!(await isProUser(userId))) {
     return NextResponse.json({ error: "Pro plan required" }, { status: 403 });
   }
+  const businessId = await getActiveBusinessId(userId);
 
   const transactions = await prisma.importedTransaction.findMany({
     where: { userId, status: "CATEGORIZED", category: { not: null } },
@@ -40,11 +42,11 @@ export async function POST() {
   for (const [, group] of weekGroups) {
     // Find or create the weekly entry for this week.
     let entry = await prisma.weeklyEntry.findFirst({
-      where: { userId, weekStart: group.weekStart },
+      where: { userId, businessId, weekStart: group.weekStart },
     });
     if (!entry) {
       entry = await prisma.weeklyEntry.create({
-        data: { userId, weekStart: group.weekStart, weekEnd: group.weekEnd },
+        data: { userId, businessId, weekStart: group.weekStart, weekEnd: group.weekEnd },
       });
     }
 

@@ -4,11 +4,13 @@ import { getCurrentYearRange } from "@/lib/utils";
 import { requireUserId } from "@/lib/get-user";
 import { validate, createEntrySchema } from "@/lib/validations";
 import { canUserEdit } from "@/lib/subscription";
+import { getActiveBusinessId } from "@/lib/business";
 
 const EXPIRED_MSG = { error: "Your trial has ended. Choose a plan to continue editing." };
 
 export async function GET(request: NextRequest) {
   const userId = await requireUserId();
+  const businessId = await getActiveBusinessId(userId);
   const searchParams = request.nextUrl.searchParams;
   const yearOnly = searchParams.get("yearOnly") === "true";
   const id = searchParams.get("id");
@@ -30,6 +32,7 @@ export async function GET(request: NextRequest) {
       const entry = await prisma.weeklyEntry.findFirst({
         where: {
           userId,
+          businessId,
           status: "DRAFT",
           weekStart: new Date(weekStart),
           weekEnd: new Date(weekEnd),
@@ -45,6 +48,7 @@ export async function GET(request: NextRequest) {
     const entries = await prisma.weeklyEntry.findMany({
       where: {
         userId,
+        businessId,
         status: "SUBMITTED",
         weekStart: { gte: start },
         weekEnd: { lte: end },
@@ -56,7 +60,7 @@ export async function GET(request: NextRequest) {
   }
 
   const entries = await prisma.weeklyEntry.findMany({
-    where: { userId, status: "SUBMITTED" },
+    where: { userId, businessId, status: "SUBMITTED" },
     include: { lineItems: true, accountBalances: true, investments: true },
     orderBy: { weekStart: "desc" },
   });
@@ -66,6 +70,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const userId = await requireUserId();
   if (!(await canUserEdit(userId))) return NextResponse.json(EXPIRED_MSG, { status: 403 });
+  const businessId = await getActiveBusinessId(userId);
   const body = await request.json();
   const parsed = validate(createEntrySchema, body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
@@ -73,6 +78,7 @@ export async function POST(request: NextRequest) {
   const entry = await prisma.weeklyEntry.create({
     data: {
       userId,
+      businessId,
       weekStart: new Date(parsed.data.weekStart),
       weekEnd: new Date(parsed.data.weekEnd),
       mileage: parsed.data.mileage || 0,

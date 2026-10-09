@@ -4,6 +4,7 @@ import { requireUserId } from "@/lib/get-user";
 import { DEFAULT_DEAL_STEPS, DEFAULT_WHOLESALE_STEPS } from "@/lib/constants";
 import { validate, createDealSchema, updateDealSchema, deleteByIdSchema } from "@/lib/validations";
 import { isProUser } from "@/lib/subscription";
+import { getActiveBusinessId } from "@/lib/business";
 
 const PRO_REQUIRED = { error: "Pro plan required" } as const;
 
@@ -11,8 +12,9 @@ const PRO_REQUIRED = { error: "Pro plan required" } as const;
 export async function GET() {
   const userId = await requireUserId();
   if (!(await isProUser(userId))) return NextResponse.json(PRO_REQUIRED, { status: 403 });
+  const businessId = await getActiveBusinessId(userId);
   const deals = await prisma.deal.findMany({
-    where: { userId },
+    where: { userId, businessId },
     include: { expenses: true, steps: { orderBy: { sortOrder: "asc" } } },
     orderBy: { createdAt: "desc" },
   });
@@ -26,6 +28,7 @@ export async function POST(request: NextRequest) {
   const parsed = validate(createDealSchema, body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
 
+  const businessId = await getActiveBusinessId(userId);
   const dealType = parsed.data.dealType || "FIX_AND_FLIP";
   const insuranceAmount = parsed.data.insurance || 0;
 
@@ -55,6 +58,7 @@ export async function POST(request: NextRequest) {
   const deal = await prisma.deal.create({
     data: {
       userId,
+      businessId,
       dealType,
       address: parsed.data.address,
       nickname: parsed.data.nickname || "",

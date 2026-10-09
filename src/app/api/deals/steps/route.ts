@@ -4,6 +4,7 @@ import { requireUserId } from "@/lib/get-user";
 import { validate, updateDealStepSchema } from "@/lib/validations";
 import { isProUser } from "@/lib/subscription";
 import { getCurrentWeekRange } from "@/lib/utils";
+import { getActiveBusinessId } from "@/lib/business";
 
 export async function PUT(request: NextRequest) {
   const userId = await requireUserId();
@@ -70,13 +71,15 @@ export async function PUT(request: NextRequest) {
 
         // Only touch a weekly entry if we're actually adding a line item.
         if (addIncome || addRehab) {
+          // Land the line items in the deal's own business week.
+          const businessId = deal.businessId ?? (await getActiveBusinessId(userId));
           const { start, end } = getCurrentWeekRange();
           let entry = await prisma.weeklyEntry.findFirst({
-            where: { userId, weekStart: start, weekEnd: end },
+            where: { userId, businessId, weekStart: start, weekEnd: end },
           });
           if (!entry) {
             entry = await prisma.weeklyEntry.create({
-              data: { userId, weekStart: start, weekEnd: end },
+              data: { userId, businessId, weekStart: start, weekEnd: end },
             });
           }
 
