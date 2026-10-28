@@ -24,12 +24,28 @@ function sanitizeName(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120) || "file";
 }
 
-// GET — list the user's documents (newest first) with short-lived signed URLs.
-export async function GET() {
+// GET — list the user's documents, or (with ?id=) mint a FRESH signed URL for a
+// single document on demand so view links can never go stale.
+export async function GET(request: NextRequest) {
   try {
     const userId = await requireUserId();
     if (!(await isProUser(userId))) {
       return NextResponse.json({ error: "Pro plan required" }, { status: 403 });
+    }
+
+    const id = request.nextUrl.searchParams.get("id");
+    if (id) {
+      const doc = await prisma.document.findUnique({ where: { id } });
+      if (!doc || doc.userId !== userId) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
+      const { data } = await getSupabase()
+        .storage.from(DOCUMENTS_BUCKET)
+        .createSignedUrl(doc.storagePath, 300); // fresh 5-min link, generated at click time
+      if (!data?.signedUrl) {
+        return NextResponse.json({ error: "Could not generate a link" }, { status: 500 });
+      }
+      return NextResponse.json({ url: data.signedUrl });
     }
 
     const docs = await prisma.document.findMany({

@@ -85,6 +85,27 @@ export default function DocumentVault() {
     });
   }
 
+  // Open a document using a freshly-minted signed URL so the link can't be
+  // stale. Open the tab synchronously first (avoids popup blocking), then
+  // point it at the URL once we have it.
+  async function openDoc(id: string) {
+    const tab = window.open("", "_blank");
+    try {
+      const res = await fetch(`/api/documents?id=${encodeURIComponent(id)}`);
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.url) {
+        if (tab) tab.location.href = data.url;
+        else window.open(data.url, "_blank");
+      } else {
+        tab?.close();
+        alert(data.error || "Couldn't open the document. Try refreshing the page.");
+      }
+    } catch {
+      tab?.close();
+      alert("Couldn't open the document. Try refreshing the page.");
+    }
+  }
+
   async function remove(id: string) {
     if (!confirm("Delete this document? This cannot be undone.")) return;
     setDocs((prev) => prev.filter((d) => d.id !== id));
@@ -229,16 +250,12 @@ export default function DocumentVault() {
                           ))}
                         </select>
 
-                        {d.url && (
-                          <a
-                            href={d.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-emerald-500 hover:text-emerald-400 whitespace-nowrap"
-                          >
-                            View
-                          </a>
-                        )}
+                        <button
+                          onClick={() => openDoc(d.id)}
+                          className="text-xs text-emerald-500 hover:text-emerald-400 whitespace-nowrap"
+                        >
+                          View
+                        </button>
                         <button
                           onClick={() => remove(d.id)}
                           className="text-red-400 hover:text-red-300 text-lg leading-none flex-shrink-0"
