@@ -35,10 +35,31 @@ export default function BankReviewQueue() {
     }
   }, []);
 
+  // Pull fresh transactions from the linked bank(s) once per login session, then
+  // show the review queue. Gated by sessionStorage so navigating between pages
+  // doesn't re-sync (and doesn't rack up Plaid API costs); fails quietly when no
+  // bank is linked or the sync errors — we still show any already-pending items.
+  const SYNC_FLAG = "bankSyncedThisSession";
+  const refresh = useCallback(async () => {
+    if (typeof window !== "undefined" && !sessionStorage.getItem(SYNC_FLAG)) {
+      sessionStorage.setItem(SYNC_FLAG, "1");
+      try {
+        await fetch("/api/plaid/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: "{}",
+        });
+      } catch {
+        /* offline or sync failed — fall through and show existing pending items */
+      }
+    }
+    await load();
+  }, [load]);
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    load();
-  }, [load]);
+    refresh();
+  }, [refresh]);
 
   const current = queue[index];
   const isIncome = current ? current.amount < 0 : false;
